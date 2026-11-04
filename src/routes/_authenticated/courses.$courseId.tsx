@@ -48,7 +48,6 @@ function CoursePage() {
 
   if (isLoading) return null;
   if (!course) return <p className="text-muted-foreground">Course not found. <Link to="/courses" className="text-primary underline">Back to courses</Link></p>;
-  const map = new Map([[course.id, course]]);
   const schedule = (course.schedule as Slot[]) ?? [];
 
   return (
@@ -118,8 +117,6 @@ function CoursePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* map kept for future multi-course rendering */}
-      <span hidden>{map.size}</span>
     </div>
   );
 }
