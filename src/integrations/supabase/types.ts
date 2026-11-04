@@ -14,7 +14,313 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          aliases: string[]
+          archived: boolean
+          code: string | null
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          last_accessed_at: string | null
+          name: string
+          notes: string | null
+          schedule: Json
+          semester: string | null
+          teacher: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aliases?: string[]
+          archived?: boolean
+          code?: string | null
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          last_accessed_at?: string | null
+          name: string
+          notes?: string | null
+          schedule?: Json
+          semester?: string | null
+          teacher?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          aliases?: string[]
+          archived?: boolean
+          code?: string | null
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          last_accessed_at?: string | null
+          name?: string
+          notes?: string | null
+          schedule?: Json
+          semester?: string | null
+          teacher?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      milestones: {
+        Row: {
+          created_at: string
+          done: boolean
+          due_at: string | null
+          id: string
+          position: number
+          project_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          due_at?: string | null
+          id?: string
+          position?: number
+          project_id: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          due_at?: string | null
+          id?: string
+          position?: number
+          project_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          dashboard_widgets: Json
+          default_duration_minutes: number
+          default_priority: string
+          default_task_view: string
+          display_name: string | null
+          id: string
+          school: string | null
+          theme: string
+          timezone: string
+          updated_at: string
+          week_starts_on: number
+        }
+        Insert: {
+          created_at?: string
+          dashboard_widgets?: Json
+          default_duration_minutes?: number
+          default_priority?: string
+          default_task_view?: string
+          display_name?: string | null
+          id: string
+          school?: string | null
+          theme?: string
+          timezone?: string
+          updated_at?: string
+          week_starts_on?: number
+        }
+        Update: {
+          created_at?: string
+          dashboard_widgets?: Json
+          default_duration_minutes?: number
+          default_priority?: string
+          default_task_view?: string
+          display_name?: string | null
+          id?: string
+          school?: string | null
+          theme?: string
+          timezone?: string
+          updated_at?: string
+          week_starts_on?: number
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subtasks: {
+        Row: {
+          created_at: string
+          done: boolean
+          id: string
+          position: number
+          task_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          position?: number
+          task_id: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          position?: number
+          task_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          completed_at: string | null
+          course_id: string | null
+          created_at: string
+          description: string | null
+          due_at: string | null
+          estimated_minutes: number | null
+          id: string
+          milestone_id: string | null
+          planned_date: string | null
+          priority: string
+          project_id: string | null
+          recurrence: string
+          status: string
+          tags: string[]
+          task_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          milestone_id?: string | null
+          planned_date?: string | null
+          priority?: string
+          project_id?: string | null
+          recurrence?: string
+          status?: string
+          tags?: string[]
+          task_type?: string
+          title: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          milestone_id?: string | null
+          planned_date?: string | null
+          priority?: string
+          project_id?: string | null
+          recurrence?: string
+          status?: string
+          tags?: string[]
+          task_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
