@@ -15,7 +15,7 @@ export const PRIORITY_CLASS: Record<string, string> = {
   urgent: "text-destructive",
 };
 
-export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?: Course; onOpen: (t: Task) => void; compact?: boolean }) {
+export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?: Course | undefined; onOpen: (t: Task) => void; compact?: boolean }) {
   const toggle = useToggleTask();
   const done = task.status === "done";
   const overdue = isOverdue(task);

@@ -25,7 +25,7 @@ function useMove() {
 export function ListView({ tasks, courses, onOpen }: ViewProps) {
   const groups = useMemo(() => {
     const now = new Date();
-    const g: Record<string, Task[]> = { Overdue: [], "No deadline": [], Done: [] };
+    const g = { Overdue: [] as Task[], "No deadline": [] as Task[], Done: [] as Task[] };
     const dated: Record<string, Task[]> = {};
     for (const t of tasks) {
       if (t.status === "done") g.Done.push(t);
@@ -40,7 +40,7 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
     if (g.Overdue.length) out.push(["Overdue", g.Overdue]);
     for (const k of Object.keys(dated).sort()) {
       const d = new Date(`${k}T00:00`);
-      out.push([isToday(d) ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k]]);
+      out.push([isToday(d) ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k] ?? []]);
     }
     if (g["No deadline"].length) out.push(["No deadline", g["No deadline"]]);
     if (g.Done.length) out.push(["Done", g.Done]);

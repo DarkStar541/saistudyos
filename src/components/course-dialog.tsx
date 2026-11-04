@@ -18,7 +18,7 @@ export function CourseDialog({ open, onOpenChange, course }: { open: boolean; on
   const [slots, setSlots] = useState<Slot[]>([]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     setF({
       name: course?.name ?? "", code: course?.code ?? "", teacher: course?.teacher ?? "", semester: course?.semester ?? "",
       color: course?.color ?? "purple", icon: course?.icon ?? "book", aliases: course?.aliases.join(", ") ?? "",

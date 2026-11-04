@@ -67,7 +67,7 @@ function Dashboard() {
       {customizing && hidden.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
           <span className="text-muted-foreground">Add widget:</span>
-          {hidden.map((k) => <Button key={k} size="sm" variant="secondary" onClick={() => persist([...layout, k])}><Plus className="size-3.5" /> {WIDGETS[k].label}</Button>)}
+          {hidden.map((k) => <Button key={k} size="sm" variant="secondary" onClick={() => persist([...layout, k])}><Plus className="size-3.5" /> {WIDGETS[k]?.label}</Button>)}
         </div>
       )}
 
@@ -79,11 +79,11 @@ function Dashboard() {
             onDragStart={() => setDragKey(key)}
             onDragOver={(e) => customizing && e.preventDefault()}
             onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, i); setDragKey(null); }}
-            className={cn("relative rounded-2xl border border-border bg-card p-4 shadow-card", WIDGETS[key].wide && "md:col-span-2", customizing && "cursor-move ring-1 ring-primary/30", dragKey === key && "opacity-50")}
+            className={cn("relative rounded-2xl border border-border bg-card p-4 shadow-card", WIDGETS[key]?.wide && "md:col-span-2", customizing && "cursor-move ring-1 ring-primary/30", dragKey === key && "opacity-50")}
           >
             <div className="mb-2 flex items-center gap-2">
               {customizing && <GripVertical className="size-4 text-muted-foreground" />}
-              <h2 className="text-sm font-semibold">{WIDGETS[key].label}</h2>
+              <h2 className="text-sm font-semibold">{WIDGETS[key]?.label}</h2>
               {customizing && (
                 <div className="ml-auto flex gap-1">
                   <Button size="icon" variant="ghost" className="size-7" disabled={i === 0} onClick={() => moveTo(key, i - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>

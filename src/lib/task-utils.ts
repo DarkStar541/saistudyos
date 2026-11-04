@@ -14,7 +14,7 @@ export const isDone = (t: TaskLike) => t.status === "done";
 /** Planned dates are calendar days (no time). Parse as local date. */
 export function parsePlanned(d: string | null): Date | null {
   if (!d) return null;
-  const [y, m, day] = d.split("-").map(Number);
+  const [y = 1970, m = 1, day = 1] = d.split("-").map(Number);
   return new Date(y, m - 1, day);
 }
 

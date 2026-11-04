@@ -44,7 +44,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     if (task) {
       const d = task.due_at ? new Date(task.due_at) : null;
       setF({
