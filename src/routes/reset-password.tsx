@@ -18,7 +18,7 @@ function ResetPassword() {
       <form className="w-full max-w-sm space-y-3 rounded-2xl border border-border bg-card p-6 shadow-card" onSubmit={async (e) => {
         e.preventDefault();
         const { error } = await supabase.auth.updateUser({ password: pw });
-        if (error) return toast.error(error.message);
+        if (error) return void toast.error(error.message);
         toast.success("Password updated");
         navigate({ to: "/dashboard" });
       }}>

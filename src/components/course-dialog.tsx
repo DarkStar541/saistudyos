@@ -23,12 +23,14 @@ export function CourseDialog({ open, onOpenChange, course }: { open: boolean; on
       name: course?.name ?? "", code: course?.code ?? "", teacher: course?.teacher ?? "", semester: course?.semester ?? "",
       color: course?.color ?? "purple", icon: course?.icon ?? "book", aliases: course?.aliases.join(", ") ?? "",
     });
+    void 0;
     setSlots(((course?.schedule as Slot[] | undefined) ?? []).map((s) => ({ ...s })));
+    return undefined;
   }, [open, course]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!f.name.trim()) return toast.error("Course name is required");
+    if (!f.name.trim()) return void toast.error("Course name is required");
     await save.mutateAsync({
       id: course?.id, name: f.name.trim().slice(0, 120), code: f.code || null, teacher: f.teacher || null, semester: f.semester || null,
       color: f.color, icon: f.icon, aliases: f.aliases.split(",").map((a) => a.trim()).filter(Boolean).slice(0, 20), schedule: slots,

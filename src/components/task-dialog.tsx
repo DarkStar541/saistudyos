@@ -16,8 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 type Props = {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  task?: Task | null;
-  defaults?: Partial<Pick<Task, "course_id" | "project_id" | "planned_date" | "task_type">>;
+  task?: Task | null | undefined;
+  defaults?: undefined | Partial<Pick<Task, "course_id" | "project_id" | "planned_date" | "task_type">>;
 };
 
 const sel = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
@@ -60,6 +60,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
       setSubs([]);
     }
     setNewSub("");
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task?.id]);
 
@@ -68,7 +69,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!f.title.trim()) return toast.error("Give the task a title");
+    if (!f.title.trim()) return void toast.error("Give the task a title");
     if (f.due_date && f.planned_date && f.planned_date > f.due_date) toast.warning("Heads up: planned work date is after the deadline");
     setSaving(true);
     try {

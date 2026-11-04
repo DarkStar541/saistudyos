@@ -135,7 +135,7 @@ function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         <DialogHeader><DialogTitle>New project</DialogTitle></DialogHeader>
         <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
-          if (!f.name.trim()) return toast.error("Name your project");
+          if (!f.name.trim()) return void toast.error("Name your project");
           await save.mutateAsync({ name: f.name.trim(), description: f.description || null, course_id: f.course_id || null, due_at: f.due ? new Date(`${f.due}T23:59`).toISOString() : null });
           setF({ name: "", description: "", course_id: "", due: "" });
           onOpenChange(false);
