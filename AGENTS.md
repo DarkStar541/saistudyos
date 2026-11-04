@@ -8,3 +8,8 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Architecture
+- Data access goes through `src/lib/db.ts` (react-query + browser client); every user table has RLS scoped to `auth.uid() = user_id`, which is the security boundary.
+- Task date rules (due vs planned work date, overdue, workload) live as pure functions in `src/lib/task-utils.ts` with tests in `src/test/` — keep logic there so it stays testable.
+- Signed-in pages live under `src/routes/_authenticated/` and render inside `AppShell`.
