@@ -1,0 +1,106 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { GraduationCap } from "lucide-react";
+import { toast } from "sonner";
+import "@lovable.dev/cloud-auth-js/styles.css";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Sign in — StudyOS" },
+      { name: "description", content: "Sign in or create your private StudyOS workspace." },
+      { property: "og:title", content: "Sign in — StudyOS" },
+      { property: "og:description", content: "Sign in or create your private StudyOS workspace." },
+    ],
+  }),
+  component: AuthPage,
+});
+
+function AuthPage() {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => data.user && navigate({ to: "/dashboard", replace: true }));
+    const { data } = supabase.auth.onAuthStateChange((e, s) => { if (s && e === "SIGNED_IN") navigate({ to: "/dashboard", replace: true }); });
+    return () => data.subscription.unsubscribe();
+  }, [navigate]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/dashboard", data: { full_name: name } } });
+        if (error) throw error;
+        if (!data.session) setSent("Check your email to confirm your account, then sign in.");
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+        if (error) throw error;
+        setSent("If that email has an account, a reset link is on its way.");
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function oauth(p: "google" | "lovable") {
+    const r = await lovable.auth.signInWithOAuth(p, { redirect_uri: window.location.origin + "/auth" });
+    if (r.error) toast.error(r.error.message ?? "Sign-in failed");
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="mb-3 grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground"><GraduationCap className="size-6" /></span>
+          <h1 className="text-2xl font-bold">{mode === "signup" ? "Create your workspace" : mode === "forgot" ? "Reset password" : "Welcome back"}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Your courses and deadlines, all in one place.</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+          {sent ? (
+            <div className="space-y-4 text-center text-sm"><p>{sent}</p><Button variant="outline" onClick={() => { setSent(null); setMode("signin"); }}>Back to sign in</Button></div>
+          ) : (
+            <>
+              {mode !== "forgot" && (
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full" onClick={() => oauth("google")}>Continue with Google</Button>
+                  <button type="button" className="lovable-auth-button w-full" onClick={() => oauth("lovable")}>Continue with Lovable</button>
+                  <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
+                </div>
+              )}
+              <form onSubmit={submit} className="space-y-3">
+                {mode === "signup" && <div className="space-y-1"><Label htmlFor="name">Name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>}
+                <div className="space-y-1"><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                {mode !== "forgot" && <div className="space-y-1"><Label htmlFor="pw">Password</Label><Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>}
+                <Button type="submit" className="w-full" disabled={busy}>{mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}</Button>
+              </form>
+              <div className="mt-4 flex justify-between text-sm">
+                {mode === "signin" ? (
+                  <><button className="text-muted-foreground hover:text-foreground" onClick={() => setMode("forgot")}>Forgot password?</button><button className="font-medium text-primary" onClick={() => setMode("signup")}>Create account</button></>
+                ) : (
+                  <button className="font-medium text-primary" onClick={() => setMode("signin")}>Back to sign in</button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
