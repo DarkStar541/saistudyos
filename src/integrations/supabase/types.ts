@@ -68,6 +68,63 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_sessions: {
+        Row: {
+          completed: boolean
+          course_id: string | null
+          created_at: string
+          duration_seconds: number
+          ended_at: string | null
+          id: string
+          kind: string
+          planned_seconds: number
+          started_at: string
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          course_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          kind?: string
+          planned_seconds: number
+          started_at?: string
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          course_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          kind?: string
+          planned_seconds?: number
+          started_at?: string
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "focus_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestones: {
         Row: {
           created_at: string
@@ -117,8 +174,12 @@ export type Database = {
           default_priority: string
           default_task_view: string
           display_name: string | null
+          focus_minutes: number
           id: string
+          long_break_every: number
+          long_break_minutes: number
           school: string | null
+          short_break_minutes: number
           theme: string
           timezone: string
           updated_at: string
@@ -131,8 +192,12 @@ export type Database = {
           default_priority?: string
           default_task_view?: string
           display_name?: string | null
+          focus_minutes?: number
           id: string
+          long_break_every?: number
+          long_break_minutes?: number
           school?: string | null
+          short_break_minutes?: number
           theme?: string
           timezone?: string
           updated_at?: string
@@ -145,8 +210,12 @@ export type Database = {
           default_priority?: string
           default_task_view?: string
           display_name?: string | null
+          focus_minutes?: number
           id?: string
+          long_break_every?: number
+          long_break_minutes?: number
           school?: string | null
+          short_break_minutes?: number
           theme?: string
           timezone?: string
           updated_at?: string
@@ -250,6 +319,10 @@ export type Database = {
           priority: string
           project_id: string | null
           recurrence: string
+          recurrence_days: number[] | null
+          recurrence_end: string | null
+          recurrence_interval: number
+          recurrence_parent_id: string | null
           status: string
           tags: string[]
           task_type: string
@@ -270,6 +343,10 @@ export type Database = {
           priority?: string
           project_id?: string | null
           recurrence?: string
+          recurrence_days?: number[] | null
+          recurrence_end?: string | null
+          recurrence_interval?: number
+          recurrence_parent_id?: string | null
           status?: string
           tags?: string[]
           task_type?: string
@@ -290,6 +367,10 @@ export type Database = {
           priority?: string
           project_id?: string | null
           recurrence?: string
+          recurrence_days?: number[] | null
+          recurrence_end?: string | null
+          recurrence_interval?: number
+          recurrence_parent_id?: string | null
           status?: string
           tags?: string[]
           task_type?: string
