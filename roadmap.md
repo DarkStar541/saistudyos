@@ -1,10 +1,17 @@
-# StudyOS Stage 2 — UI, Performance & Feature Refinement
+# StudyOS Roadmap
 
-- [ ] DB migration: recurrence fields on tasks, focus_sessions table, focus settings on profiles
-- [ ] Perf: query staleTimes, fewer refetches
-- [ ] UI: replace native selects/date inputs with polished components (Select, DatePicker, Checkbox)
-- [ ] Visual design polish + verified dark mode
-- [ ] Recurring tasks: weekdays, selected days, intervals, end dates, skip, edit one vs series
-- [ ] Pomodoro/focus: global timer, focus mode page, session tracking, start from task
+## Day 1 — Global performance (done)
+- [x] Baseline measurements via Playwright (nav, cold load, dialog, toggle)
+- [x] Route guard + profile query: local session read instead of auth-server round trip
+- [x] QueryClient defaults: no refetch-on-focus, retry 1, 30s staleTime
+- [x] Route preloading on hover/intent
+- [x] Optimistic updates with rollback: task toggle, delete, row edits
+- [x] Course detail: drop refetch after last-accessed tracking
+- [x] After-measurements + report
+
+## Stage 2 — remaining (paused)
+- [ ] Focus mode page + nav entry, focus button on tasks, focus settings in Settings
 - [ ] Insights page: productivity, workload, focus charts + heatmap, period selector
-- [ ] Tests for recurrence logic; verify build + key flows
+- [ ] Remaining native dropdowns in Settings/Tasks/Courses → styled components
+- [ ] Dark mode + responsive verification
+- [ ] Recurrence engine tests (src/lib/recurrence.ts)
