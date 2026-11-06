@@ -149,7 +149,7 @@ export function nextInstancePatch(t: Task, now = new Date()): { due_at: string |
   };
 }
 
-/** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). */
+/** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). Optimistic: the checkbox flips instantly and rolls back on failure. */
 export function useToggleTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -169,8 +169,20 @@ export function useToggleTask() {
         unwrap(await supabase.from("tasks").insert({ ...rest, status: "todo", ...patch, recurrence_parent_id: sid }));
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onMutate: async (t) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const previous = qc.getQueryData<Task[]>(["tasks"]);
+      const done = t.status !== "done";
+      qc.setQueryData<Task[]>(["tasks"], (old) =>
+        old?.map((r) => (r.id === t.id ? { ...r, status: done ? "done" : "todo", completed_at: done ? new Date().toISOString() : null } : r)),
+      );
+      return { previous };
+    },
+    onError: (e: Error, _t, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["tasks"], ctx.previous);
+      toast.error(e.message);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
 
