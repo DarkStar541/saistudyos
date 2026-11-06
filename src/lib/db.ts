@@ -28,9 +28,10 @@ export const profileQuery = queryOptions({
   queryKey: ["profile"],
   staleTime: STALE,
   queryFn: async () => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return null;
-    return unwrap(await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle()) as Profile | null;
+    // Local session read — avoids an auth-server round trip before every profile fetch.
+    const { data: s } = await supabase.auth.getSession();
+    if (!s.session?.user) return null;
+    return unwrap(await supabase.from("profiles").select("*").eq("id", s.session.user.id).maybeSingle()) as Profile | null;
   },
 });
 export const coursesQuery = queryOptions({
@@ -74,25 +75,51 @@ export const useFocusSessions = () => useQuery(focusSessionsQuery);
 
 type TableName = "courses" | "projects" | "milestones" | "tasks" | "subtasks" | "profiles" | "focus_sessions";
 
+const keyOf = (table: TableName) => [table === "profiles" ? "profile" : table];
+
 /** Generic upsert/delete mutation for a user-owned table. RLS enforces ownership server-side. */
 export function useSave(table: TableName) {
   const qc = useQueryClient();
+  const key = keyOf(table);
   return useMutation({
     mutationFn: async (row: Record<string, unknown>) => {
       const { id, ...rest } = row;
       if (id) return unwrap(await supabase.from(table).update(rest as never).eq("id", id as string).select().single());
       return unwrap(await supabase.from(table).insert(rest as never).select().single());
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: [table === "profiles" ? "profile" : table] }),
-    onError: (e: Error) => toast.error(e.message),
+    // Optimistic update for existing rows so edits feel instant; inserts wait for the server id.
+    onMutate: async (row) => {
+      if (!row["id"]) return undefined;
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<Record<string, unknown>[]>(key);
+      qc.setQueryData<Record<string, unknown>[]>(key, (old) =>
+        old?.map((r) => (r["id"] === row["id"] ? { ...r, ...row } : r)),
+      );
+      return { previous };
+    },
+    onError: (e: Error, _row, ctx) => {
+      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+      toast.error(e.message);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
   });
 }
 export function useRemove(table: TableName) {
   const qc = useQueryClient();
+  const key = keyOf(table);
   return useMutation({
     mutationFn: async (id: string) => unwrap(await supabase.from(table).delete().eq("id", id)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [table] }),
-    onError: (e: Error) => toast.error(e.message),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<Record<string, unknown>[]>(key);
+      qc.setQueryData<Record<string, unknown>[]>(key, (old) => old?.filter((r) => r["id"] !== id));
+      return { previous };
+    },
+    onError: (e: Error, _id, ctx) => {
+      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+      toast.error(e.message);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
   });
 }
 
@@ -122,7 +149,7 @@ export function nextInstancePatch(t: Task, now = new Date()): { due_at: string |
   };
 }
 
-/** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). */
+/** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). Optimistic: the checkbox flips instantly and rolls back on failure. */
 export function useToggleTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -142,8 +169,20 @@ export function useToggleTask() {
         unwrap(await supabase.from("tasks").insert({ ...rest, status: "todo", ...patch, recurrence_parent_id: sid }));
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onMutate: async (t) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const previous = qc.getQueryData<Task[]>(["tasks"]);
+      const done = t.status !== "done";
+      qc.setQueryData<Task[]>(["tasks"], (old) =>
+        old?.map((r) => (r.id === t.id ? { ...r, status: done ? "done" : "todo", completed_at: done ? new Date().toISOString() : null } : r)),
+      );
+      return { previous };
+    },
+    onError: (e: Error, _t, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["tasks"], ctx.previous);
+      toast.error(e.message);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
 

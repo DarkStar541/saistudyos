@@ -69,10 +69,10 @@ async function recordSession(completed: boolean) {
   if (state.phase !== "focus" || !state.sessionStartedAt || !state.startedAt) return;
   const durationSec = Math.min(state.totalSec, Math.floor((Date.now() - state.startedAt) / 1000));
   if (durationSec < 30) return; // ignore accidental taps
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return;
+  const { data: s } = await supabase.auth.getSession();
+  if (!s.session?.user) return;
   await supabase.from("focus_sessions").insert({
-    user_id: u.user.id,
+    user_id: s.session.user.id,
     task_id: state.taskId,
     course_id: state.courseId,
     kind: "focus",
