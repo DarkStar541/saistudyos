@@ -89,11 +89,11 @@ export function useSave(table: TableName) {
     },
     // Optimistic update for existing rows so edits feel instant; inserts wait for the server id.
     onMutate: async (row) => {
-      if (!row.id) return undefined;
+      if (!row["id"]) return undefined;
       await qc.cancelQueries({ queryKey: key });
       const previous = qc.getQueryData<Record<string, unknown>[]>(key);
       qc.setQueryData<Record<string, unknown>[]>(key, (old) =>
-        old?.map((r) => (r.id === row.id ? { ...r, ...row } : r)),
+        old?.map((r) => (r["id"] === row["id"] ? { ...r, ...row } : r)),
       );
       return { previous };
     },
@@ -112,7 +112,7 @@ export function useRemove(table: TableName) {
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: key });
       const previous = qc.getQueryData<Record<string, unknown>[]>(key);
-      qc.setQueryData<Record<string, unknown>[]>(key, (old) => old?.filter((r) => r.id !== id));
+      qc.setQueryData<Record<string, unknown>[]>(key, (old) => old?.filter((r) => r["id"] !== id));
       return { previous };
     },
     onError: (e: Error, _id, ctx) => {
