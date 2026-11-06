@@ -37,7 +37,8 @@ function CoursePage() {
   // Track "recently accessed" for the dashboard widget.
   useEffect(() => {
     if (!course) return;
-    supabase.from("courses").update({ last_accessed_at: new Date().toISOString() }).eq("id", course.id).then(() => qc.invalidateQueries({ queryKey: ["courses"] }));
+    // Fire-and-forget; no invalidation — the dashboard re-sorts on its next fresh fetch.
+    void supabase.from("courses").update({ last_accessed_at: new Date().toISOString() }).eq("id", course.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course?.id]);
 
