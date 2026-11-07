@@ -9,6 +9,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "A private workspace for students: courses, assignments, exams and projects with separate deadlines and work dates." },
       { property: "og:title", content: "StudyOS — The student operating system" },
       { property: "og:description", content: "Courses, assignments, exams and projects in one calm, customizable workspace." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Landing,

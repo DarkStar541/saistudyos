@@ -1,5 +1,10 @@
 # StudyOS Roadmap
 
+## Dual-date diagnosis and fix
+- [ ] Diagnose calendar banners, deadline indicators, daily counts and actual recurring settings
+- [ ] Fix shared date representation and recurring date calculation without changing existing data
+- [ ] Test MathXL, Catapult Design and edge cases; verify signed-in calendar/dashboard
+
 ## Day 1 — Global performance (done)
 - [x] Baseline measurements via Playwright (nav, cold load, dialog, toggle)
 - [x] Route guard + profile query: local session read instead of auth-server round trip

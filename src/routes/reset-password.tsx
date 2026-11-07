@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Set a new password — StudyOS" }, { name: "description", content: "Choose a new StudyOS password." }] }),
+  head: () => ({ meta: [{ title: "Set a new password — StudyOS" }, { name: "description", content: "Choose a new StudyOS password." }, { property: "og:title", content: "Set a new password — StudyOS" }, { property: "og:description", content: "Choose a new StudyOS password." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ResetPassword,
 });
 

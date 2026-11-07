@@ -2,8 +2,7 @@ import { useMutation, useQuery, useQueryClient, queryOptions } from "@tanstack/r
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
-import { nextPendingOccurrence, type RecurrenceRule } from "./recurrence";
-import { parsePlanned, toDateKey } from "./task-utils";
+import { nextInstanceDates } from "./recurrence";
 
 type T = Database["public"]["Tables"];
 export type Profile = T["profiles"]["Row"];
@@ -126,27 +125,12 @@ export function useRemove(table: TableName) {
 /** The series root id for a recurring task (the task itself when it is the root). */
 export const seriesIdOf = (t: Task) => t.recurrence_parent_id ?? t.id;
 
-const ruleOf = (t: Task): RecurrenceRule => ({
-  recurrence: t.recurrence,
-  recurrence_interval: t.recurrence_interval,
-  recurrence_days: t.recurrence_days,
-  recurrence_end: t.recurrence_end,
-});
-
 /**
  * Compute the next occurrence of a recurring task. Returns null when the rule
  * has ended. Missed slots are skipped so the next instance lands today or later.
  */
 export function nextInstancePatch(t: Task, now = new Date()): { due_at: string | null; planned_date: string | null } | null {
-  const rule = ruleOf(t);
-  const anchor = parsePlanned(t.planned_date) ?? (t.due_at ? new Date(t.due_at) : null);
-  if (!anchor) return null;
-  const next = nextPendingOccurrence(rule, anchor, now);
-  if (!next) return null;
-  return {
-    due_at: t.due_at ? (() => { const d = new Date(next); const old = new Date(t.due_at); d.setHours(old.getHours(), old.getMinutes(), 0, 0); return d.toISOString(); })() : null,
-    planned_date: t.planned_date ? toDateKey(next) : null,
-  };
+  return nextInstanceDates(t, now);
 }
 
 /** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). Optimistic: the checkbox flips instantly and rolls back on failure. */

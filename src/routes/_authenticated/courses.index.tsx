@@ -7,7 +7,7 @@ import { CourseIcon } from "@/components/course-icon";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/courses/")({
-  head: () => ({ meta: [{ title: "Courses — StudyOS" }, { name: "description", content: "Manage your classes, schedules and teachers." }] }),
+  head: () => ({ meta: [{ title: "Courses — StudyOS" }, { name: "description", content: "Manage your classes, schedules and teachers." }, { property: "og:title", content: "Courses — StudyOS" }, { property: "og:description", content: "Manage your classes, schedules and teachers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: CoursesPage,
 });
 

@@ -1,5 +1,6 @@
 // Recurrence engine for repeating tasks. Pure functions, tested in src/test/recurrence.test.ts.
-import { addDays, addMonths, addYears, startOfDay } from "date-fns";
+import { addDays, addMonths, addYears, differenceInCalendarDays, startOfDay } from "date-fns";
+import { parsePlanned, toDateKey, type TaskLike } from "./task-utils";
 
 export type RecurrenceRule = {
   recurrence: string;
@@ -63,7 +64,7 @@ export function nextOccurrenceDate(rule: RecurrenceRule, from: Date): Date | nul
     default:
       return null;
   }
-  if (rule.recurrence_end && next > startOfDay(new Date(`${rule.recurrence_end}T23:59:59`))) return null;
+  if (rule.recurrence_end && toDateKey(next) > rule.recurrence_end) return null;
   return next;
 }
 
@@ -78,6 +79,20 @@ export function nextPendingOccurrence(rule: RecurrenceRule, scheduled: Date, now
     next = nextOccurrenceDate(rule, next);
   }
   return next;
+}
+
+/** Shift both dates by the same calendar-day distance, preserving their gap and due time. */
+export function nextInstanceDates(task: TaskLike & RecurrenceRule, now = new Date()) {
+  const due = task.due_at ? new Date(task.due_at) : null;
+  const anchor = parsePlanned(task.planned_date) ?? due;
+  if (!anchor) return null;
+  const next = nextPendingOccurrence(task, anchor, now);
+  if (!next) return null;
+  const shift = differenceInCalendarDays(next, anchor);
+  return {
+    due_at: due ? addDays(due, shift).toISOString() : null,
+    planned_date: task.planned_date ? toDateKey(next) : null,
+  };
 }
 
 /** Human-readable summary, e.g. "Every 2 weeks on Mon, Wed until Jun 1". */
