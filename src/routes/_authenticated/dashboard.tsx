@@ -4,7 +4,8 @@ import { addDays, format, isSameDay, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { isForToday, isOverdue, isUpcoming, toDateKey, weeklyWorkload, workDay } from "@/lib/task-utils";
+import { calendarDays, isForToday, isOverdue, isUpcoming, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { CalendarTask } from "@/components/calendar-task";
 import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
 import { CourseIcon } from "@/components/course-icon";
@@ -180,21 +181,18 @@ function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
 
 function WeekStrip({ tasks, courseMap, onOpen }: Ctx) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i));
+  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"));
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
-        const items = tasks.filter((t) => t.status !== "done" && (() => { const w = workDay(t); return w && isSameDay(w, d); })());
-        const deadlines = tasks.filter((t) => t.status !== "done" && t.due_at && isSameDay(new Date(t.due_at), d));
+        const entry = byDay.get(toDateKey(d));
         return (
           <div key={d.toISOString()} className="min-h-24 rounded-xl bg-muted/50 p-2">
             <p className={cn("text-xs font-medium", isSameDay(d, new Date()) && "text-primary")}>{format(d, "EEE d")}</p>
-            {!!deadlines.length && <p className="text-[10px] font-semibold text-destructive">{deadlines.length} due</p>}
+            {!!entry?.dueCount && <p className="text-[10px] font-semibold text-destructive">{entry.dueCount} due</p>}
             <div className="mt-1 space-y-0.5">
-              {items.slice(0, 3).map((t) => {
-                const c = t.course_id ? courseMap.get(t.course_id) : undefined;
-                return <button key={t.id} onClick={() => onOpen(t)} className="block w-full truncate rounded px-1 text-left text-xs" style={{ background: `color-mix(in oklab, ${c ? colorVar(c.color) : "var(--primary)"} 18%, transparent)` }}>{t.title}</button>;
-              })}
-              {items.length > 3 && <p className="text-[10px] text-muted-foreground">+{items.length - 3}</p>}
+              {entry?.work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} onOpen={onOpen} />)}
+              {entry?.deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
             </div>
           </div>
         );

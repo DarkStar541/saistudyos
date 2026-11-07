@@ -20,6 +20,28 @@ export function parsePlanned(d: string | null): Date | null {
 
 export const toDateKey = (d: Date) => format(d, "yyyy-MM-dd");
 
+/** Independent calendar channels: a deadline is never a work-session banner. */
+export function calendarDays<T extends TaskLike>(tasks: T[]) {
+  const days = new Map<string, { work: T[]; deadlines: T[]; dueCount: number }>();
+  const day = (key: string) => {
+    let entry = days.get(key);
+    if (!entry) {
+      entry = { work: [], deadlines: [], dueCount: 0 };
+      days.set(key, entry);
+    }
+    return entry;
+  };
+  for (const task of tasks) {
+    if (task.planned_date) day(task.planned_date).work.push(task);
+    if (task.due_at) {
+      const entry = day(toDateKey(new Date(task.due_at)));
+      entry.deadlines.push(task);
+      if (!isDone(task)) entry.dueCount++;
+    }
+  }
+  return days;
+}
+
 export function isOverdue(t: TaskLike, now = new Date()) {
   return !isDone(t) && !!t.due_at && isBefore(new Date(t.due_at), now);
 }

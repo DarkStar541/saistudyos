@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { colorVar, type Course, type Task } from "@/lib/db";
-import { STATUSES, STATUS_LABEL, isOverdue, toDateKey } from "@/lib/task-utils";
+import { STATUSES, STATUS_LABEL, calendarDays, isOverdue, toDateKey } from "@/lib/task-utils";
+import { CalendarTask } from "@/components/calendar-task";
 import { Button } from "@/components/ui/button";
 import { TaskRow, PRIORITY_CLASS } from "@/components/task-row";
 import { cn } from "@/lib/utils";
@@ -128,15 +129,7 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
     return out;
   }, [month, weekStartsOn]);
 
-  const byDay = useMemo(() => {
-    const m = new Map<string, Task[]>();
-    for (const t of tasks) {
-      const key = mode === "due" ? (t.due_at ? toDateKey(new Date(t.due_at)) : null) : t.planned_date ?? (t.due_at ? toDateKey(new Date(t.due_at)) : null);
-      if (!key) continue;
-      (m.get(key) ?? m.set(key, []).get(key)!).push(t);
-    }
-    return m;
-  }, [tasks, mode]);
+  const byDay = useMemo(() => calendarDays(tasks), [tasks]);
 
   const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
 
@@ -146,9 +139,9 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
         <h3 className="text-lg font-semibold">{format(month, "MMMM yyyy")}</h3>
         <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-0.5 text-xs">
           {(["planned", "due"] as const).map((m) => (
-            <button key={m} onClick={() => setMode(m)} className={cn("rounded-md px-2.5 py-1", mode === m && "bg-card shadow-sm")}>
-              {m === "planned" ? "Work dates" : "Deadlines"}
-            </button>
+            <Button key={m} size="sm" variant="ghost" onClick={() => setMode(m)} aria-pressed={mode === m} className={cn("h-6 rounded-md px-2.5 py-1", mode === m && "bg-card shadow-sm")}>
+              {m === "planned" ? "Work & deadlines" : "Deadlines"}
+            </Button>
           ))}
         </div>
         <Button size="icon" variant="ghost" onClick={() => setMonth((m) => addMonths(m, -1))} aria-label="Previous month"><ChevronLeft className="size-4" /></Button>
@@ -160,32 +153,24 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
         {labels.map((l) => <div key={l} className="bg-muted px-2 py-1.5 font-medium text-muted-foreground">{l}</div>)}
         {days.map((d) => {
           const key = toDateKey(d);
-          const items = byDay.get(key) ?? [];
+          const entry = byDay.get(key);
+          const work = mode === "planned" ? entry?.work ?? [] : [];
+          const deadlines = entry?.deadlines ?? [];
           return (
             <div
               key={key}
               onDragOver={(e) => mode === "planned" && e.preventDefault()}
-              onDrop={(e) => { const id = e.dataTransfer.getData("text/task"); if (id) move(id, { planned_date: key }); }}
+              onDrop={(e) => { e.preventDefault(); if (mode !== "planned") return; const id = e.dataTransfer.getData("text/task"); if (id) move(id, { planned_date: key }); }}
+              aria-label={key}
               className={cn("min-h-20 bg-card p-1 md:min-h-28", !isSameMonth(d, month) && "bg-muted/40 text-muted-foreground")}
             >
-              <div className={cn("mb-1 grid size-6 place-items-center rounded-full", isToday(d) && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</div>
+              <div className="mb-1 flex flex-wrap items-center gap-1">
+                <span className={cn("grid size-6 place-items-center rounded-full", isToday(d) && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</span>
+                {!!entry?.dueCount && <span className="text-[10px] font-semibold text-destructive">{entry.dueCount} due</span>}
+              </div>
               <div className="space-y-0.5">
-                {items.slice(0, 4).map((t) => {
-                  const c = t.course_id ? courses.get(t.course_id) : undefined;
-                  return (
-                    <button
-                      key={t.id}
-                      draggable={mode === "planned"}
-                      onDragStart={(e) => e.dataTransfer.setData("text/task", t.id)}
-                      onClick={() => onOpen(t)}
-                      className={cn("block w-full truncate rounded px-1 py-0.5 text-left", t.status === "done" && "line-through opacity-50", t.task_type === "exam" && "font-semibold")}
-                      style={{ background: `color-mix(in oklab, ${c ? colorVar(c.color) : "var(--primary)"} 18%, transparent)` }}
-                    >
-                      {t.title}
-                    </button>
-                  );
-                })}
-                {items.length > 4 && <p className="px-1 text-muted-foreground">+{items.length - 4} more</p>}
+                {work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} draggable onOpen={onOpen} />)}
+                {deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
               </div>
             </div>
           );
