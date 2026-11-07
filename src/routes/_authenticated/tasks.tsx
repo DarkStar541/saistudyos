@@ -39,9 +39,9 @@ function TasksPage() {
         <h1 className="mr-auto text-3xl font-bold">Tasks</h1>
         <div className="flex rounded-lg bg-muted p-0.5">
           {VIEWS.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setView(id)} className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm", view === id ? "bg-card font-medium shadow-sm" : "text-muted-foreground")}>
+            <Button key={id} variant="ghost" aria-label={label} aria-pressed={view === id} onClick={() => setView(id)} className={cn("h-auto items-center gap-1.5 rounded-md px-3 py-1.5 text-sm", view === id ? "bg-card font-medium shadow-sm" : "text-muted-foreground")}>
               <Icon className="size-4" /> <span className="hidden sm:inline">{label}</span>
-            </button>
+            </Button>
           ))}
         </div>
         <Button onClick={() => setCreating(true)}><Plus className="size-4" /> New</Button>
