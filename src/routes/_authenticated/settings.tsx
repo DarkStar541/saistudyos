@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — StudyOS" }, { name: "description", content: "Profile, theme and task defaults." }] }),
+  head: () => ({ meta: [{ title: "Settings — StudyOS" }, { name: "description", content: "Profile, theme and task defaults." }, { property: "og:title", content: "Settings — StudyOS" }, { property: "og:description", content: "Profile, theme and task defaults." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: SettingsPage,
 });
 

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({
-  head: () => ({ meta: [{ title: "Course — StudyOS" }, { name: "description", content: "Course details, assignments, exams and notes." }] }),
+  head: () => ({ meta: [{ title: "Course — StudyOS" }, { name: "description", content: "Course details, assignments, exams and notes." }, { property: "og:title", content: "Course — StudyOS" }, { property: "og:description", content: "Course details, assignments, exams and notes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: CoursePage,
 });
 

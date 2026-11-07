@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/projects")({
-  head: () => ({ meta: [{ title: "Projects — StudyOS" }, { name: "description", content: "Break big work into milestones and tasks." }] }),
+  head: () => ({ meta: [{ title: "Projects — StudyOS" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — StudyOS" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ProjectsPage,
 });
 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
-  head: () => ({ meta: [{ title: "Tasks — StudyOS" }, { name: "description", content: "All your tasks in list, board and calendar views." }] }),
+  head: () => ({ meta: [{ title: "Tasks — StudyOS" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — StudyOS" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TasksPage,
 });
 
