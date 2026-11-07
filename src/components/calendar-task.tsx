@@ -4,7 +4,7 @@ import { colorVar, type Course, type Task } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 export function CalendarTask({ task, course, deadline = false, draggable = false, onOpen }: {
-  task: Task; course?: Course; deadline?: boolean; draggable?: boolean; onOpen: (t: Task) => void;
+  task: Task; course?: Course | undefined; deadline?: boolean; draggable?: boolean; onOpen: (t: Task) => void;
 }) {
   return (
     <Button
