@@ -42,7 +42,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
     task_type: defaults?.task_type ?? "assignment", status: "todo", priority: profile?.default_priority ?? "medium",
     due_date: "", due_time: "23:59", planned_date: defaults?.planned_date ?? "",
     estimated_minutes: String(profile?.default_duration_minutes ?? 60), tags: "",
-    recurrence: "none", recurrence_interval: "1", recurrence_days: [] as number[], recurrence_end: "",
+    recurrence: "none", recurrence_interval: "1", recurrence_days: [] as number[], recurrence_end: "", separate_end: false,
   });
   const [f, setF] = useState(blank);
   const [subs, setSubs] = useState<{ id?: string; title: string; done: boolean }[]>([]);
@@ -61,7 +61,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
         planned_date: task.planned_date ?? "", estimated_minutes: task.estimated_minutes?.toString() ?? "",
         tags: task.tags.join(", "), recurrence: task.recurrence,
         recurrence_interval: String(task.recurrence_interval ?? 1), recurrence_days: task.recurrence_days ?? [],
-        recurrence_end: task.recurrence_end ?? "",
+        recurrence_end: task.recurrence_end ?? "", separate_end: !!(task.recurrence_end && task.due_at),
       });
       setSubs(allSubs.filter((s) => s.task_id === task.id).map((s) => ({ id: s.id, title: s.title, done: s.done })));
     } else {
@@ -75,12 +75,16 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
   }, [open, task?.id]);
 
   const projectMilestones = useMemo(() => milestones.filter((m) => m.project_id === f.project_id), [milestones, f.project_id]);
-  const patch = (k: keyof typeof f, v: string | number[]) => setF((p) => ({ ...p, [k]: v }));
+  const patch = (k: keyof typeof f, v: string | number[] | boolean) => setF((p) => ({ ...p, [k]: v }));
   const isRecurring = f.recurrence !== "none";
+  // With a deadline the series ends there unless a separate end is chosen; without one, "Repeat until" is required.
+  const showRepeatUntil = isRecurring && (!f.due_date || f.separate_end);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!f.title.trim()) return void toast.error("Give the task a title");
+    if (isRecurring && showRepeatUntil && !f.recurrence_end) return void toast.error(f.due_date ? "Pick a repeat end date, or turn off the separate end date" : "Repeating tasks without a deadline need a Repeat until date");
+    if (isRecurring && f.recurrence_end && f.planned_date && f.recurrence_end < f.planned_date) return void toast.error("Repeat until can't be before the work date");
     if (f.due_date && f.planned_date && f.planned_date > f.due_date) toast.warning("Heads up: planned work date is after the deadline");
     setSaving(true);
     try {
@@ -89,13 +93,13 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
         project_id: f.project_id || null, milestone_id: f.project_id && f.milestone_id ? f.milestone_id : null,
         task_type: f.task_type, status: f.status, priority: f.priority,
         due_at: f.due_date ? new Date(`${f.due_date}T${f.due_time || "23:59"}`).toISOString() : null,
-        planned_date: f.planned_date || null,
+        planned_date: f.planned_date || (isRecurring ? format(new Date(), "yyyy-MM-dd") : null),
         estimated_minutes: f.estimated_minutes ? Math.max(0, Math.min(10000, parseInt(f.estimated_minutes) || 0)) : null,
         tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 20),
         recurrence: f.recurrence,
         recurrence_interval: Math.max(1, Math.min(365, parseInt(f.recurrence_interval) || 1)),
         recurrence_days: f.recurrence === "weekly" && f.recurrence_days.length ? f.recurrence_days : null,
-        recurrence_end: isRecurring && f.recurrence_end ? f.recurrence_end : null,
+        recurrence_end: showRepeatUntil && f.recurrence_end ? f.recurrence_end : null,
         completed_at: f.status === "done" ? task?.completed_at ?? new Date().toISOString() : null,
       };
       const res = task
@@ -214,9 +218,9 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
                   <Input type="number" min={1} max={365} value={f.recurrence_interval} onChange={(e) => patch("recurrence_interval", e.target.value)} />
                 </Field>
               )}
-              {isRecurring && (
-                <Field label="Ends">
-                  <DatePicker value={f.recurrence_end} onChange={(v) => patch("recurrence_end", v)} placeholder="No end date" />
+              {showRepeatUntil && (
+                <Field label="Repeat until">
+                  <DatePicker value={f.recurrence_end} onChange={(v) => patch("recurrence_end", v)} placeholder="Pick an end date" />
                 </Field>
               )}
             </div>
@@ -240,10 +244,19 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
                 </div>
               </div>
             )}
+            {isRecurring && f.due_date && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Checkbox checked={f.separate_end} onCheckedChange={(v) => patch("separate_end", !!v)} />
+                Set a separate repeat end date
+              </label>
+            )}
             {isRecurring && (
               <p className="text-xs text-muted-foreground">
-                {describeRecurrence({ recurrence: f.recurrence, recurrence_interval: parseInt(f.recurrence_interval) || 1, recurrence_days: f.recurrence_days, recurrence_end: f.recurrence_end || null })}
-                {" "}— completing it creates the next one automatically.
+                {describeRecurrence({ recurrence: f.recurrence, recurrence_interval: parseInt(f.recurrence_interval) || 1, recurrence_days: f.recurrence_days, recurrence_end: showRepeatUntil ? f.recurrence_end || null : f.due_date || null })}
+                {" "}— completing it creates the next work session automatically.
+                {f.due_date && !f.separate_end && " Repeats stop at the deadline."}
+                {f.due_date && f.separate_end && " The deadline stays the real due date."}
+                {!f.due_date && " No deadline — nothing will show as due."}
               </p>
             )}
             {task && task.recurrence !== "none" && (

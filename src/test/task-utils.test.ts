@@ -36,7 +36,7 @@ describe("independent calendar dates", () => {
     expect(isUpcoming(task, 7, now)).toBe(true);
   });
   it("represents every task sharing a deadline, not just four", () => {
-    const tasks = Array.from({ length: 6 }, (_, id) => ({ id, status: "todo", due_at: due, planned_date: "2026-11-05" }));
+    const tasks = Array.from({ length: 6 }, (_, id) => ({ id: String(id), status: "todo", due_at: due, planned_date: "2026-11-05" }));
     const day = calendarDays(tasks).get("2026-11-06");
     expect(day?.deadlines).toHaveLength(6);
     expect(day?.dueCount).toBe(6);
