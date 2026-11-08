@@ -1,5 +1,5 @@
 // Recurrence engine for repeating tasks. Pure functions, tested in src/test/recurrence.test.ts.
-import { addDays, addMonths, addYears, differenceInCalendarDays, startOfDay } from "date-fns";
+import { addDays, addMonths, addYears, startOfDay } from "date-fns";
 import { parsePlanned, toDateKey, type TaskLike } from "./task-utils";
 
 export type RecurrenceRule = {
@@ -81,18 +81,22 @@ export function nextPendingOccurrence(rule: RecurrenceRule, scheduled: Date, now
   return next;
 }
 
-/** Shift both dates by the same calendar-day distance, preserving their gap and due time. */
+/**
+ * The day a series stops: an explicit "repeat until" date wins; otherwise the
+ * deadline ends the series. The deadline itself never moves.
+ */
+export function effectiveRecurrenceEnd(task: { due_at: string | null; recurrence_end?: string | null }): string | null {
+  if (task.recurrence_end) return task.recurrence_end;
+  return task.due_at ? toDateKey(new Date(task.due_at)) : null;
+}
+
+/** Next work occurrence of a series; the deadline stays fixed (one deadline per series). */
 export function nextInstanceDates(task: TaskLike & RecurrenceRule, now = new Date()) {
-  const due = task.due_at ? new Date(task.due_at) : null;
-  const anchor = parsePlanned(task.planned_date) ?? due;
-  if (!anchor) return null;
-  const next = nextPendingOccurrence(task, anchor, now);
+  const anchor = parsePlanned(task.planned_date);
+  if (!anchor) return null; // work occurrences need a work date to start from
+  const next = nextPendingOccurrence({ ...task, recurrence_end: effectiveRecurrenceEnd(task) }, anchor, now);
   if (!next) return null;
-  const shift = differenceInCalendarDays(next, anchor);
-  return {
-    due_at: due ? addDays(due, shift).toISOString() : null,
-    planned_date: task.planned_date ? toDateKey(next) : null,
-  };
+  return { due_at: task.due_at, planned_date: toDateKey(next) };
 }
 
 /** Human-readable summary, e.g. "Every 2 weeks on Mon, Wed until Jun 1". */

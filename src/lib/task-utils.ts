@@ -7,6 +7,8 @@ export type TaskLike = {
   planned_date: string | null;
   estimated_minutes?: number | null;
   task_type?: string;
+  id?: string;
+  recurrence_parent_id?: string | null;
 };
 
 export const isDone = (t: TaskLike) => t.status === "done";
@@ -31,10 +33,25 @@ export function calendarDays<T extends TaskLike>(tasks: T[]) {
     }
     return entry;
   };
+  // A recurring series shares one deadline: show it once per series, preferring the open instance.
+  const seen = new Map<string, T>();
   for (const task of tasks) {
     if (task.planned_date) day(task.planned_date).work.push(task);
     if (task.due_at) {
-      const entry = day(toDateKey(new Date(task.due_at)));
+      const dayKey = toDateKey(new Date(task.due_at));
+      const entry = day(dayKey);
+      const sid = task.recurrence_parent_id ?? task.id;
+      const seriesKey = sid ? `${sid}|${task.due_at}` : null;
+      const prior = seriesKey ? seen.get(seriesKey) : undefined;
+      if (prior) {
+        if (isDone(prior) && !isDone(task)) {
+          entry.deadlines[entry.deadlines.indexOf(prior)] = task;
+          entry.dueCount++;
+          seen.set(seriesKey!, task);
+        }
+        continue;
+      }
+      if (seriesKey) seen.set(seriesKey, task);
       entry.deadlines.push(task);
       if (!isDone(task)) entry.dueCount++;
     }
