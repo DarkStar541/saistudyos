@@ -56,7 +56,7 @@ function Dashboard() {
   const plannedToday = tasks.filter((t) => isForToday(t)).length;
   const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
   const overdueCount = tasks.filter((t) => isOverdue(t)).length;
-  const stats: { value: number; label: string; tone?: "danger" }[] = [
+  const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
     { value: plannedToday, label: "planned today" },
     { value: dueThisWeek, label: "due this week" },
     { value: overdueCount, label: "overdue", tone: overdueCount ? "danger" : undefined },
