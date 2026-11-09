@@ -14,6 +14,12 @@
 - [x] Course detail: drop refetch after last-accessed tracking
 - [x] After-measurements + report
 
+## Visual Transformation Phase 1 — design foundation + dashboard (in progress)
+- [ ] Design tokens: editorial palette (warm paper light / ink-plum dark), serif display type, refined shadows
+- [ ] App shell: sidebar, mobile nav, page wash
+- [ ] Dashboard: editorial masthead with stats, widget chrome, week strip, workload chart
+- [ ] Verify: light/dark, desktop/mobile, tests, build
+
 ## Stage 2 — remaining (paused)
 - [ ] Focus mode page + nav entry, focus button on tasks, focus settings in Settings
 - [ ] Insights page: productivity, workload, focus charts + heatmap, period selector
