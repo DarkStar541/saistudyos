@@ -21,7 +21,7 @@ export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?
   const overdue = isOverdue(task);
   const planned = parsePlanned(task.planned_date);
   return (
-    <div className={cn("group flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60", done && "opacity-55")}>
+    <div className={cn("group flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent/50", done && "opacity-55")}>
       <Checkbox className="mt-0.5 rounded-full" checked={done} onCheckedChange={() => toggle.mutate(task)} aria-label={`Complete ${task.title}`} />
       <button onClick={() => onOpen(task)} className="min-w-0 flex-1 text-left">
         <p className={cn("truncate text-sm font-medium", done && "line-through")}>{task.title}</p>

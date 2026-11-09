@@ -24,7 +24,7 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
   overdue: { label: "Overdue" },
   upcoming: { label: "Upcoming assignments" },
   exams: { label: "Upcoming exams" },
-  calendar: { label: "This week" , wide: true },
+  calendar: { label: "This week", wide: true },
   workload: { label: "Weekly workload" },
   courses: { label: "Recent courses" },
   ai: { label: "AI assistant" },
@@ -53,17 +53,36 @@ function Dashboard() {
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60 };
 
+  const plannedToday = tasks.filter((t) => isForToday(t)).length;
+  const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
+  const overdueCount = tasks.filter((t) => isOverdue(t)).length;
+  const stats: { value: number; label: string; tone?: "danger" }[] = [
+    { value: plannedToday, label: "planned today" },
+    { value: dueThisWeek, label: "due this week" },
+    { value: overdueCount, label: "overdue", tone: overdueCount ? "danger" : undefined },
+  ];
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end gap-3">
+      <header className="mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="mr-auto">
-          <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMMM d")}</p>
-          <h1 className="text-3xl font-bold">{greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}</h1>
+          <p className="overline-label">{format(new Date(), "EEEE, MMMM d")}</p>
+          <h1 className="mt-1.5 text-4xl font-semibold leading-tight md:text-5xl">
+            {greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+            {stats.map((s) => (
+              <span key={s.label} className="flex items-baseline gap-1.5">
+                <span className={cn("font-display text-2xl font-semibold", s.tone === "danger" ? "text-destructive" : "text-foreground")}>{s.value}</span>
+                <span className="text-xs text-muted-foreground">{s.label}</span>
+              </span>
+            ))}
+          </div>
         </div>
         <Button variant={customizing ? "default" : "outline"} size="sm" onClick={() => setCustomizing((c) => !c)}>
           {customizing ? <><Check className="size-4" /> Done</> : <><Settings2 className="size-4" /> Customize</>}
         </Button>
-      </div>
+      </header>
 
       {customizing && hidden.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
@@ -80,11 +99,17 @@ function Dashboard() {
             onDragStart={() => setDragKey(key)}
             onDragOver={(e) => customizing && e.preventDefault()}
             onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, i); setDragKey(null); }}
-            className={cn("relative rounded-2xl border border-border bg-card p-4 shadow-card", WIDGETS[key]?.wide && "md:col-span-2", customizing && "cursor-move ring-1 ring-primary/30", dragKey === key && "opacity-50")}
+            className={cn(
+              "relative rounded-2xl border border-border bg-card p-5 shadow-card transition-shadow",
+              !customizing && "hover:shadow-lift",
+              WIDGETS[key]?.wide && "md:col-span-2",
+              customizing && "cursor-move ring-1 ring-primary/30",
+              dragKey === key && "opacity-50",
+            )}
           >
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
               {customizing && <GripVertical className="size-4 text-muted-foreground" />}
-              <h2 className="text-sm font-semibold">{WIDGETS[key]?.label}</h2>
+              <h2 className="overline-label">{WIDGETS[key]?.label}</h2>
               {customizing && (
                 <div className="ml-auto flex gap-1">
                   <Button size="icon" variant="ghost" className="size-7" disabled={i === 0} onClick={() => moveTo(key, i - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
@@ -150,12 +175,12 @@ function QuickCapture() {
       setTitle("");
       toast.success("Captured");
     }}>
-      <Input placeholder="Write it down before you forget…" value={title} onChange={(e) => setTitle(e.target.value)} className="h-10" />
+      <Input placeholder="Write it down before you forget…" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 rounded-xl" />
       <div className="flex gap-2">
-        <select className="h-10 rounded-md border border-input bg-background px-2 text-sm" value={when} onChange={(e) => setWhen(e.target.value as "today" | "none")}>
+        <select className="h-11 rounded-xl border border-input bg-background px-2 text-sm" value={when} onChange={(e) => setWhen(e.target.value as "today" | "none")}>
           <option value="today">Work on today</option><option value="none">No date</option>
         </select>
-        <Button type="submit" className="h-10">Add</Button>
+        <Button type="submit" className="h-11 rounded-xl">Add</Button>
       </div>
     </form>
   );
@@ -166,15 +191,21 @@ function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
   const max = Math.max(120, ...days.map((d) => d.minutes));
   return (
     <div className="flex h-36 items-end gap-2 pt-2">
-      {days.map((d) => (
-        <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[10px] text-muted-foreground">{d.minutes ? `${Math.round((d.minutes / 60) * 10) / 10}h` : ""}</span>
-          <div className="w-full rounded-md bg-muted" style={{ height: 96 }}>
-            <div className={cn("w-full rounded-md", d.minutes > 240 ? "bg-destructive" : "bg-primary")} style={{ height: `${(d.minutes / max) * 100}%`, marginTop: `${96 - (d.minutes / max) * 96}px` }} />
+      {days.map((d) => {
+        const today = isSameDay(d.day, new Date());
+        return (
+          <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
+            <span className="font-display text-[11px] font-medium text-muted-foreground">{d.minutes ? `${Math.round((d.minutes / 60) * 10) / 10}h` : ""}</span>
+            <div className="w-full rounded-md bg-muted" style={{ height: 96 }}>
+              <div
+                className={cn("w-full rounded-md", d.minutes > 240 ? "bg-destructive" : "bg-primary", !today && "opacity-75")}
+                style={{ height: `${(d.minutes / max) * 100}%`, marginTop: `${96 - (d.minutes / max) * 96}px` }}
+              />
+            </div>
+            <span className={cn("text-xs", today ? "font-semibold text-primary" : "text-muted-foreground")}>{format(d.day, "EEEEE")}</span>
           </div>
-          <span className={cn("text-xs", isSameDay(d.day, new Date()) ? "font-semibold text-primary" : "text-muted-foreground")}>{format(d.day, "EEEEE")}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -186,10 +217,11 @@ function WeekStrip({ tasks, courseMap, onOpen }: Ctx) {
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
         const entry = byDay.get(toDateKey(d));
+        const today = isSameDay(d, new Date());
         return (
-          <div key={d.toISOString()} className="min-h-24 rounded-xl bg-muted/50 p-2">
-            <p className={cn("text-xs font-medium", isSameDay(d, new Date()) && "text-primary")}>{format(d, "EEE d")}</p>
-            {!!entry?.dueCount && <p className="text-[10px] font-semibold text-destructive">{entry.dueCount} due</p>}
+          <div key={d.toISOString()} className={cn("min-h-24 rounded-xl bg-muted/50 p-2", today && "bg-accent/60 ring-1 ring-primary/40")}>
+            <p className={cn("text-xs font-medium", today && "font-semibold text-primary")}>{format(d, "EEE d")}</p>
+            {!!entry?.dueCount && <p className="font-display text-[11px] font-semibold text-destructive">{entry.dueCount} due</p>}
             <div className="mt-1 space-y-0.5">
               {entry?.work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} onOpen={onOpen} />)}
               {entry?.deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
@@ -207,7 +239,7 @@ function RecentCourses({ courses }: { courses: Course[] }) {
   return (
     <div className="grid grid-cols-2 gap-2">
       {recent.map((c) => (
-        <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }} className="flex items-center gap-2 rounded-xl border border-border p-2 hover:bg-muted/60">
+        <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }} className="flex items-center gap-2 rounded-xl border border-border p-2 transition-colors hover:bg-muted/60">
           <span className="grid size-8 place-items-center rounded-lg" style={{ background: `color-mix(in oklab, ${colorVar(c.color)} 16%, transparent)`, color: colorVar(c.color) }}><CourseIcon name={c.icon} className="size-4" /></span>
           <span className="truncate text-sm font-medium">{c.code || c.name}</span>
         </Link>
