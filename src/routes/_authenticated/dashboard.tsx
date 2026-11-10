@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { addDays, format, isSameDay, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { colorVar, useCourses, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, isForToday, isOverdue, isUpcoming, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
+import { calendarDays, isDone, isForToday, isOverdue, isUpcoming, toDateKey, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
@@ -30,10 +30,15 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
   ai: { label: "AI assistant" },
 };
 
+// Gauge targets. Constants for now; they can move into Settings later.
+const FOCUS_GOAL_MIN = 120;
+const WEEK_CAPACITY_MIN = 1200;
+
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: tasks = [] } = useTasks();
   const { data: courses = [] } = useCourses();
+  const { data: sessions = [] } = useFocusSessions();
   const saveProfile = useSave("profiles");
   const [customizing, setCustomizing] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -56,6 +61,14 @@ function Dashboard() {
   const plannedToday = tasks.filter((t) => isForToday(t)).length;
   const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
   const overdueCount = tasks.filter((t) => isOverdue(t)).length;
+
+  const todayKey = toDateKey(new Date());
+  const doneToday = tasks.filter((t) => isDone(t) && t.completed_at && toDateKey(new Date(t.completed_at)) === todayKey).length;
+  const todayTotal = doneToday + plannedToday;
+  const focusMin = Math.round(sessions.filter((s) => s.kind === "focus" && toDateKey(new Date(s.started_at)) === todayKey).reduce((a, s) => a + s.duration_seconds, 0) / 60);
+  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback).reduce((a, d) => a + d.minutes, 0);
+  const weekLoad = weekMin / WEEK_CAPACITY_MIN;
+  const hrs = (m: number) => `${Math.round((m / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
     { value: plannedToday, label: "planned today" },
     { value: dueThisWeek, label: "due this week" },
@@ -64,10 +77,10 @@ function Dashboard() {
 
   return (
     <div>
-      <header className="mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
+      <header className="mb-10 flex flex-wrap items-end gap-x-8 gap-y-6">
         <div className="mr-auto">
           <p className="overline-label">{format(new Date(), "EEEE, MMMM d")}</p>
-          <h1 className="mt-1.5 text-4xl font-semibold leading-tight md:text-5xl">
+          <h1 className="mt-2 text-5xl leading-[1.05] md:text-7xl">
             {greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}
           </h1>
           <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
@@ -78,6 +91,11 @@ function Dashboard() {
               </span>
             ))}
           </div>
+        </div>
+        <div className="flex flex-wrap items-start justify-center gap-x-2">
+          <Gauge value={todayTotal ? doneToday / todayTotal : 0} label={`${doneToday}/${todayTotal}`} sub="done today" />
+          <Gauge value={focusMin / FOCUS_GOAL_MIN} label={focusMin >= 60 ? hrs(focusMin) : `${focusMin}m`} sub={`of ${hrs(FOCUS_GOAL_MIN)} focus`} />
+          <Gauge value={weekLoad} label={hrs(weekMin)} sub="planned this week" tone={weekLoad > 1 ? "danger" : weekLoad > 0.8 ? "warn" : undefined} />
         </div>
         <Button variant={customizing ? "default" : "outline"} size="sm" onClick={() => setCustomizing((c) => !c)}>
           {customizing ? <><Check className="size-4" /> Done</> : <><Settings2 className="size-4" /> Customize</>}
@@ -100,7 +118,7 @@ function Dashboard() {
             onDragOver={(e) => customizing && e.preventDefault()}
             onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, i); setDragKey(null); }}
             className={cn(
-              "relative rounded-2xl border border-border bg-card p-5 shadow-card transition-shadow",
+              "relative rounded-3xl border border-border bg-card p-6 shadow-card transition-shadow",
               !customizing && "hover:shadow-lift",
               WIDGETS[key]?.wide && "md:col-span-2",
               customizing && "cursor-move ring-1 ring-primary/30",
@@ -244,6 +262,35 @@ function RecentCourses({ courses }: { courses: Course[] }) {
           <span className="truncate text-sm font-medium">{c.code || c.name}</span>
         </Link>
       ))}
+    </div>
+  );
+}
+
+function Gauge({ value, label, sub, tone }: { value: number; label: string; sub: string; tone?: "warn" | "danger" | undefined }) {
+  const id = "g" + useId().replace(/[^a-zA-Z0-9]/g, "");
+  const r = 42;
+  const c = 2 * Math.PI * r;
+  const sweep = (c * 240) / 360;
+  const v = Math.max(0, Math.min(1, value));
+  const [from, to] = tone === "danger" ? ["var(--destructive)", "var(--destructive)"] : tone === "warn" ? ["var(--warning)", "var(--destructive)"] : ["var(--primary)", "var(--course-pink)"];
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative size-28">
+        <svg viewBox="0 0 100 100" className="size-full" aria-hidden="true">
+          <defs>
+            <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor={from} />
+              <stop offset="1" stopColor={to} />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" className="text-foreground/10" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${sweep} ${c}`} transform="rotate(150 50 50)" />
+          <circle cx="50" cy="50" r={r} fill="none" stroke={`url(#${id})`} strokeWidth="6" strokeLinecap="round" opacity={v ? 1 : 0} strokeDasharray={`${sweep * v} ${c}`} transform="rotate(150 50 50)" style={{ transition: "stroke-dasharray 0.6s ease" }} />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center pb-1">
+          <span className="font-display text-2xl leading-none">{label}</span>
+        </div>
+      </div>
+      <p className="-mt-3 text-xs text-muted-foreground">{sub}</p>
     </div>
   );
 }
