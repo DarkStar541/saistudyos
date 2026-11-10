@@ -4,18 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * StudyOS design foundation — "editorial study journal".
- *
- * Light mode: warm paper surfaces, ink text, one restrained violet accent,
- * hairline borders and soft layered shadows.
- * Dark mode: atmospheric ink-plum, elevated surfaces, luminous accent —
- * never flat black.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- * All colors use oklch.
- */
+/* StudyOS — "Ember Aurora": ember accent, editorial serif, frosted glass over soft aurora light. */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -67,28 +56,28 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.975 0.007 85);
-  --foreground: oklch(0.26 0.025 285);
-  --card: oklch(0.998 0.002 85);
-  --card-foreground: oklch(0.26 0.025 285);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.26 0.025 285);
-  --primary: oklch(0.47 0.19 295);
-  --primary-foreground: oklch(0.98 0.005 300);
-  --secondary: oklch(0.94 0.012 85);
-  --secondary-foreground: oklch(0.32 0.06 295);
-  --muted: oklch(0.945 0.01 85);
-  --muted-foreground: oklch(0.5 0.025 285);
-  --accent: oklch(0.925 0.03 295);
-  --accent-foreground: oklch(0.34 0.11 295);
-  --destructive: oklch(0.57 0.2 27);
+  --radius: 0.875rem;
+  --background: oklch(0.97 0.012 80);
+  --foreground: oklch(0.24 0.02 40);
+  --card: oklch(0.995 0.004 80 / 85%);
+  --card-foreground: oklch(0.24 0.02 40);
+  --popover: oklch(0.995 0.003 80);
+  --popover-foreground: oklch(0.24 0.02 40);
+  --primary: oklch(0.56 0.16 40);
+  --primary-foreground: oklch(0.99 0.005 70);
+  --secondary: oklch(0.94 0.015 75);
+  --secondary-foreground: oklch(0.3 0.04 40);
+  --muted: oklch(0.945 0.012 78);
+  --muted-foreground: oklch(0.48 0.03 50);
+  --accent: oklch(0.93 0.04 55);
+  --accent-foreground: oklch(0.36 0.09 40);
+  --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.98 0 0);
   --success: oklch(0.6 0.14 155);
   --warning: oklch(0.7 0.15 60);
-  --border: oklch(0.905 0.012 80);
-  --input: oklch(0.89 0.014 80);
-  --ring: oklch(0.47 0.19 295);
+  --border: oklch(0.89 0.015 75);
+  --input: oklch(0.87 0.017 75);
+  --ring: oklch(0.56 0.16 40);
   --course-purple: oklch(0.55 0.2 295);
   --course-blue: oklch(0.57 0.16 250);
   --course-green: oklch(0.6 0.14 155);
@@ -102,40 +91,40 @@
   --chart-3: var(--course-green);
   --chart-4: var(--course-coral);
   --chart-5: var(--course-orange);
-  --shadow-card: 0 1px 2px oklch(0.3 0.04 295 / 5%), 0 8px 24px -12px oklch(0.3 0.06 295 / 12%);
-  --shadow-lift: 0 2px 4px oklch(0.3 0.04 295 / 6%), 0 18px 44px -16px oklch(0.3 0.08 295 / 22%);
-  --sidebar: oklch(0.962 0.009 85);
-  --sidebar-foreground: oklch(0.28 0.025 285);
-  --sidebar-primary: oklch(0.47 0.19 295);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.918 0.028 295);
-  --sidebar-accent-foreground: oklch(0.32 0.11 295);
-  --sidebar-border: oklch(0.91 0.012 80);
-  --sidebar-ring: oklch(0.47 0.19 295);
+  --shadow-card: 0 1px 2px oklch(0.3 0.05 40 / 6%), 0 10px 28px -14px oklch(0.35 0.08 40 / 16%);
+  --shadow-lift: 0 2px 4px oklch(0.3 0.05 40 / 8%), 0 20px 44px -16px oklch(0.35 0.1 40 / 26%);
+  --sidebar: oklch(0.955 0.014 78 / 85%);
+  --sidebar-foreground: oklch(0.26 0.02 40);
+  --sidebar-primary: oklch(0.56 0.16 40);
+  --sidebar-primary-foreground: oklch(0.99 0.005 70);
+  --sidebar-accent: oklch(0.92 0.04 55);
+  --sidebar-accent-foreground: oklch(0.34 0.09 40);
+  --sidebar-border: oklch(0.9 0.014 75);
+  --sidebar-ring: oklch(0.56 0.16 40);
 }
 
 .dark {
-  --background: oklch(0.17 0.02 295);
-  --foreground: oklch(0.95 0.008 300);
-  --card: oklch(0.215 0.024 295);
-  --card-foreground: oklch(0.95 0.008 300);
-  --popover: oklch(0.235 0.024 295);
-  --popover-foreground: oklch(0.95 0.008 300);
-  --primary: oklch(0.73 0.14 295);
-  --primary-foreground: oklch(0.17 0.03 295);
-  --secondary: oklch(0.27 0.025 295);
-  --secondary-foreground: oklch(0.93 0.01 300);
-  --muted: oklch(0.25 0.02 295);
-  --muted-foreground: oklch(0.71 0.02 295);
-  --accent: oklch(0.29 0.05 295);
-  --accent-foreground: oklch(0.94 0.02 300);
-  --destructive: oklch(0.67 0.18 27);
+  --background: oklch(0.15 0.02 305);
+  --foreground: oklch(0.95 0.012 70);
+  --card: oklch(1 0 0 / 5.5%);
+  --card-foreground: oklch(0.95 0.012 70);
+  --popover: oklch(0.21 0.03 305);
+  --popover-foreground: oklch(0.95 0.012 70);
+  --primary: oklch(0.78 0.13 50);
+  --primary-foreground: oklch(0.2 0.03 30);
+  --secondary: oklch(1 0 0 / 9%);
+  --secondary-foreground: oklch(0.95 0.012 70);
+  --muted: oklch(1 0 0 / 7%);
+  --muted-foreground: oklch(0.75 0.03 310);
+  --accent: oklch(0.78 0.13 50 / 16%);
+  --accent-foreground: oklch(0.92 0.06 55);
+  --destructive: oklch(0.7 0.18 20);
   --destructive-foreground: oklch(0.98 0 0);
   --success: oklch(0.7 0.14 155);
   --warning: oklch(0.77 0.14 65);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.73 0.14 295);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.78 0.13 50);
   --course-purple: oklch(0.7 0.17 295);
   --course-blue: oklch(0.7 0.14 250);
   --course-green: oklch(0.72 0.14 155);
@@ -149,16 +138,16 @@
   --chart-3: var(--course-green);
   --chart-4: var(--course-coral);
   --chart-5: var(--course-orange);
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 35%), 0 10px 28px -12px oklch(0 0 0 / 50%);
-  --shadow-lift: 0 2px 6px oklch(0 0 0 / 40%), 0 22px 52px -16px oklch(0 0 0 / 62%);
-  --sidebar: oklch(0.19 0.022 295);
-  --sidebar-foreground: oklch(0.93 0.01 300);
-  --sidebar-primary: oklch(0.73 0.14 295);
-  --sidebar-primary-foreground: oklch(0.17 0.03 295);
-  --sidebar-accent: oklch(0.27 0.04 295);
-  --sidebar-accent-foreground: oklch(0.95 0.01 300);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.73 0.14 295);
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 35%), 0 30px 60px -30px oklch(0 0 0 / 60%);
+  --shadow-lift: 0 2px 6px oklch(0 0 0 / 40%), 0 28px 60px -20px oklch(0 0 0 / 70%);
+  --sidebar: oklch(0.13 0.02 305 / 72%);
+  --sidebar-foreground: oklch(0.93 0.012 70);
+  --sidebar-primary: oklch(0.78 0.13 50);
+  --sidebar-primary-foreground: oklch(0.2 0.03 30);
+  --sidebar-accent: oklch(0.78 0.13 50 / 15%);
+  --sidebar-accent-foreground: oklch(0.94 0.04 55);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.13 50);
 }
 
 @layer base {
@@ -180,18 +169,52 @@
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--primary) 24%, transparent);
+    background: color-mix(in oklab, var(--primary) 28%, transparent);
   }
 }
 
-/* Subtle static wash at the top of the page — no animation, cheap to paint. */
-@utility page-wash {
+/* Aurora light: fixed behind everything, never repainted on scroll. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.45;
   background:
-    radial-gradient(64rem 26rem at 18% -10rem, color-mix(in oklab, var(--primary) 8%, transparent), transparent 70%),
-    radial-gradient(52rem 22rem at 92% -12rem, color-mix(in oklab, var(--course-teal) 6%, transparent), transparent 70%);
+    radial-gradient(42rem 32rem at 90% -6%, oklch(0.78 0.13 50 / 0.22), transparent 70%),
+    radial-gradient(40rem 34rem at -4% 30%, oklch(0.65 0.18 290 / 0.2), transparent 70%),
+    radial-gradient(44rem 30rem at 55% 108%, oklch(0.7 0.18 350 / 0.14), transparent 70%);
+}
+.dark body::before {
+  opacity: 1;
 }
 
-/* Small-caps style overline label used for section and widget headers. */
+/* Page titles: big, light serif. Unlayered on purpose so it beats font-semibold. */
+h1 {
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+.dark h1 {
+  background: linear-gradient(110deg, oklch(0.97 0.02 70), oklch(0.82 0.12 50) 55%, oklch(0.78 0.14 350));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.08em;
+}
+
+/* Frosted glass for every card-style surface. */
+@layer components {
+  .bg-card.shadow-card {
+    backdrop-filter: blur(18px) saturate(1.2);
+  }
+}
+
+/* Kept for existing markup; the aurora now lives on body. */
+@utility page-wash {
+  background: none;
+}
+
 @utility overline-label {
   font-size: 0.6875rem;
   font-weight: 600;
