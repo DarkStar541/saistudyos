@@ -106,7 +106,17 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
         ? await supabase.from("tasks").update(row).eq("id", task.id).select().single()
         : await supabase.from("tasks").insert(row).select().single();
       if (res.error) throw res.error;
-      const taskId = res.data.id;
+      const savedTask = res.data as Task;
+      const taskId = savedTask.id;
+
+      // Update the shared task cache immediately so dashboard gauges and radar
+      // reflect changed work dates as soon as Save succeeds.
+      qc.setQueryData<Task[]>(["tasks"], (current) => {
+        if (!current) return current;
+        return task
+          ? current.map((item) => item.id === taskId ? savedTask : item)
+          : [savedTask, ...current];
+      });
 
       // Apply scheduling + recurrence changes to the whole series when asked.
       if (task && applySeries && task.recurrence !== "none") {
@@ -116,23 +126,47 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
           recurrence_days: row.recurrence_days, recurrence_end: row.recurrence_end,
           priority: row.priority, estimated_minutes: row.estimated_minutes, course_id: row.course_id,
         };
-        await supabase.from("tasks").update(seriesPatch).eq("recurrence_parent_id", sid).neq("id", taskId).neq("status", "done");
+        // If the edited occurrence is a child, keep the series root in sync too.
+        if (task.id !== sid) {
+          const rootResult = await supabase.from("tasks").update(seriesPatch).eq("id", sid);
+          if (rootResult.error) throw rootResult.error;
+        }
+        const seriesResult = await supabase
+          .from("tasks")
+          .update(seriesPatch)
+          .eq("recurrence_parent_id", sid)
+          .neq("id", taskId)
+          .neq("status", "done");
+        if (seriesResult.error) throw seriesResult.error;
       }
 
       // Sync subtasks
       const existing = allSubs.filter((s) => s.task_id === taskId);
       const keepIds = new Set(subs.filter((s) => s.id).map((s) => s.id));
       const toDelete = existing.filter((s) => !keepIds.has(s.id)).map((s) => s.id);
-      if (toDelete.length) await supabase.from("subtasks").delete().in("id", toDelete);
-      for (const [i, s] of subs.entries()) {
-        if (s.id) await supabase.from("subtasks").update({ title: s.title, done: s.done, position: i }).eq("id", s.id);
-        else await supabase.from("subtasks").insert({ task_id: taskId, title: s.title, done: s.done, position: i });
+      if (toDelete.length) {
+        const deleteResult = await supabase.from("subtasks").delete().in("id", toDelete);
+        if (deleteResult.error) throw deleteResult.error;
       }
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      qc.invalidateQueries({ queryKey: ["subtasks"] });
+      for (const [i, s] of subs.entries()) {
+        const subtaskResult = s.id
+          ? await supabase.from("subtasks").update({ title: s.title, done: s.done, position: i }).eq("id", s.id)
+          : await supabase.from("subtasks").insert({ task_id: taskId, title: s.title, done: s.done, position: i });
+        if (subtaskResult.error) throw subtaskResult.error;
+      }
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["tasks"] }),
+        qc.invalidateQueries({ queryKey: ["subtasks"] }),
+      ]);
       toast.success(task ? "Task updated" : "Task added");
       onOpenChange(false);
     } catch (err) {
+      // The task row may already have saved before a series/subtask write failed.
+      // Reconcile the cache so the editor and dashboard reflect persisted data.
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["tasks"] }),
+        qc.invalidateQueries({ queryKey: ["subtasks"] }),
+      ]);
       toast.error((err as Error).message);
     } finally {
       setSaving(false);
