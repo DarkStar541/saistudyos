@@ -54,7 +54,7 @@ function CoursePage() {
   return (
     <div>
       <Link to="/courses" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Courses</Link>
-      <div className="mb-6 flex flex-wrap items-start gap-4">
+      <div className="page-intro mb-8 flex flex-wrap items-start gap-4 border-b border-border/70 pb-6">
         <span className="grid size-14 place-items-center rounded-2xl" style={{ background: `color-mix(in oklab, ${colorVar(course.color)} 18%, transparent)`, color: colorVar(course.color) }}>
           <CourseIcon name={course.icon} className="size-7" />
         </span>
@@ -124,7 +124,7 @@ function CoursePage() {
 
 function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-2 shadow-card">
+    <section className="page-section p-2">
       <div className="flex items-center justify-between px-3 py-1.5">
         <h2 className="text-sm font-semibold">{title}</h2>
         {action}
