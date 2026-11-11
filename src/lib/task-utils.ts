@@ -22,6 +22,48 @@ export function parsePlanned(d: string | null): Date | null {
 }
 
 export const toDateKey = (d: Date) => format(d, "yyyy-MM-dd");
+/** Convert an ISO instant into date/time input values in the saved IANA time zone. */
+export function dateTimeInputInTimeZone(iso: string, timeZone?: string | null) {
+  const date = new Date(iso);
+  if (!timeZone) return { date: format(date, "yyyy-MM-dd"), time: format(date, "HH:mm") };
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(date);
+    const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+    return { date: `${part("year")}-${part("month")}-${part("day")}`, time: `${part("hour")}:${part("minute")}` };
+  } catch {
+    return { date: format(date, "yyyy-MM-dd"), time: format(date, "HH:mm") };
+  }
+}
+
+/** Interpret a date/time input as wall-clock time in the saved IANA time zone. */
+export function dateTimeInTimeZoneToIso(dateKey: string, time: string, timeZone?: string | null): string {
+  if (!timeZone) return new Date(`${dateKey}T${time || "23:59"}`).toISOString();
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const [hour, minute] = (time || "23:59").split(":").map(Number);
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  let candidate = target;
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    });
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const parts = formatter.formatToParts(new Date(candidate));
+      const part = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+      const represented = Date.UTC(part("year"), part("month") - 1, part("day"), part("hour"), part("minute"));
+      const delta = represented - target;
+      if (delta === 0) break;
+      candidate -= delta;
+    }
+  } catch {
+    candidate = new Date(`${dateKey}T${time || "23:59"}`).getTime();
+  }
+  return new Date(candidate).toISOString();
+}
+
 
 /** Format an instant as a calendar date in the student's saved IANA time zone. */
 export function dateKeyInTimeZone(date: Date, timeZone?: string | null): string {
