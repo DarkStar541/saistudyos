@@ -54,18 +54,18 @@ function Dashboard() {
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60 };
+  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
 
-  const plannedToday = tasks.filter((t) => isForToday(t)).length;
+  const plannedToday = tasks.filter((t) => isForToday(t, new Date(), ctx.timeZone)).length;
   const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
   const overdueCount = tasks.filter((t) => isOverdue(t)).length;
-  const progressToday = todayProgress(tasks);
+  const progressToday = todayProgress(tasks, new Date(), ctx.timeZone);
   const focusMin = Math.round(
     sessions
       .filter((session) => session.kind === "focus" && toDateKey(new Date(session.started_at)) === toDateKey(new Date()))
       .reduce((sum, session) => sum + session.duration_seconds, 0) / 60,
   );
-  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback).reduce((sum, day) => sum + day.minutes, 0);
+  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback, ctx.timeZone).reduce((sum, day) => sum + day.minutes, 0);
   const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
     { value: plannedToday, label: "planned today" },
@@ -215,8 +215,8 @@ function DashboardComposition(props: DashboardCompositionProps) {
 
 function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
   const open = ctx.tasks.filter((t) => t.status !== "done");
-  const today = open.filter(isForToday);
-  const overdue = open.filter(isOverdue);
+  const today = open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
+  const overdue = open.filter((task) => isOverdue(task));
   const next = open.filter((t) => isUpcoming(t, 14)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
   const lead = next[0] ?? today[0];
   return (
@@ -365,7 +365,7 @@ function InstrumentGauge({ label, value, detail, ratio, tone }: { label: string;
   );
 }
 
-type Ctx = { tasks: Task[]; courses: Course[]; courseMap: Map<string, Course>; onOpen: (t: Task) => void; weekStartsOn: 0 | 1; fallback: number };
+type Ctx = { tasks: Task[]; courses: Course[]; courseMap: Map<string, Course>; onOpen: (t: Task) => void; weekStartsOn: 0 | 1; fallback: number; timeZone?: string };
 
 function TaskList({ items, ctx, empty }: { items: Task[]; ctx: Ctx; empty: string }) {
   if (!items.length) return <p className="py-3 text-sm text-muted-foreground">{empty}</p>;
@@ -420,7 +420,7 @@ function QuickCapture() {
 }
 
 function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
-  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback);
+  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback, arguments[0].timeZone);
   const max = Math.max(120, ...days.map((d) => d.minutes));
   return (
     <div className="flex h-36 items-end gap-2 pt-2">
@@ -445,7 +445,7 @@ function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
 
 function WeekStrip({ tasks, courseMap, onOpen }: Ctx) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i));
-  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"));
+  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), arguments[0].timeZone);
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
