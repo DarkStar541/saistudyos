@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { colorVar, useCourses, useTasks } from "@/lib/db";
 import { CourseDialog } from "@/components/course-dialog";
@@ -17,11 +17,18 @@ function CoursesPage() {
   const [open, setOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const list = courses.filter((c) => showArchived || !c.archived);
+  const openTaskCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const task of tasks) {
+      if (task.course_id && task.status !== "done") counts.set(task.course_id, (counts.get(task.course_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [tasks]);
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3">
-        <h1 className="mr-auto text-3xl font-bold">Courses</h1>
+      <div className="page-intro mb-8 flex flex-wrap items-end gap-3 border-b border-border/70 pb-6">
+        <div className="mr-auto"><p className="overline-label mb-2">YOUR ACADEMIC LANDSCAPE</p><h1 className="text-5xl font-semibold">Courses<span className="text-primary">.</span></h1><p className="mt-2 text-sm text-muted-foreground">Every class, its work, and the semester ahead.</p></div>
         <label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Archived</label>
         <Button onClick={() => setOpen(true)}><Plus className="size-4" /> New course</Button>
       </div>
@@ -34,7 +41,7 @@ function CoursesPage() {
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((c) => {
-          const open = tasks.filter((t) => t.course_id === c.id && t.status !== "done").length;
+          const open = openTaskCounts.get(c.id) ?? 0;
           return (
             <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }} className="group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-transform hover:-translate-y-0.5">
               <div className="h-2" style={{ background: colorVar(c.color) }} />
