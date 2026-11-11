@@ -11,7 +11,7 @@ import { TaskRow, PRIORITY_CLASS } from "@/components/task-row";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ViewProps = { tasks: Task[]; courses: Map<string, Course>; onOpen: (t: Task) => void };
+type ViewProps = { tasks: Task[]; courses: Map<string, Course>; onOpen: (t: Task) => void; timeZone?: string };
 
 function useMove() {
   const qc = useQueryClient();
@@ -117,7 +117,7 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
   );
 }
 
-export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewProps & { weekStartsOn?: 0 | 1 }) {
+export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZone }: ViewProps & { weekStartsOn?: 0 | 1 }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [mode, setMode] = useState<"planned" | "due">("planned");
   const move = useMove();
@@ -129,7 +129,7 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
     return out;
   }, [month, weekStartsOn]);
 
-  const byDay = useMemo(() => calendarDays(tasks), [tasks]);
+  const byDay = useMemo(() => calendarDays(tasks, timeZone), [tasks, timeZone]);
 
   const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
 
