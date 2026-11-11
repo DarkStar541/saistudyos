@@ -41,6 +41,18 @@ describe("recurrence intervals and weekday selection", () => {
   it("deduplicates invalid and repeated weekday values", () => {
     expect(nextOccurrenceDate({ recurrence: "weekly", recurrence_days: [1, 1, 9, -1] }, new Date(2026, 10, 9))?.getDate()).toBe(16);
   });
+  it("clamps monthly recurrence to the last day of shorter months", () => {
+    const next = nextOccurrenceDate({ recurrence: "monthly" }, new Date(2026, 0, 31));
+    expect(next?.getFullYear()).toBe(2026);
+    expect(next?.getMonth()).toBe(1);
+    expect(next?.getDate()).toBe(28);
+  });
+  it("keeps leap-day yearly recurrence on the last day of February", () => {
+    const next = nextOccurrenceDate({ recurrence: "yearly" }, new Date(2024, 1, 29));
+    expect(next?.getFullYear()).toBe(2025);
+    expect(next?.getMonth()).toBe(1);
+    expect(next?.getDate()).toBe(28);
+  });
   it("applies intervals to biweekly recurrence", () => {
     expect(nextOccurrenceDate({ recurrence: "biweekly", recurrence_interval: 2 }, new Date(2026, 10, 9))?.getDate()).toBe(7);
   });
