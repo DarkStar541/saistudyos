@@ -57,16 +57,19 @@ function Dashboard() {
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
 
-  const plannedToday = tasks.filter((t) => isForToday(t, new Date(), ctx.timeZone)).length;
-  const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
-  const overdueCount = tasks.filter((t) => isOverdue(t)).length;
-  const progressToday = todayProgress(tasks, new Date(), ctx.timeZone);
-  const focusMin = Math.round(
-    sessions
-      .filter((session) => session.kind === "focus" && toDateKey(new Date(session.started_at)) === toDateKey(new Date()))
-      .reduce((sum, session) => sum + session.duration_seconds, 0) / 60,
-  );
-  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback, ctx.timeZone).reduce((sum, day) => sum + day.minutes, 0);
+  const metrics = useMemo(() => {
+    const now = new Date();
+    const todayKey = dateKeyInTimeZone(now, ctx.timeZone);
+    return {
+      plannedToday: tasks.filter((task) => isForToday(task, now, ctx.timeZone)).length,
+      dueThisWeek: tasks.filter((task) => isUpcoming(task, 7, now)).length,
+      overdueCount: tasks.filter((task) => isOverdue(task, now)).length,
+      progressToday: todayProgress(tasks, now, ctx.timeZone),
+      focusMin: Math.round(sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), ctx.timeZone) === todayKey).reduce((sum, session) => sum + session.duration_seconds, 0) / 60),
+      weekMin: weeklyWorkload(tasks, now, ctx.weekStartsOn, ctx.fallback, ctx.timeZone).reduce((sum, day) => sum + day.minutes, 0),
+    };
+  }, [tasks, sessions, ctx.timeZone, ctx.weekStartsOn, ctx.fallback]);
+  const { plannedToday, dueThisWeek, overdueCount, progressToday, focusMin, weekMin } = metrics;
   const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
     { value: plannedToday, label: "planned today" },
