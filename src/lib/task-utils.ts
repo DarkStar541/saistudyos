@@ -23,8 +23,23 @@ export function parsePlanned(d: string | null): Date | null {
 
 export const toDateKey = (d: Date) => format(d, "yyyy-MM-dd");
 
+/** Format an instant as a calendar date in the student's saved IANA time zone. */
+export function dateKeyInTimeZone(date: Date, timeZone?: string | null): string {
+  if (!timeZone) return toDateKey(date);
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(date);
+    const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+    return `${part("year")}-${part("month")}-${part("day")}`;
+  } catch {
+    // A stale/invalid saved zone must not break the calendar.
+    return toDateKey(date);
+  }
+}
+
 /** Independent calendar channels: a deadline is never a work-session banner. */
-export function calendarDays<T extends TaskLike>(tasks: T[]) {
+export function calendarDays<T extends TaskLike>(tasks: T[], timeZone?: string | null) {
   const days = new Map<string, { work: T[]; deadlines: T[]; dueCount: number }>();
   const day = (key: string) => {
     let entry = days.get(key);
@@ -39,7 +54,7 @@ export function calendarDays<T extends TaskLike>(tasks: T[]) {
   for (const task of tasks) {
     if (task.planned_date) day(task.planned_date).work.push(task);
     if (task.due_at) {
-      const dayKey = toDateKey(new Date(task.due_at));
+      const dayKey = dateKeyInTimeZone(new Date(task.due_at), timeZone);
       const entry = day(dayKey);
       const sid = task.recurrence_parent_id ?? task.id;
       const seriesKey = sid ? `${sid}|${task.due_at}` : null;
@@ -69,7 +84,7 @@ export function isForToday(t: TaskLike, now = new Date()) {
   if (isDone(t)) return false;
   const key = toDateKey(now);
   if (t.planned_date) return t.planned_date <= key && !isOverdue(t, now);
-  return !!t.due_at && toDateKey(new Date(t.due_at)) === key && !isOverdue(t, now);
+  return !!t.due_at && dateKeyInTimeZone(new Date(t.due_at), timeZone) === key && !isOverdue(t, now);
 }
 
 /** Shared progress model for dashboard gauges: completed work counts only when
@@ -79,7 +94,7 @@ export function todayProgress(tasks: TaskLike[], now = new Date()) {
   const completed = tasks.filter((task) => {
     const scheduledToday =
       task.planned_date === todayKey ||
-      (!task.planned_date && !!task.due_at && toDateKey(new Date(task.due_at)) === todayKey);
+      (!task.planned_date && !!task.due_at && dateKeyInTimeZone(new Date(task.due_at), timeZone) === todayKey);
     return (
       scheduledToday &&
       isDone(task) &&
@@ -87,7 +102,7 @@ export function todayProgress(tasks: TaskLike[], now = new Date()) {
       isSameDay(new Date(task.completed_at), now)
     );
   }).length;
-  const remaining = tasks.filter((task) => isForToday(task, now)).length;
+  const remaining = tasks.filter((task) => isForToday(task, now, timeZone)).length;
   const total = completed + remaining;
   return {
     completed,
@@ -118,7 +133,7 @@ export function weeklyWorkload(tasks: TaskLike[], now = new Date(), weekStartsOn
     const minutes = tasks
       .filter((t) => !isDone(t))
       .filter((t) => {
-        const w = workDay(t);
+        const w = workDay(t, timeZone);
         return w && toDateKey(w) === key;
       })
       .reduce((sum, t) => sum + (t.estimated_minutes ?? fallbackMinutes), 0);
