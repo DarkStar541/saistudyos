@@ -1,7 +1,7 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckSquare, ChartNoAxesCombined, FolderKanban, LayoutDashboard, LogOut, Plus, Settings, Timer } from "lucide-react";
+import { BookOpen, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
 import { applyTheme } from "@/lib/theme";
@@ -13,8 +13,6 @@ const NAV = [
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/courses", label: "Courses", icon: BookOpen },
   { to: "/projects", label: "Projects", icon: FolderKanban },
-  { to: "/focus", label: "Focus", icon: Timer },
-  { to: "/insights", label: "Insights", icon: ChartNoAxesCombined },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -121,7 +119,7 @@ export function AppShell() {
       >
         <Plus className="size-6" />
       </button>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-7 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground" activeProps={{ className: "font-semibold text-primary" }}>
             <Icon className="size-5" /> {label}
