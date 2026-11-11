@@ -56,6 +56,12 @@ describe("recurrence intervals and weekday selection", () => {
   it("applies intervals to biweekly recurrence", () => {
     expect(nextOccurrenceDate({ recurrence: "biweekly", recurrence_interval: 2 }, new Date(2026, 10, 9))?.getDate()).toBe(7);
   });
+  it("catches up a daily series after more than 500 missed days", () => {
+    const next = nextPendingOccurrence({ recurrence: "daily" }, new Date(2024, 0, 1), new Date(2026, 10, 11));
+    expect(next?.getFullYear()).toBe(2026);
+    expect(next?.getMonth()).toBe(10);
+    expect(next?.getDate()).toBe(12);
+  });
   it("skips missed occurrences without exceeding the recurrence end", () => {
     expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
   });
