@@ -6,6 +6,7 @@ import { COURSE_ICONS, CourseIcon } from "@/components/course-icon";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -80,9 +81,10 @@ export function CourseDialog({ open, onOpenChange, course }: { open: boolean; on
             <Label className="text-xs">Weekly schedule</Label>
             {slots.map((s, i) => (
               <div key={i} className="flex items-center gap-2">
-                <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={s.day} onChange={(e) => setSlots((p) => p.map((x, j) => (j === i ? { ...x, day: +e.target.value } : x)))}>
-                  {DAYS.map((d, n) => <option key={d} value={n}>{d}</option>)}
-                </select>
+                <Select value={String(s.day)} onValueChange={(value) => setSlots((p) => p.map((x, j) => (j === i ? { ...x, day: Number(value) } : x)))}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>{DAYS.map((d, n) => <SelectItem key={d} value={String(n)}>{d}</SelectItem>)}</SelectContent>
+                </Select>
                 <Input type="time" value={s.start} onChange={(e) => setSlots((p) => p.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))} />
                 <Input type="time" value={s.end} onChange={(e) => setSlots((p) => p.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))} />
                 <Input placeholder="Room" value={s.location ?? ""} onChange={(e) => setSlots((p) => p.map((x, j) => (j === i ? { ...x, location: e.target.value } : x)))} />
