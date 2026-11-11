@@ -25,6 +25,13 @@ export const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const intervalOf = (r: RecurrenceRule) => Math.max(1, Math.min(365, Math.floor(r.recurrence_interval ?? 1)));
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Preserve the day-of-month where possible; clamp month-end dates instead of overflowing. */
+function addMonthsClamped(date: Date, amount: number): Date {
+  const target = addMonths(date, amount);
+  if (target.getDate() !== date.getDate()) target.setDate(0);
+  return target;
+}
+
 /** The next occurrence strictly after `from`, or null when the rule ends first. */
 export function nextOccurrenceDate(rule: RecurrenceRule, from: Date): Date | null {
   const n = intervalOf(rule);
@@ -62,7 +69,7 @@ export function nextOccurrenceDate(rule: RecurrenceRule, from: Date): Date | nul
       next = addDays(from, 14 * n);
       break;
     case "monthly":
-      next = addMonths(from, n);
+      next = addMonthsClamped(from, n);
       break;
     case "yearly":
       next = addYears(from, n);
