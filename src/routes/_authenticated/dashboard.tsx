@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
+import { getSavedStyle, type VisualStyle } from "@/lib/theme";
 import { addDays, format, isSameDay, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, isDone, isForToday, isOverdue, isUpcoming, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { calendarDays, isDone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
@@ -30,10 +31,6 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
   ai: { label: "AI assistant" },
 };
 
-// Gauge targets. Constants for now; they can move into Settings later.
-const FOCUS_GOAL_MIN = 120;
-const WEEK_CAPACITY_MIN = 1200;
-
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: tasks = [] } = useTasks();
@@ -43,6 +40,7 @@ function Dashboard() {
   const [customizing, setCustomizing] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
+  const [visualStyle] = useState<VisualStyle>(() => getSavedStyle());
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
   const layout = ((profile?.dashboard_widgets as string[] | undefined) ?? []).filter((k) => WIDGETS[k]);
@@ -61,14 +59,14 @@ function Dashboard() {
   const plannedToday = tasks.filter((t) => isForToday(t)).length;
   const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
   const overdueCount = tasks.filter((t) => isOverdue(t)).length;
-
-  const todayKey = toDateKey(new Date());
-  const doneToday = tasks.filter((t) => isDone(t) && t.completed_at && toDateKey(new Date(t.completed_at)) === todayKey).length;
-  const todayTotal = doneToday + plannedToday;
-  const focusMin = Math.round(sessions.filter((s) => s.kind === "focus" && toDateKey(new Date(s.started_at)) === todayKey).reduce((a, s) => a + s.duration_seconds, 0) / 60);
-  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback).reduce((a, d) => a + d.minutes, 0);
-  const weekLoad = weekMin / WEEK_CAPACITY_MIN;
-  const hrs = (m: number) => `${Math.round((m / 60) * 10) / 10}h`;
+  const progressToday = todayProgress(tasks);
+  const focusMin = Math.round(
+    sessions
+      .filter((session) => session.kind === "focus" && toDateKey(new Date(session.started_at)) === toDateKey(new Date()))
+      .reduce((sum, session) => sum + session.duration_seconds, 0) / 60,
+  );
+  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback).reduce((sum, day) => sum + day.minutes, 0);
+  const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
     { value: plannedToday, label: "planned today" },
     { value: dueThisWeek, label: "due this week" },
@@ -77,30 +75,34 @@ function Dashboard() {
 
   return (
     <div>
-      <header className="mb-10 flex flex-wrap items-end gap-x-8 gap-y-6">
+      <header className="dashboard-heading mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="mr-auto">
-          <p className="overline-label">{format(new Date(), "EEEE, MMMM d")}</p>
-          <h1 className="mt-2 text-5xl leading-[1.05] md:text-7xl">
+          <p className="overline-label">YOUR STUDY SPACE <span className="mx-2 opacity-50">/</span> {format(new Date(), "EEEE, MMMM d")}</p>
+          <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
             {greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}
           </h1>
           <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
             {stats.map((s) => (
-              <span key={s.label} className="flex items-baseline gap-1.5">
+              <span key={s.label} className="dashboard-stat">
                 <span className={cn("font-display text-2xl font-semibold", s.tone === "danger" ? "text-destructive" : "text-foreground")}>{s.value}</span>
                 <span className="text-xs text-muted-foreground">{s.label}</span>
               </span>
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap items-start justify-center gap-x-2">
-          <Gauge value={todayTotal ? doneToday / todayTotal : 0} label={`${doneToday}/${todayTotal}`} sub="done today" />
-          <Gauge value={focusMin / FOCUS_GOAL_MIN} label={focusMin >= 60 ? hrs(focusMin) : `${focusMin}m`} sub={`of ${hrs(FOCUS_GOAL_MIN)} focus`} />
-          <Gauge value={weekLoad} label={hrs(weekMin)} sub="planned this week" tone={weekLoad > 1 ? "danger" : weekLoad > 0.8 ? "warn" : undefined} />
-        </div>
+        {visualStyle !== "nocturne" && (
+          <div className="dashboard-gauge-strip" aria-label="Today's progress and workload">
+            <Gauge value={progressToday.completionRatio} label={`${progressToday.completed}/${progressToday.total}`} sub="done today" />
+            <Gauge value={focusMin / 120} label={focusMin >= 60 ? hours(focusMin) : `${focusMin}m`} sub="of 2h focus" />
+            <Gauge value={weekMin / 1200} label={hours(weekMin)} sub="planned this week" />
+          </div>
+        )}
         <Button variant={customizing ? "default" : "outline"} size="sm" onClick={() => setCustomizing((c) => !c)}>
           {customizing ? <><Check className="size-4" /> Done</> : <><Settings2 className="size-4" /> Customize</>}
         </Button>
       </header>
+
+      {visualStyle === "nocturne" && <NocturneControlDeck tasks={tasks} courses={courses} />}
 
       {customizing && hidden.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
@@ -109,43 +111,256 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {layout.map((key, i) => (
-          <div
-            key={key}
-            draggable={customizing}
-            onDragStart={() => setDragKey(key)}
-            onDragOver={(e) => customizing && e.preventDefault()}
-            onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, i); setDragKey(null); }}
-            className={cn(
-              "relative rounded-3xl border border-border bg-card p-6 shadow-card transition-shadow",
-              !customizing && "hover:shadow-lift",
-              WIDGETS[key]?.wide && "md:col-span-2",
-              customizing && "cursor-move ring-1 ring-primary/30",
-              dragKey === key && "opacity-50",
-            )}
-          >
-            <div className="mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
-              {customizing && <GripVertical className="size-4 text-muted-foreground" />}
-              <h2 className="overline-label">{WIDGETS[key]?.label}</h2>
-              {customizing && (
-                <div className="ml-auto flex gap-1">
-                  <Button size="icon" variant="ghost" className="size-7" disabled={i === 0} onClick={() => moveTo(key, i - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="size-7" disabled={i === layout.length - 1} onClick={() => moveTo(key, i + 1)} aria-label="Move down"><ArrowDown className="size-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="size-7" onClick={() => persist(layout.filter((k) => k !== key))} aria-label="Hide widget"><EyeOff className="size-3.5" /></Button>
-                </div>
+      {layout.length ? (
+        <DashboardComposition
+          style={visualStyle}
+          ctx={ctx}
+          layout={layout}
+          customizing={customizing}
+          dragKey={dragKey}
+          setDragKey={setDragKey}
+          moveTo={moveTo}
+          persist={persist}
+          renderWidget={(key, index) => (
+            <div
+              key={key}
+              data-widget={key}
+              style={
+                visualStyle === "nocturne" &&
+                ["upcoming", "exams", "quickadd", "calendar", "ai"].includes(key)
+                  ? { gridColumn: "1 / -1" }
+                  : undefined
+              }
+              draggable={customizing}
+              onDragStart={() => setDragKey(key)}
+              onDragOver={(e) => customizing && e.preventDefault()}
+              onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, index); setDragKey(null); }}
+              className={cn(
+                "dashboard-widget relative transition-shadow",
+                visualStyle === "nocturne" && ["upcoming", "exams"].includes(key) && "nocturne-widget-wide",
+                !customizing && "hover:shadow-lift",
+                customizing && "cursor-move ring-1 ring-primary/30",
+                dragKey === key && "opacity-50",
               )}
+            >
+              <div className="dashboard-widget-heading mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
+                {customizing && <GripVertical className="size-4 text-muted-foreground" />}
+                <h2 className="overline-label">{WIDGETS[key]?.label}</h2>
+                {customizing && (
+                  <div className="ml-auto flex gap-1">
+                    <Button size="icon" variant="ghost" className="size-7" disabled={index === 0} onClick={() => moveTo(key, index - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="size-7" disabled={index === layout.length - 1} onClick={() => moveTo(key, index + 1)} aria-label="Move down"><ArrowDown className="size-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="size-7" onClick={() => persist(layout.filter((k) => k !== key))} aria-label="Hide widget"><EyeOff className="size-3.5" /></Button>
+                  </div>
+                )}
+              </div>
+              <Widget id={key} {...ctx} />
             </div>
-            <Widget id={key} {...ctx} />
+          )}
+        />
+      ) : (
+        <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+          <Eye className="mx-auto mb-2 size-5" /> Your dashboard is empty. Click Customize to add widgets.
+        </div>
+      )}
+      <TaskDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} task={editing} />
+    </div>
+  );
+}
+
+
+type DashboardCompositionProps = {
+  style: VisualStyle;
+  ctx: Ctx;
+  layout: string[];
+  customizing: boolean;
+  dragKey: string | null;
+  setDragKey: (key: string | null) => void;
+  moveTo: (key: string, index: number) => void;
+  persist: (next: string[]) => void;
+  renderWidget: (key: string, index: number) => ReactNode;
+};
+
+function DashboardComposition(props: DashboardCompositionProps) {
+  const { style, layout, renderWidget, ctx } = props;
+  const indexOf = (key: string) => layout.indexOf(key);
+  const card = (key: string) => indexOf(key) >= 0 ? renderWidget(key, indexOf(key)) : null;
+  const group = (keys: string[], className: string) => (
+    <div className={className}>{keys.filter((key) => layout.includes(key)).map((key) => card(key))}</div>
+  );
+
+  // Keep the existing widget manager available in Customize mode.
+  // The normal view returns to each style's bespoke dashboard composition.
+  if (props.customizing) {
+    return <div className="dashboard-customize-layout">{layout.map((key) => card(key))}</div>;
+  }
+
+  // Every theme composes the same user-managed widget set. The visual language
+  // and placement differ by theme, but hidden widgets stay hidden and saved order
+  // remains the source of truth in both normal and Customize views.
+  const themeLayoutClass = {
+    evergreen: "evergreen-widget-layout",
+    "paper-ink": "paper-widget-layout",
+    nocturne: "nocturne-widget-grid",
+    daydream: "daydream-widget-layout",
+    "ember-aurora": "ember-widget-layout",
+  }[style];
+
+  return (
+    <div className={cn("dashboard-composition theme-widget-layout", themeLayoutClass)}>
+      {layout.map((key) => card(key))}
+    </div>
+  );
+}
+
+function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
+  const open = ctx.tasks.filter((t) => t.status !== "done");
+  const today = open.filter(isForToday);
+  const overdue = open.filter(isOverdue);
+  const next = open.filter((t) => isUpcoming(t, 14)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
+  const lead = next[0] ?? today[0];
+  return (
+    <section className="paper-edition" aria-label="Daily academic edition">
+      <div className="paper-edition-masthead"><span>THE STUDYOS REVIEW</span><span>{format(new Date(),"EEEE · MMMM d, yyyy")}</span><span>VOL. 01 / DAILY</span></div>
+      <div className="paper-edition-title"><span>YOUR ACADEMIC DAILY</span><h2>Today, in focus.</h2><p>A clear account of what matters, what is next, and what can wait.</p></div>
+      <div className="paper-edition-grid">
+        <aside className="paper-edition-brief">
+          <span className="paper-edition-label">THE BRIEF</span>
+          <strong>{String(today.length).padStart(2,"0")}</strong><p>items on today's agenda</p>
+          <hr/><strong>{String(overdue.length).padStart(2,"0")}</strong><p>items requiring attention</p>
+          <hr/><strong>{String(ctx.courses.filter(c=>!c.archived).length).padStart(2,"0")}</strong><p>active courses</p>
+        </aside>
+        <article className="paper-edition-lead">
+          <span className="paper-edition-label">LEAD STORY / NEXT DEADLINE</span>
+          {lead ? <><h3>{lead.title}</h3><p>{ctx.courseMap.get(lead.course_id ?? "")?.name ?? "Independent work"} · {lead.due_at ? format(new Date(lead.due_at),"EEEE, MMMM d · h:mm a") : "No due time recorded"}</p><button onClick={()=>ctx.onOpen(lead)}>Open assignment ↗</button></> : <><h3>Room to think.</h3><p>No immediate deadlines are on the horizon. Use the space to get ahead.</p></>}
+        </article>
+        <div className="paper-edition-column"><span className="paper-edition-label">TODAY'S REGISTER</span>{today.length ? today.slice(0,5).map(t=><button className="paper-edition-line" key={t.id} onClick={()=>ctx.onOpen(t)}><span>{t.title}</span><small>{ctx.courseMap.get(t.course_id ?? "")?.code ?? "PERSONAL"}</small></button>) : <p className="paper-edition-empty">No planned work today.</p>}</div>
+        <div className="paper-edition-column"><span className="paper-edition-label">COMING UP</span>{next.slice(0,5).map(t=><button className="paper-edition-line" key={t.id} onClick={()=>ctx.onOpen(t)}><span>{t.title}</span><small>{t.due_at ? format(new Date(t.due_at),"MMM d") : "UNDATED"}</small></button>)}{!next.length&&<p className="paper-edition-empty">No upcoming deadlines.</p>}</div>
+      </div>
+      <div className="paper-edition-footer"><span>QUICK NOTE</span><QuickCapture /><span>END OF BRIEFING</span></div>
+    </section>
+  );
+}
+
+function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
+  const open=ctx.tasks.filter(t=>t.status!=="done");
+  const today=open.filter(isForToday);
+  const upcoming=open.filter(t=>isUpcoming(t,7)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
+  const progress = todayProgress(ctx.tasks);
+  const pct = Math.round(progress.completionRatio * 100);
+  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(new Date()),i));
+  return (
+    <section className="daydream-dashboard" aria-label="Creative study dashboard">
+      <div className="daydream-welcome"><div><span className="daydream-sticker">TODAY'S PROGRESS</span><h2>Make today<br/><em>count.</em></h2><p>Your week is yours to shape. Pick a starting point and build some momentum.</p></div><div className="daydream-progress-orbit"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48"/><circle className="daydream-progress-ring" cx="60" cy="60" r="48" style={{strokeDasharray:`${pct/100*302} 302`}}/></svg><strong>{pct}%</strong><span>completed today</span></div></div>
+      <div className="daydream-week"><div className="daydream-section-title"><span>YOUR WEEK, IN COLOR</span><small>7 DAY VIEW</small></div><div className="daydream-day-row">{days.map((day,i)=>{const count=open.filter(t=>t.due_at&&isSameDay(new Date(t.due_at),day)).length;return <div className={cn("daydream-day",i===0&&"is-today")} key={day.toISOString()}><small>{format(day,"EEE")}</small><strong>{format(day,"d")}</strong><i style={{transform:`scaleX(${Math.min(1,count/4)})`}}/><span>{count||"—"}</span></div>})}</div></div>
+      <div className="daydream-board"><div className="daydream-board-main"><div className="daydream-section-title"><span>START HERE</span><small>{today.length} ON YOUR LIST</small></div>{today.length?today.slice(0,4).map((t,i)=><button key={t.id} className={`daydream-task-card daydream-task-${i%4}`} onClick={()=>ctx.onOpen(t)}><span>{ctx.courseMap.get(t.course_id??"")?.code??"PERSONAL"}</span><strong>{t.title}</strong><small>Open task ↗</small></button>):<div className="daydream-empty">Your slate is clear. Add something you want to make progress on.</div>}</div><aside className="daydream-next"><div className="daydream-section-title"><span>ON THE HORIZON</span></div>{upcoming.slice(0,5).map(t=><button key={t.id} onClick={()=>ctx.onOpen(t)}><span>{t.due_at?format(new Date(t.due_at),"MMM d"):"Anytime"}</span><strong>{t.title}</strong></button>)}{!upcoming.length&&<p>Nothing due soon. Enjoy the breathing room.</p>}</aside></div>
+      <div className="daydream-capture"><span>DON'T LOSE THE IDEA</span><QuickCapture /></div>
+    </section>
+  );
+}
+
+function EmberAuroraDashboard({ ctx }: { ctx: Ctx }) {
+  const open=ctx.tasks.filter(t=>t.status!=="done");
+  const today=open.filter(isForToday);
+  const upcoming=open.filter(t=>isUpcoming(t,14)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??"")).slice(0,6);
+  const done=ctx.tasks.length-open.length;
+  const pct=ctx.tasks.length?Math.round(done/ctx.tasks.length*100):0;
+  return (
+    <section className="ember-aurora-dashboard" aria-label="Aurora workspace">
+      <div className="ember-aurora-surface">
+        <div className="ember-aurora-copy"><span>YOUR SPACE / A MOMENT TO RESET</span><h2>Find your<br/><i>flow.</i></h2><p>A calm overview of your academic world, with the next right thing close at hand.</p><div className="ember-aurora-actions"><span>{today.length} things planned today</span><span>{upcoming.length} approaching</span></div></div>
+        <div className="ember-aurora-orbit"><div className="ember-orbit orbit-one"/><div className="ember-orbit orbit-two"/><div className="ember-orbit-core"><strong>{pct}%</strong><span>completed</span></div></div>
+      </div>
+      <div className="ember-aurora-layout">
+        <main className="ember-aurora-timeline"><div className="ember-aurora-heading"><span>THE NEXT FEW STEPS</span><small>YOUR TIMELINE</small></div>{upcoming.length?upcoming.map((t,i)=><button className="ember-timeline-item" key={t.id} onClick={()=>ctx.onOpen(t)}><i/><time>{t.due_at?format(new Date(t.due_at),"MMM d · h:mm a"):"FLEXIBLE"}</time><strong>{t.title}</strong><small>{ctx.courseMap.get(t.course_id??"")?.name??"Personal work"}</small></button>):<p className="ember-aurora-empty">Your timeline is open. Add a task whenever you're ready.</p>}</main>
+        <aside className="ember-aurora-side"><div className="ember-aurora-glass-card"><span>ACTIVE COURSES</span><strong>{ctx.courses.filter(c=>!c.archived).length.toString().padStart(2,"0")}</strong><div className="ember-course-cloud">{ctx.courses.filter(c=>!c.archived).slice(0,6).map(course=><span key={course.id}>{course.code||course.name}</span>)}</div></div><div className="ember-aurora-glass-card"><span>TODAY'S FOCUS</span><strong>{today.length.toString().padStart(2,"0")}</strong><p>{today[0]?.title??"A little room to get ahead."}</p></div><div className="ember-aurora-quick"><span>CAPTURE A THOUGHT</span><QuickCapture /></div></aside>
+      </div>
+    </section>
+  );
+}
+
+function NocturneControlDeck({ tasks, courses }: { tasks: Task[]; courses: Course[] }) {
+  const openTasks = tasks.filter((task) => task.status !== "done");
+  const todayKey = toDateKey(new Date());
+  const progress = todayProgress(tasks);
+  const completedToday = progress.completed;
+  const planned = progress.remaining;
+  const todayTotal = progress.total;
+  const dueSoon = openTasks.filter((task) => isUpcoming(task, 7)).length;
+  const overdue = openTasks.filter((task) => isOverdue(task)).length;
+  const completion = Math.round(progress.completionRatio * 100);
+  const activeCourses = courses.filter((course) => !course.archived).length;
+  // Radar tracks planned work sessions first; actual deadline is the fallback
+  // for tasks that do not have a separate work-on date.
+  const radarEnd = toDateKey(addDays(startOfDay(new Date()), 30));
+  const radarItems = openTasks
+    .map((task) => ({
+      task,
+      workDate: task.planned_date ?? (task.due_at ? toDateKey(new Date(task.due_at)) : null),
+    }))
+    .filter((item) => !!item.workDate && item.workDate >= todayKey && item.workDate <= radarEnd)
+    .sort((a, b) => (a.workDate ?? "").localeCompare(b.workDate ?? ""))
+    .slice(0, 5);
+
+  return (
+    <section className="nocturne-control-deck" aria-label="Academic operations control center">
+      <div className="nocturne-console-topline">
+        <div>
+          <p className="nocturne-eyebrow">STUDYOS / OPERATIONS</p>
+          <h2>Control center<span>_</span></h2>
+          <p className="nocturne-console-subtitle">A live overview of your academic workload.</p>
+        </div>
+        <div className="nocturne-system-status"><i /> SYSTEM ONLINE <span>LOCAL DATA</span></div>
+      </div>
+
+      <div className="nocturne-instrument-grid">
+        <InstrumentGauge label="Completion today" value={`${completion}%`} detail={`${completedToday} of ${todayTotal} today`} ratio={completion / 100} tone="gold" />
+        <InstrumentGauge label="Today's queue" value={String(planned)} detail="remaining today" ratio={progress.remainingRatio} tone="blue" />
+        <InstrumentGauge label="Due soon" value={String(dueSoon)} detail="next 7 days" ratio={openTasks.length ? dueSoon / openTasks.length : 0} tone="teal" />
+        <InstrumentGauge label="Overdue" value={String(overdue)} detail="open items" ratio={openTasks.length ? overdue / openTasks.length : 0} tone="alert" />
+        <div className="nocturne-course-instrument">
+          <div className="nocturne-panel-heading"><span>COURSE NETWORK</span><span>ACTIVE</span></div>
+          <div className="nocturne-course-value">{activeCourses.toString().padStart(2, "0")}<small> COURSES</small></div>
+          <div className="nocturne-course-track">{courses.filter((course) => !course.archived).slice(0, 8).map((course) => <i key={course.id} title={course.code || course.name} />)}</div>
+          <p>Active courses in your workspace</p>
+        </div>
+      </div>
+
+      <div className="nocturne-deadline-panel">
+        <div className="nocturne-panel-heading"><span>WORK SESSION RADAR</span><span>NEXT 30 DAYS</span></div>
+        {radarItems.length ? (
+          <div className="nocturne-deadline-list">
+            {radarItems.map(({ task, workDate }, index) => (
+              <div className="nocturne-deadline-row" key={task.id}>
+                <span className="nocturne-radar-index">{String(index + 1).padStart(2, "0")}</span>
+                <span className="nocturne-radar-dot" />
+                <span className="nocturne-deadline-name">{task.title}</span>
+                <span className="nocturne-deadline-type">{task.task_type}</span>
+                <time>{format(new Date(workDate + "T12:00:00"), "MMM d")}{task.due_at && task.planned_date ? " · deadline " + format(new Date(task.due_at), "MMM d") : ""}</time>
+              </div>
+            ))}
           </div>
-        ))}
-        {!layout.length && (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground md:col-span-2">
-            <Eye className="mx-auto mb-2 size-5" /> Your dashboard is empty. Click Customize to add widgets.
-          </div>
+        ) : (
+          <p className="nocturne-empty-radar">No planned work sessions in the next 30 days.</p>
         )}
       </div>
-      <TaskDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} task={editing} />
+    </section>
+  );
+}
+
+function InstrumentGauge({ label, value, detail, ratio, tone }: { label: string; value: string; detail: string; ratio: number; tone: "gold" | "blue" | "teal" | "alert" }) {
+  const circumference = 2 * Math.PI * 39;
+  const progress = Math.max(0, Math.min(1, ratio));
+  return (
+    <div className={`nocturne-gauge nocturne-gauge-${tone}`}>
+      <div className="nocturne-gauge-top"><span>{label}</span><span className="nocturne-gauge-live">LIVE</span></div>
+      <div className="nocturne-gauge-body">
+        <svg viewBox="0 0 100 100" role="img" aria-label={`${label}: ${value}`}>
+          <circle className="nocturne-gauge-track" cx="50" cy="50" r="39" />
+          <circle className="nocturne-gauge-progress" cx="50" cy="50" r="39" strokeDasharray={`${progress * circumference} ${circumference}`} />
+        </svg>
+        <div className="nocturne-gauge-reading"><strong>{value}</strong><span>{detail}</span></div>
+      </div>
     </div>
   );
 }
@@ -266,31 +481,23 @@ function RecentCourses({ courses }: { courses: Course[] }) {
   );
 }
 
-function Gauge({ value, label, sub, tone }: { value: number; label: string; sub: string; tone?: "warn" | "danger" | undefined }) {
+function Gauge({ value, label, sub }: { value: number; label: string; sub: string }) {
   const id = "g" + useId().replace(/[^a-zA-Z0-9]/g, "");
-  const r = 42;
-  const c = 2 * Math.PI * r;
-  const sweep = (c * 240) / 360;
-  const v = Math.max(0, Math.min(1, value));
-  const [from, to] = tone === "danger" ? ["var(--destructive)", "var(--destructive)"] : tone === "warn" ? ["var(--warning)", "var(--destructive)"] : ["var(--primary)", "var(--course-pink)"];
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const sweep = (circumference * 240) / 360;
+  const progress = Math.max(0, Math.min(1, value));
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative size-28">
-        <svg viewBox="0 0 100 100" className="size-full" aria-hidden="true">
-          <defs>
-            <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor={from} />
-              <stop offset="1" stopColor={to} />
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" className="text-foreground/10" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${sweep} ${c}`} transform="rotate(150 50 50)" />
-          <circle cx="50" cy="50" r={r} fill="none" stroke={`url(#${id})`} strokeWidth="6" strokeLinecap="round" opacity={v ? 1 : 0} strokeDasharray={`${sweep * v} ${c}`} transform="rotate(150 50 50)" style={{ transition: "stroke-dasharray 0.6s ease" }} />
+    <div className="dashboard-summary-gauge">
+      <div className="dashboard-summary-gauge-dial">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--primary)" /><stop offset="1" stopColor="var(--course-teal)" /></linearGradient></defs>
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="currentColor" className="text-foreground/10" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${sweep} ${circumference}`} transform="rotate(150 50 50)" />
+          <circle cx="50" cy="50" r={radius} fill="none" stroke={`url(#${id})`} strokeWidth="6" strokeLinecap="round" opacity={progress ? 1 : 0} strokeDasharray={`${sweep * progress} ${circumference}`} transform="rotate(150 50 50)" />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center pb-1">
-          <span className="font-display text-2xl leading-none">{label}</span>
-        </div>
+        <strong>{label}</strong>
       </div>
-      <p className="-mt-3 text-xs text-muted-foreground">{sub}</p>
+      <span>{sub}</span>
     </div>
   );
 }

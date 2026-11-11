@@ -35,8 +35,8 @@ function TasksPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="mr-auto text-3xl font-bold">Tasks</h1>
+      <div className="page-intro mb-8 flex flex-wrap items-end gap-3 border-b border-border/70 pb-6">
+        <div className="mr-auto"><p className="overline-label mb-2">THE WORKBENCH</p><h1 className="text-5xl font-semibold">Tasks<span className="text-primary">.</span></h1><p className="mt-2 text-sm text-muted-foreground">Everything on your plate, brought into focus.</p></div>
         <div className="flex rounded-lg bg-muted p-0.5">
           {VIEWS.map(({ id, label, icon: Icon }) => (
             <Button key={id} variant="ghost" aria-label={label} aria-pressed={view === id} onClick={() => setView(id)} className={cn("h-auto items-center gap-1.5 rounded-md px-3 py-1.5 text-sm", view === id ? "bg-card font-medium shadow-sm" : "text-muted-foreground")}>

@@ -1,7 +1,76 @@
 import { describe, expect, it } from "vitest";
-import { calendarDays, isForToday, isOverdue, isUpcoming, nextOccurrence, weeklyWorkload } from "@/lib/task-utils";
+import {
+  calendarDays,
+  isForToday,
+  isOverdue,
+  isUpcoming,
+  nextOccurrence,
+  todayProgress,
+  weeklyWorkload,
+} from "@/lib/task-utils";
 
 const now = new Date(2026, 10, 4, 12, 0); // Wed Nov 4 2026 noon local
+
+describe("today progress", () => {
+  it("shows a full remaining-work ring when both of today's tasks are unfinished", () => {
+    const tasks = [
+      { status: "todo", due_at: null, planned_date: "2026-11-04" },
+      { status: "in_progress", due_at: null, planned_date: "2026-11-04" },
+    ];
+    expect(todayProgress(tasks, now)).toEqual({
+      completed: 0,
+      remaining: 2,
+      total: 2,
+      completionRatio: 0,
+      remainingRatio: 1,
+    });
+  });
+
+  it("splits today's progress evenly when one of two scheduled tasks is completed today", () => {
+    const tasks = [
+      {
+        status: "done",
+        due_at: null,
+        planned_date: "2026-11-04",
+        completed_at: new Date(2026, 10, 4, 10).toISOString(),
+      },
+      { status: "todo", due_at: null, planned_date: "2026-11-04", completed_at: null },
+    ];
+    expect(todayProgress(tasks, now)).toEqual({
+      completed: 1,
+      remaining: 1,
+      total: 2,
+      completionRatio: 0.5,
+      remainingRatio: 0.5,
+    });
+  });
+
+  it("removes a task from today's gauge when its work date is moved to tomorrow", () => {
+    const tasks = [
+      { status: "todo", due_at: new Date(2026, 10, 7, 23, 59).toISOString(), planned_date: "2026-11-04" },
+      { status: "todo", due_at: new Date(2026, 10, 7, 23, 59).toISOString(), planned_date: "2026-11-05" },
+    ];
+    expect(todayProgress(tasks, now)).toMatchObject({
+      completed: 0,
+      remaining: 1,
+      total: 1,
+      completionRatio: 0,
+      remainingRatio: 1,
+    });
+  });
+
+  it("does not count work completed on a different day in today's gauge", () => {
+    const tasks = [
+      {
+        status: "done",
+        due_at: null,
+        planned_date: "2026-11-04",
+        completed_at: new Date(2026, 10, 3, 23).toISOString(),
+      },
+    ];
+    expect(todayProgress(tasks, now).total).toBe(0);
+  });
+});
 
 describe("dual dates", () => {
   it("a task due Friday but planned for today shows in Today", () => {
