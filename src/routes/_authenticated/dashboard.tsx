@@ -163,7 +163,7 @@ function Dashboard() {
           <Eye className="mx-auto mb-2 size-5" /> Your dashboard is empty. Click Customize to add widgets.
         </div>
       )}
-      <TaskDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} task={editing} />
+      {editing && <TaskDialog open={true} onOpenChange={(o) => !o && setEditing(null)} task={editing} />}
     </div>
   );
 }
