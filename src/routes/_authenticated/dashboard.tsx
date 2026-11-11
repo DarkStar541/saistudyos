@@ -245,15 +245,15 @@ function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
 
 function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
   const open=ctx.tasks.filter(t=>t.status!=="done");
-  const today=open.filter(isForToday);
+  const today=open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
   const upcoming=open.filter(t=>isUpcoming(t,7)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
-  const progress = todayProgress(ctx.tasks);
+  const progress = todayProgress(ctx.tasks, new Date(), ctx.timeZone);
   const pct = Math.round(progress.completionRatio * 100);
-  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(new Date()),i));
+  const todayKey = dateKeyInTimeZone(new Date(), ctx.timeZone);\n  const [year, month, day] = todayKey.split("-").map(Number);\n  const todayDate = new Date(year, month - 1, day);\n  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(todayDate),i));
   return (
     <section className="daydream-dashboard" aria-label="Creative study dashboard">
       <div className="daydream-welcome"><div><span className="daydream-sticker">TODAY'S PROGRESS</span><h2>Make today<br/><em>count.</em></h2><p>Your week is yours to shape. Pick a starting point and build some momentum.</p></div><div className="daydream-progress-orbit"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48"/><circle className="daydream-progress-ring" cx="60" cy="60" r="48" style={{strokeDasharray:`${pct/100*302} 302`}}/></svg><strong>{pct}%</strong><span>completed today</span></div></div>
-      <div className="daydream-week"><div className="daydream-section-title"><span>YOUR WEEK, IN COLOR</span><small>7 DAY VIEW</small></div><div className="daydream-day-row">{days.map((day,i)=>{const count=open.filter(t=>t.due_at&&isSameDay(new Date(t.due_at),day)).length;return <div className={cn("daydream-day",i===0&&"is-today")} key={day.toISOString()}><small>{format(day,"EEE")}</small><strong>{format(day,"d")}</strong><i style={{transform:`scaleX(${Math.min(1,count/4)})`}}/><span>{count||"—"}</span></div>})}</div></div>
+      <div className="daydream-week"><div className="daydream-section-title"><span>YOUR WEEK, IN COLOR</span><small>7 DAY VIEW</small></div><div className="daydream-day-row">{days.map((day,i)=>{const count=open.filter(t=>t.due_at&&dateKeyInTimeZone(new Date(t.due_at),ctx.timeZone)===toDateKey(day)).length;return <div className={cn("daydream-day",i===0&&"is-today")} key={day.toISOString()}><small>{format(day,"EEE")}</small><strong>{format(day,"d")}</strong><i style={{transform:`scaleX(${Math.min(1,count/4)})`}}/><span>{count||"—"}</span></div>})}</div></div>
       <div className="daydream-board"><div className="daydream-board-main"><div className="daydream-section-title"><span>START HERE</span><small>{today.length} ON YOUR LIST</small></div>{today.length?today.slice(0,4).map((t,i)=><button key={t.id} className={`daydream-task-card daydream-task-${i%4}`} onClick={()=>ctx.onOpen(t)}><span>{ctx.courseMap.get(t.course_id??"")?.code??"PERSONAL"}</span><strong>{t.title}</strong><small>Open task ↗</small></button>):<div className="daydream-empty">Your slate is clear. Add something you want to make progress on.</div>}</div><aside className="daydream-next"><div className="daydream-section-title"><span>ON THE HORIZON</span></div>{upcoming.slice(0,5).map(t=><button key={t.id} onClick={()=>ctx.onOpen(t)}><span>{t.due_at?format(new Date(t.due_at),"MMM d"):"Anytime"}</span><strong>{t.title}</strong></button>)}{!upcoming.length&&<p>Nothing due soon. Enjoy the breathing room.</p>}</aside></div>
       <div className="daydream-capture"><span>DON'T LOSE THE IDEA</span><QuickCapture /></div>
     </section>
