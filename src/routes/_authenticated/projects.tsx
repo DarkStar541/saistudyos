@@ -156,9 +156,10 @@ function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
           <div className="space-y-1"><Label className="text-xs">Name</Label><Input autoFocus value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="History research paper" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-xs">Course</Label>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={f.course_id} onChange={(e) => setF({ ...f, course_id: e.target.value })}>
-                <option value="">None</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select></div>
+              <Select value={f.course_id || "__none__"} onValueChange={(value) => setF({ ...f, course_id: value === "__none__" ? "" : value })}>
+                <SelectTrigger className="h-9 w-full"><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">None</SelectItem>{courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select></div>
             <div className="space-y-1"><Label className="text-xs">Final deadline</Label><DatePicker value={f.due} onChange={(value) => setF({ ...f, due: value })} placeholder="Final deadline" /></div>
           </div>
           <div className="space-y-1"><Label className="text-xs">Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
