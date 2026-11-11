@@ -1663,3 +1663,85 @@ html.theme-ember-aurora .app-mobile-add {
   background:linear-gradient(110deg,var(--primary),oklch(.72 .17 350)) !important;
   color:var(--primary-foreground) !important;
 }
+
+
+/* Stage 3 design foundation: page-level art direction shared across modules. */
+.page-intro {
+  position: relative;
+  min-width: 0;
+  isolation: isolate;
+}
+.page-intro > div:first-child { min-width: min(100%, 18rem); }
+.page-intro h1 {
+  max-width: 100%;
+  font-size: clamp(2.65rem, 5vw, 4.15rem);
+  line-height: .98;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+.page-intro > div:first-child > p:last-child {
+  max-width: 42rem;
+  line-height: 1.6;
+}
+.course-card {
+  min-width: 0;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.course-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+.task-calendar { min-width: 0; }
+.task-calendar [aria-label][class*="min-h-"] { min-width: 0; overflow-wrap: anywhere; }
+.page-section { min-width: 0; }
+html.theme-evergreen .page-intro {
+  border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+}
+html.theme-paper-ink .page-intro {
+  border-bottom: 3px double var(--foreground);
+}
+html.theme-paper-ink .page-intro h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+html.theme-nocturne .page-intro {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border));
+  border-radius: .8rem;
+  background: linear-gradient(115deg, color-mix(in oklab, var(--card) 94%, var(--primary)), var(--card));
+}
+html.theme-nocturne .page-intro .overline-label {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: .18em;
+}
+html.theme-daydream .page-intro {
+  padding: clamp(1rem, 2.5vw, 1.7rem);
+  border: 0;
+  border-radius: 1.5rem 1.5rem 1.5rem .45rem;
+  background: linear-gradient(125deg, color-mix(in oklab, var(--card) 94%, var(--course-purple)), color-mix(in oklab, var(--card) 90%, var(--course-orange)));
+}
+html.theme-daydream .page-intro h1 { letter-spacing: -.045em; }
+html.theme-ember-aurora .page-intro {
+  padding: clamp(1rem, 2.5vw, 1.7rem);
+  border: 1px solid color-mix(in oklab, var(--course-purple) 25%, var(--border));
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(ellipse at 100% 0%, color-mix(in oklab, var(--course-purple) 12%, transparent), transparent 48%),
+    linear-gradient(130deg, color-mix(in oklab, var(--card) 94%, var(--course-orange)), color-mix(in oklab, var(--card) 96%, var(--course-purple)));
+  box-shadow: var(--shadow-card);
+}
+html.theme-paper-ink .task-calendar { border-radius: 0; box-shadow: none; }
+html.theme-nocturne .task-calendar {
+  border-color: color-mix(in oklab, var(--primary) 25%, var(--border));
+  background: color-mix(in oklab, var(--card) 94%, var(--primary));
+}
+html.theme-daydream .task-calendar { border: 0; border-radius: 1.4rem; }
+html.theme-ember-aurora .task-calendar {
+  border-color: color-mix(in oklab, var(--course-purple) 24%, var(--border));
+  background: color-mix(in oklab, var(--card) 94%, var(--course-purple));
+}
+@media (max-width: 640px) {
+  .page-intro h1 { font-size: clamp(2.35rem, 12vw, 3.3rem); }
+  .page-intro { align-items: flex-start; }
+  .task-calendar { overflow-x: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card { transition: none; }
+}
