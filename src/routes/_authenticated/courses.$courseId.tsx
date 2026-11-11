@@ -105,7 +105,7 @@ function CoursePage() {
       </div>
 
       <CourseDialog open={edit} onOpenChange={setEdit} course={course} />
-      <TaskDialog open={!!taskOpen || !!editing} onOpenChange={(o) => { if (!o) { setTaskOpen(null); setEditing(null); } }} task={editing} defaults={{ course_id: course.id, task_type: taskOpen ?? "assignment" }} />
+      {(taskOpen || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(null); setEditing(null); } }} task={editing} defaults={{ course_id: course.id, task_type: taskOpen ?? "assignment" }} />}
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
           <AlertDialogHeader>
