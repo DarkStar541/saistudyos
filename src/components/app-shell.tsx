@@ -16,15 +16,10 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-const EMBER = { background: "linear-gradient(110deg, var(--primary), oklch(0.72 0.17 350))" };
-
 function Wordmark() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 px-2">
-      <span
-        className="grid size-8 place-items-center rounded-lg font-display text-base font-semibold text-primary-foreground shadow-card"
-        style={EMBER}
-      >
+      <span className="app-wordmark-mark grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-semibold text-primary-foreground shadow-card">
         S
       </span>
       <span className="font-display text-2xl font-normal italic tracking-tight">StudyOS</span>
@@ -40,6 +35,15 @@ export function AppShell() {
 
   useEffect(() => {
     if (profile?.theme) applyTheme(profile.theme);
+  }, [profile?.theme]);
+
+  // Keep system mode in sync if the operating system theme changes mid-session.
+  useEffect(() => {
+    if (profile?.theme !== "system") return undefined;
+    const preference = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => applyTheme("system");
+    preference.addEventListener("change", sync);
+    return () => preference.removeEventListener("change", sync);
   }, [profile?.theme]);
 
   // Keyboard shortcut: "n" opens new task (ignored while typing).
@@ -66,21 +70,21 @@ export function AppShell() {
   const initial = (profile?.display_name ?? "S").trim().charAt(0).toUpperCase() || "S";
 
   return (
-    <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 backdrop-blur-xl md:flex">
+    <div className="min-h-screen bg-background">
+      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[17rem] flex-col px-5 py-7 md:flex">
         <Wordmark />
-        <Button className="mt-8 justify-start gap-2 shadow-card" style={EMBER} onClick={() => setAddOpen(true)}>
+        <Button className="app-new-task-button mt-9 h-11 justify-start gap-2 rounded-xl shadow-card" onClick={() => setAddOpen(true)}>
           <Plus className="size-4" /> New task
           <kbd className="ml-auto rounded bg-primary-foreground/20 px-1.5 text-xs">N</kbd>
         </Button>
-        <p className="overline-label mt-8 px-3">Workspace</p>
-        <nav className="mt-2 flex flex-1 flex-col gap-0.5">
+        <div className="mt-12 mb-2 px-3"><p className="overline-label">Your space</p><p className="mt-1 text-xs text-sidebar-foreground/50">A calmer way to get things done</p></div>
+        <nav className="mt-3 flex flex-1 flex-col gap-1">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-              activeProps={{ className: "bg-sidebar-accent font-semibold text-sidebar-accent-foreground ring-1 ring-primary/25" }}
+              className="app-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+              activeProps={{ className: "bg-sidebar-accent font-semibold text-sidebar-accent-foreground" }}
             >
               <Icon className="size-4" /> {label}
             </Link>
@@ -101,8 +105,8 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="pb-24 md:pb-0 md:pl-64">
-        <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
+      <main className="page-wash pb-24 md:pb-0 md:pl-[17rem]">
+        <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-10 md:py-10 xl:px-14">
           <Outlet />
         </div>
       </main>
@@ -111,12 +115,11 @@ export function AppShell() {
       <button
         aria-label="New task"
         onClick={() => setAddOpen(true)}
-        className="fixed bottom-20 right-4 z-30 grid size-14 place-items-center rounded-full text-primary-foreground shadow-lift md:hidden"
-        style={EMBER}
+        className="app-mobile-add fixed bottom-20 right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lift md:hidden"
       >
         <Plus className="size-6" />
       </button>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-sidebar backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground" activeProps={{ className: "font-semibold text-primary" }}>
             <Icon className="size-5" /> {label}
