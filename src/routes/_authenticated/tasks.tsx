@@ -5,6 +5,7 @@ import { useCourses, useProfile, useTasks, type Task } from "@/lib/db";
 import { TaskDialog } from "@/components/task-dialog";
 import { BoardView, CalendarView, ListView } from "@/components/task-views";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
@@ -47,10 +48,13 @@ function TasksPage() {
         <Button onClick={() => setCreating(true)}><Plus className="size-4" /> New</Button>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-        <select className="h-9 rounded-md border border-input bg-background px-2" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)}>
-          <option value="">All courses</option>
-          {courses.map((c) => <option key={c.id} value={c.id}>{c.code || c.name}</option>)}
-        </select>
+        <Select value={courseFilter || "__all__"} onValueChange={(value) => setCourseFilter(value === "__all__" ? "" : value)}>
+          <SelectTrigger className="h-9 w-[min(100%,15rem)]"><SelectValue placeholder="All courses" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All courses</SelectItem>
+            {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
         {view !== "board" && (
           <label className="flex items-center gap-2 text-muted-foreground">
             <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Show completed
