@@ -32,12 +32,21 @@ function ProjectsPage() {
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
   const tasksByProject = useMemo(() => {
     const grouped = new Map<string, Task[]>();
-    for (const task of tasks) if (task.project_id) grouped.set(task.project_id, [...(grouped.get(task.project_id) ?? []), task]);
+    for (const task of tasks) {
+      if (!task.project_id) continue;
+      const bucket = grouped.get(task.project_id) ?? [];
+      bucket.push(task);
+      grouped.set(task.project_id, bucket);
+    }
     return grouped;
   }, [tasks]);
   const milestonesByProject = useMemo(() => {
     const grouped = new Map<string, typeof milestones>();
-    for (const milestone of milestones) grouped.set(milestone.project_id, [...(grouped.get(milestone.project_id) ?? []), milestone]);
+    for (const milestone of milestones) {
+      const bucket = grouped.get(milestone.project_id) ?? [];
+      bucket.push(milestone);
+      grouped.set(milestone.project_id, bucket);
+    }
     return grouped;
   }, [milestones]);
 
