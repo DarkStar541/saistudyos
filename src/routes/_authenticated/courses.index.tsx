@@ -43,7 +43,7 @@ function CoursesPage() {
         {list.map((c) => {
           const open = openTaskCounts.get(c.id) ?? 0;
           return (
-            <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }} className="group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-transform hover:-translate-y-0.5">
+            <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }} className="course-card group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-transform hover:-translate-y-0.5">
               <div className="h-2" style={{ background: colorVar(c.color) }} />
               <div className="p-5">
                 <div className="flex items-start gap-3">
