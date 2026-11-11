@@ -31,8 +31,8 @@ function ProjectsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center">
-        <h1 className="mr-auto text-3xl font-bold">Projects</h1>
+      <div className="page-intro mb-8 flex items-end border-b border-border/70 pb-6">
+        <div className="mr-auto"><p className="overline-label mb-2">LONGER HORIZONS</p><h1 className="text-5xl font-semibold">Projects<span className="text-primary">.</span></h1><p className="mt-2 text-sm text-muted-foreground">Big goals, broken into meaningful next steps.</p></div>
         <Button onClick={() => setCreating(true)}><Plus className="size-4" /> New project</Button>
       </div>
       {!projects.length && (
