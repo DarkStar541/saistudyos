@@ -101,9 +101,9 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
             </div>
           ))}
         </div>
-        <form className="mt-2 flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? new Date(`${date}T23:59`).toISOString() : null, position: ms.length }); setTitle(""); setDate(""); }}>
-          <Input className="h-8" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input className="h-8 w-36" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <form className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? new Date(`${date}T23:59`).toISOString() : null, position: ms.length }); setTitle(""); setDate(""); }}>
+          <Input className="h-9 w-full min-w-0" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input className="h-9 w-full min-w-0" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           <Button size="sm" type="submit">Add</Button>
         </form>
         <div className="mt-6 flex gap-2">
