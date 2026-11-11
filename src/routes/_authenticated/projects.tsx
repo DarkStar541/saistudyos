@@ -30,6 +30,16 @@ function ProjectsPage() {
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
+  const tasksByProject = useMemo(() => {
+    const grouped = new Map<string, Task[]>();
+    for (const task of tasks) if (task.project_id) grouped.set(task.project_id, [...(grouped.get(task.project_id) ?? []), task]);
+    return grouped;
+  }, [tasks]);
+  const milestonesByProject = useMemo(() => {
+    const grouped = new Map<string, typeof milestones>();
+    for (const milestone of milestones) grouped.set(milestone.project_id, [...(grouped.get(milestone.project_id) ?? []), milestone]);
+    return grouped;
+  }, [milestones]);
 
   return (
     <div>
@@ -45,8 +55,8 @@ function ProjectsPage() {
       )}
       <div className="space-y-3">
         {projects.map((p) => {
-          const pt = tasks.filter((t) => t.project_id === p.id);
-          const pm = milestones.filter((m) => m.project_id === p.id);
+          const pt = tasksByProject.get(p.id) ?? [];
+          const pm = milestonesByProject.get(p.id) ?? [];
           const total = pt.length + pm.length;
           const done = pt.filter((t) => t.status === "done").length + pm.filter((m) => m.done).length;
           const course = p.course_id ? courseMap.get(p.course_id) : undefined;
