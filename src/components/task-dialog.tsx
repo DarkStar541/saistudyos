@@ -122,9 +122,20 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
       if (task && applySeries && task.recurrence !== "none") {
         const sid = seriesIdOf(task);
         const seriesPatch = {
-          recurrence: row.recurrence, recurrence_interval: row.recurrence_interval,
-          recurrence_days: row.recurrence_days, recurrence_end: row.recurrence_end,
-          priority: row.priority, estimated_minutes: row.estimated_minutes, course_id: row.course_id,
+          title: row.title,
+          description: row.description,
+          course_id: row.course_id,
+          project_id: row.project_id,
+          milestone_id: row.milestone_id,
+          task_type: row.task_type,
+          priority: row.priority,
+          estimated_minutes: row.estimated_minutes,
+          tags: row.tags,
+          due_at: row.due_at,
+          recurrence: row.recurrence,
+          recurrence_interval: row.recurrence_interval,
+          recurrence_days: row.recurrence_days,
+          recurrence_end: row.recurrence_end,
         };
         // If the edited occurrence is a child, keep the series root in sync too.
         if (task.id !== sid) {
