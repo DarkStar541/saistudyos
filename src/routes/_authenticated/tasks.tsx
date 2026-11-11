@@ -63,7 +63,7 @@ function TasksPage() {
       </div>
       {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
       {view === "board" && <BoardView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
-      {view === "calendar" && <CalendarView tasks={filtered} courses={courseMap} onOpen={setEditing} weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1} />}
+      {view === "calendar" && <CalendarView tasks={filtered} courses={courseMap} onOpen={setEditing} weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1} timeZone={profile?.timezone} />}
       {(creating || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }} task={editing} defaults={courseFilter ? { course_id: courseFilter } : undefined} />}
     </div>
   );
