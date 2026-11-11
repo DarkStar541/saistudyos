@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/date-picker";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -103,13 +105,14 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
         </div>
         <form className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? new Date(`${date}T23:59`).toISOString() : null, position: ms.length }); setTitle(""); setDate(""); }}>
           <Input className="h-9 w-full min-w-0" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input className="h-9 w-full min-w-0" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DatePicker value={date} onChange={setDate} placeholder="Milestone date" className="h-9" />
           <Button size="sm" type="submit">Add</Button>
         </form>
         <div className="mt-6 flex gap-2">
-          <select className="h-8 rounded-md border border-input bg-background px-2 text-sm" value={project.status} onChange={(e) => saveP.mutate({ id: project.id, status: e.target.value })}>
-            <option value="active">Active</option><option value="on_hold">On hold</option><option value="completed">Completed</option>
-          </select>
+          <Select value={project.status} onValueChange={(value) => saveP.mutate({ id: project.id, status: value })}>
+            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="on_hold">On hold</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent>
+          </Select>
           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Delete "${project.name}"? Its tasks are kept.`)) removeP.mutate(project.id); }}><Trash2 className="size-4" /> Delete project</Button>
         </div>
       </div>
@@ -146,7 +149,7 @@ function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={f.course_id} onChange={(e) => setF({ ...f, course_id: e.target.value })}>
                 <option value="">None</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select></div>
-            <div className="space-y-1"><Label className="text-xs">Final deadline</Label><Input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></div>
+            <div className="space-y-1"><Label className="text-xs">Final deadline</Label><DatePicker value={f.due} onChange={(value) => setF({ ...f, due: value })} placeholder="Final deadline" /></div>
           </div>
           <div className="space-y-1"><Label className="text-xs">Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit">Create</Button></div>
