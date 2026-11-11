@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate } from "@/lib/recurrence";
+import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence } from "@/lib/recurrence";
 import { calendarDays } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
 /** Simulate completing each occurrence and collect the whole series. */
-function series(start: T): T[] {
-  const all: T[] = [start];
-  let cur = start;
+function series(start: T[]): T[];
+function series(start: T): T[];
+function series(start: T | T[]): T[] {
+  const initial = Array.isArray(start) ? start : [start];
+  const all: T[] = [...initial];
+  let cur = initial[0];
   for (let i = 0; i < 100; i++) {
     const p = nextInstanceDates(cur, new Date(`${cur.planned_date}T00:00:00`));
     if (!p) break;
-    cur = { ...cur, id: `${start.id}-${i}`, recurrence_parent_id: start.id, ...p };
+    cur = { ...cur, id: `${cur.id}-${i}`, recurrence_parent_id: initial[0].id, ...p };
     all.push(cur);
   }
   return all;
@@ -21,6 +24,30 @@ const base = (o: Partial<T>): T => ({ id: "s", recurrence_parent_id: null, statu
 const dueOn = (d: string) => new Date(`${d}T23:59:00`).toISOString();
 const deadlineDays = (s: T[]) => [...calendarDays(s).entries()].filter(([, e]) => e.deadlines.length).map(([k, e]) => [k, e.deadlines.length]);
 const totalDue = (s: T[]) => [...calendarDays(s).values()].reduce((n, e) => n + e.dueCount, 0);
+
+describe("recurrence intervals and weekday selection", () => {
+  it("keeps selected weekdays in the current eligible week", () => {
+    const rule = { recurrence: "weekly", recurrence_days: [1, 3] };
+    expect(work(series(base({ recurrence: "weekly", recurrence_days: [1, 3] })))).toEqual(["2026-11-09", "2026-11-11", "2026-11-16", "2026-11-18"]);
+    expect(nextOccurrenceDate(rule, new Date(2026, 10, 10))?.getDate()).toBe(11);
+  });
+  it("honors every-N-weeks when weekdays are selected", () => {
+    const rule = { recurrence: "weekly", recurrence_interval: 2, recurrence_days: [1, 3] };
+    const start = new Date(2026, 10, 9);
+    expect(nextOccurrenceDate(rule, start)?.getDate()).toBe(11);
+    expect(nextOccurrenceDate(rule, new Date(2026, 10, 11))?.toDateString()).toBe(new Date(2026, 10, 23).toDateString());
+    expect(describeRecurrence(rule)).toBe("Every 2 weeks on Mon, Wed");
+  });
+  it("deduplicates invalid and repeated weekday values", () => {
+    expect(nextOccurrenceDate({ recurrence: "weekly", recurrence_days: [1, 1, 9, -1] }, new Date(2026, 10, 9))?.getDate()).toBe(16);
+  });
+  it("applies intervals to biweekly recurrence", () => {
+    expect(nextOccurrenceDate({ recurrence: "biweekly", recurrence_interval: 2 }, new Date(2026, 10, 9))?.getDate()).toBe(7);
+  });
+  it("skips missed occurrences without exceeding the recurrence end", () => {
+    expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
+  });
+});
 
 describe("1. deadline only: series ends at the deadline", () => {
   it("daily through the deadline, one red indicator", () => {
