@@ -127,7 +127,7 @@ export function AppShell() {
         ))}
       </nav>
 
-      <TaskDialog open={addOpen} onOpenChange={setAddOpen} />
+      {addOpen && <TaskDialog open={addOpen} onOpenChange={setAddOpen} />}
     </div>
   );
 }
