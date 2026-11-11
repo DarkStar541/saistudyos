@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — StudyOS" }, { name: "description", content: "Profile, theme and task defaults." }, { property: "og:title", content: "Settings — StudyOS" }, { property: "og:description", content: "Profile, theme and task defaults." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -15,7 +16,9 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 const sel = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
-const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["UTC"];
+const zones = typeof Intl.supportedValuesOf === "function"
+  ? Intl.supportedValuesOf("timeZone")
+  : ["UTC", "America/Denver", "America/Los_Angeles", "America/Chicago", "America/New_York", "Europe/London", "Asia/Kolkata"];
 
 const UPCOMING = [
   ["AI Quick Add & Capture Inbox", "Stage 2"],
@@ -41,6 +44,8 @@ function SettingsPage() {
   }, [profile]);
 
   if (!profile) return null;
+  // Keep the saved zone selectable even if the browser omits a legacy IANA alias.
+  const timezoneOptions = [...new Set([...zones, profile.timezone])].filter(Boolean).sort();
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   async function submit(e: React.FormEvent) {
@@ -62,7 +67,7 @@ function SettingsPage() {
           <Row label="Display name"><Input value={f.display_name} onChange={set("display_name")} /></Row>
           <Row label="School"><Input value={f.school} onChange={set("school")} /></Row>
           <Row label="Time zone">
-            <select className={sel} value={f.timezone} onChange={set("timezone")}>{zones.map((z) => <option key={z}>{z}</option>)}</select>
+            <Select value={f.timezone} onValueChange={(value) => setF((p) => ({ ...p, timezone: value }))}><SelectTrigger className={sel}><SelectValue placeholder="Choose a time zone" /></SelectTrigger><SelectContent className="max-h-80">{timezoneOptions.map((z) => <SelectItem key={z} value={z}>{z.replaceAll("_", " ")}</SelectItem>)}</SelectContent></Select>
           </Row>
         </Card>
         <Card title="Appearance">
