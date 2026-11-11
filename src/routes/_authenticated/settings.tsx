@@ -18,7 +18,7 @@ const sel = "h-9 w-full rounded-md border border-input bg-background px-2 text-s
 const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["UTC"];
 
 const UPCOMING = [
-  ["AI Quick Add & Capture Inbox", "Stage 3"],
+  ["AI Quick Add & Capture Inbox", "Stage 2"],
   ["Canvas LMS", "Stage 3"],
   ["Google Calendar", "Stage 3"],
   ["AI Hub & Knowledge Library", "Stage 4"],
@@ -29,14 +29,14 @@ function SettingsPage() {
   const save = useSave("profiles");
   const [visualStyle, setVisualStyle] = useState<VisualStyle>("evergreen");
   useEffect(() => { setVisualStyle(getSavedStyle()); }, []);
-  const [f, setF] = useState({ display_name: "", school: "", timezone: "UTC", theme: "system", default_task_view: "list", default_priority: "medium", default_duration_minutes: "60", focus_minutes: "25", short_break_minutes: "5", long_break_minutes: "15", long_break_every: "4", week_starts_on: "1" });
+  const [f, setF] = useState({ display_name: "", school: "", timezone: "UTC", theme: "system", default_task_view: "list", default_priority: "medium", default_duration_minutes: "60", week_starts_on: "1" });
 
   useEffect(() => {
     if (!profile) return;
     setF({
       display_name: profile.display_name ?? "", school: profile.school ?? "", timezone: profile.timezone, theme: profile.theme,
       default_task_view: profile.default_task_view, default_priority: profile.default_priority,
-      default_duration_minutes: String(profile.default_duration_minutes), focus_minutes: String(profile.focus_minutes), short_break_minutes: String(profile.short_break_minutes), long_break_minutes: String(profile.long_break_minutes), long_break_every: String(profile.long_break_every), week_starts_on: String(profile.week_starts_on),
+      default_duration_minutes: String(profile.default_duration_minutes), week_starts_on: String(profile.week_starts_on),
     });
   }, [profile]);
 
@@ -48,7 +48,7 @@ function SettingsPage() {
     await save.mutateAsync({
       id: profile!.id, display_name: f.display_name.slice(0, 80) || null, school: f.school.slice(0, 120) || null, timezone: f.timezone,
       theme: f.theme, default_task_view: f.default_task_view, default_priority: f.default_priority,
-      default_duration_minutes: Math.max(5, Math.min(600, parseInt(f.default_duration_minutes) || 60)), focus_minutes: Math.max(5, Math.min(180, parseInt(f.focus_minutes) || 25)), short_break_minutes: Math.max(1, Math.min(60, parseInt(f.short_break_minutes) || 5)), long_break_minutes: Math.max(1, Math.min(90, parseInt(f.long_break_minutes) || 15)), long_break_every: Math.max(2, Math.min(8, parseInt(f.long_break_every) || 4)), week_starts_on: +f.week_starts_on,
+      default_duration_minutes: Math.max(5, Math.min(600, parseInt(f.default_duration_minutes) || 60)), week_starts_on: +f.week_starts_on,
     });
     applyTheme(f.theme);
     toast.success("Settings saved");
@@ -106,12 +106,6 @@ function SettingsPage() {
           <Row label="Week starts on">
             <select className={sel} value={f.week_starts_on} onChange={set("week_starts_on")}><option value="1">Monday</option><option value="0">Sunday</option></select>
           </Row>
-        </Card>
-        <Card title="Focus settings">
-          <Row label="Focus duration (min)"><Input type="number" min={5} max={180} value={f.focus_minutes} onChange={set("focus_minutes")} /></Row>
-          <Row label="Short break (min)"><Input type="number" min={1} max={60} value={f.short_break_minutes} onChange={set("short_break_minutes")} /></Row>
-          <Row label="Long break (min)"><Input type="number" min={1} max={90} value={f.long_break_minutes} onChange={set("long_break_minutes")} /></Row>
-          <Row label="Long break every N focus sessions"><Input type="number" min={2} max={8} value={f.long_break_every} onChange={set("long_break_every")} /></Row>
         </Card>
         <Card title="Task defaults">
           <Row label="Default task view">
