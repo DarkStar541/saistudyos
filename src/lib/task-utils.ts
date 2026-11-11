@@ -1,5 +1,5 @@
 // Pure date/task helpers. "Due" = actual deadline; "planned" = day the student intends to work on it.
-import { addDays, format, isBefore, startOfDay, startOfWeek } from "date-fns";
+import { addDays, format, isBefore, isSameDay, startOfDay, startOfWeek } from "date-fns";
 
 export type TaskLike = {
   status: string;
@@ -9,6 +9,7 @@ export type TaskLike = {
   task_type?: string;
   id?: string;
   recurrence_parent_id?: string | null;
+  completed_at?: string | null;
 };
 
 export const isDone = (t: TaskLike) => t.status === "done";
@@ -69,6 +70,32 @@ export function isForToday(t: TaskLike, now = new Date()) {
   const key = toDateKey(now);
   if (t.planned_date) return t.planned_date <= key && !isOverdue(t, now);
   return !!t.due_at && toDateKey(new Date(t.due_at)) === key && !isOverdue(t, now);
+}
+
+/** Shared progress model for dashboard gauges: completed work counts only when
+ * it was scheduled for today and was actually completed today. */
+export function todayProgress(tasks: TaskLike[], now = new Date()) {
+  const todayKey = toDateKey(now);
+  const completed = tasks.filter((task) => {
+    const scheduledToday =
+      task.planned_date === todayKey ||
+      (!task.planned_date && !!task.due_at && toDateKey(new Date(task.due_at)) === todayKey);
+    return (
+      scheduledToday &&
+      isDone(task) &&
+      !!task.completed_at &&
+      isSameDay(new Date(task.completed_at), now)
+    );
+  }).length;
+  const remaining = tasks.filter((task) => isForToday(task, now)).length;
+  const total = completed + remaining;
+  return {
+    completed,
+    remaining,
+    total,
+    completionRatio: total ? completed / total : 0,
+    remainingRatio: total ? remaining / total : 0,
+  };
 }
 
 export function isUpcoming(t: TaskLike, days = 7, now = new Date()) {
