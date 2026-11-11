@@ -109,15 +109,15 @@ function SettingsPage() {
             </div>
           </div>
           <Row label="Week starts on">
-            <select className={sel} value={f.week_starts_on} onChange={set("week_starts_on")}><option value="1">Monday</option><option value="0">Sunday</option></select>
+            <Select value={f.week_starts_on} onValueChange={(value) => setF((p) => ({ ...p, week_starts_on: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">Monday</SelectItem><SelectItem value="0">Sunday</SelectItem></SelectContent></Select>
           </Row>
         </Card>
         <Card title="Task defaults">
           <Row label="Default task view">
-            <select className={sel} value={f.default_task_view} onChange={set("default_task_view")}><option value="list">List</option><option value="board">Board</option><option value="calendar">Calendar</option></select>
+            <Select value={f.default_task_view} onValueChange={(value) => setF((p) => ({ ...p, default_task_view: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="list">List</SelectItem><SelectItem value="board">Board</SelectItem><SelectItem value="calendar">Calendar</SelectItem></SelectContent></Select>
           </Row>
           <Row label="Default priority">
-            <select className={sel} value={f.default_priority} onChange={set("default_priority")}>{PRIORITIES.map((p) => <option key={p} value={p} className="capitalize">{p}</option>)}</select>
+            <Select value={f.default_priority} onValueChange={(value) => setF((p) => ({ ...p, default_priority: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent></Select>
           </Row>
           <Row label="Default estimate (min)"><Input type="number" min={5} max={600} value={f.default_duration_minutes} onChange={set("default_duration_minutes")} /></Row>
         </Card>
