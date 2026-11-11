@@ -134,7 +134,7 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZon
   const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-3 shadow-card md:p-4">
+    <div className="task-calendar rounded-2xl border border-border bg-card p-3 shadow-card md:p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="text-lg font-semibold">{format(month, "MMMM yyyy")}</h3>
         <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-0.5 text-xs">
