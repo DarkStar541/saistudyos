@@ -11,6 +11,7 @@ import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
 import { CourseIcon } from "@/components/course-icon";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -410,9 +411,10 @@ function QuickCapture() {
     }}>
       <Input placeholder="Write it down before you forget…" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 rounded-xl" />
       <div className="flex gap-2">
-        <select className="h-11 rounded-xl border border-input bg-background px-2 text-sm" value={when} onChange={(e) => setWhen(e.target.value as "today" | "none")}>
-          <option value="today">Work on today</option><option value="none">No date</option>
-        </select>
+        <Select value={when} onValueChange={(value) => setWhen(value as "today" | "none")}>
+          <SelectTrigger className="h-11 w-40 rounded-xl"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="today">Work on today</SelectItem><SelectItem value="none">No date</SelectItem></SelectContent>
+        </Select>
         <Button type="submit" className="h-11 rounded-xl">Add</Button>
       </div>
     </form>
