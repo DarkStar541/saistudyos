@@ -5,7 +5,7 @@ import { addDays, format, isSameDay, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, isDone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, isDone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
@@ -419,13 +419,14 @@ function QuickCapture() {
   );
 }
 
-function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
-  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback, arguments[0].timeZone);
+function Workload({ tasks, weekStartsOn, fallback, timeZone }: Ctx) {
+  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback, timeZone);
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
   const max = Math.max(120, ...days.map((d) => d.minutes));
   return (
     <div className="flex h-36 items-end gap-2 pt-2">
       {days.map((d) => {
-        const today = isSameDay(d.day, new Date());
+        const today = d.key === todayKey;
         return (
           <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
             <span className="font-display text-[11px] font-medium text-muted-foreground">{d.minutes ? `${Math.round((d.minutes / 60) * 10) / 10}h` : ""}</span>
@@ -443,14 +444,17 @@ function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
   );
 }
 
-function WeekStrip({ tasks, courseMap, onOpen }: Ctx) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i));
-  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), arguments[0].timeZone);
+function WeekStrip({ tasks, courseMap, onOpen, timeZone }: Ctx) {
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const [year, month, day] = todayKey.split("-").map(Number);
+  const todayDate = new Date(year, month - 1, day);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(todayDate), i));
+  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), timeZone);
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
         const entry = byDay.get(toDateKey(d));
-        const today = isSameDay(d, new Date());
+        const today = toDateKey(d) === todayKey;
         return (
           <div key={d.toISOString()} className={cn("min-h-24 rounded-xl bg-muted/50 p-2", today && "bg-accent/60 ring-1 ring-primary/40")}>
             <p className={cn("text-xs font-medium", today && "font-semibold text-primary")}>{format(d, "EEE d")}</p>
