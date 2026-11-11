@@ -123,7 +123,7 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
         </div>
         {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
       </div>
-      <TaskDialog open={taskOpen || !!editing} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />
+      {(taskOpen || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />}
     </div>
   );
 }
