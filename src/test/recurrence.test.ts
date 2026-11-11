@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence } from "@/lib/recurrence";
-import { calendarDays } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
@@ -64,6 +64,19 @@ describe("recurrence intervals and weekday selection", () => {
   });
   it("skips missed occurrences without exceeding the recurrence end", () => {
     expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
+  });
+});
+
+describe("saved time zone calendar bucketing", () => {
+  it("places an instant on the correct local calendar day", () => {
+    const instant = new Date("2026-11-12T02:00:00.000Z");
+    expect(dateKeyInTimeZone(instant, "America/Denver")).toBe("2026-11-11");
+  });
+  it("counts a deadline in the selected time zone", () => {
+    const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
+    const days = calendarDays([task], "America/Denver");
+    expect(days.get("2026-11-11")?.dueCount).toBe(1);
+    expect(days.has("2026-11-12")).toBe(false);
   });
 });
 
