@@ -121,38 +121,24 @@ export function isOverdue(t: TaskLike, now = new Date()) {
   return !isDone(t) && !!t.due_at && isBefore(new Date(t.due_at), now);
 }
 
-/** A task belongs to "today" if planned for today, or due today without a different plan. */
-export function isForToday(t: TaskLike, now = new Date()) {
+/** A task belongs to today if planned for today, or due today without a different plan. */
+export function isForToday(t: TaskLike, now = new Date(), timeZone?: string | null) {
   if (isDone(t)) return false;
-  const key = toDateKey(now);
+  const key = dateKeyInTimeZone(now, timeZone);
   if (t.planned_date) return t.planned_date <= key && !isOverdue(t, now);
   return !!t.due_at && dateKeyInTimeZone(new Date(t.due_at), timeZone) === key && !isOverdue(t, now);
 }
 
-/** Shared progress model for dashboard gauges: completed work counts only when
- * it was scheduled for today and was actually completed today. */
-export function todayProgress(tasks: TaskLike[], now = new Date()) {
-  const todayKey = toDateKey(now);
+/** Shared progress model for dashboard gauges: completed work counts only when it was scheduled for today and completed today. */
+export function todayProgress(tasks: TaskLike[], now = new Date(), timeZone?: string | null) {
+  const todayKey = dateKeyInTimeZone(now, timeZone);
   const completed = tasks.filter((task) => {
-    const scheduledToday =
-      task.planned_date === todayKey ||
-      (!task.planned_date && !!task.due_at && dateKeyInTimeZone(new Date(task.due_at), timeZone) === todayKey);
-    return (
-      scheduledToday &&
-      isDone(task) &&
-      !!task.completed_at &&
-      isSameDay(new Date(task.completed_at), now)
-    );
+    const scheduledToday = task.planned_date === todayKey || (!task.planned_date && !!task.due_at && dateKeyInTimeZone(new Date(task.due_at), timeZone) === todayKey);
+    return scheduledToday && isDone(task) && !!task.completed_at && dateKeyInTimeZone(new Date(task.completed_at), timeZone) === todayKey;
   }).length;
   const remaining = tasks.filter((task) => isForToday(task, now, timeZone)).length;
   const total = completed + remaining;
-  return {
-    completed,
-    remaining,
-    total,
-    completionRatio: total ? completed / total : 0,
-    remainingRatio: total ? remaining / total : 0,
-  };
+  return { completed, remaining, total, completionRatio: total ? completed / total : 0, remainingRatio: total ? remaining / total : 0 };
 }
 
 export function isUpcoming(t: TaskLike, days = 7, now = new Date()) {
@@ -162,27 +148,21 @@ export function isUpcoming(t: TaskLike, days = 7, now = new Date()) {
 }
 
 /** The day a task is scheduled on a calendar/workload: planned date wins, otherwise due date. */
-export function workDay(t: TaskLike): Date | null {
-  return parsePlanned(t.planned_date) ?? (t.due_at ? startOfDay(new Date(t.due_at)) : null);
+export function workDay(t: TaskLike, timeZone?: string | null): Date | null {
+  return parsePlanned(t.planned_date) ?? (t.due_at ? parsePlanned(dateKeyInTimeZone(new Date(t.due_at), timeZone)) : null);
 }
 
-/** Minutes of open work per day for the week containing `now`. */
-export function weeklyWorkload(tasks: TaskLike[], now = new Date(), weekStartsOn: 0 | 1 = 1, fallbackMinutes = 60) {
-  const start = startOfWeek(now, { weekStartsOn });
+/** Minutes of open work per day for the week containing now. */
+export function weeklyWorkload(tasks: TaskLike[], now = new Date(), weekStartsOn: 0 | 1 = 1, fallbackMinutes = 60, timeZone?: string | null) {
+  const calendarToday = parsePlanned(dateKeyInTimeZone(now, timeZone)) ?? now;
+  const start = startOfWeek(calendarToday, { weekStartsOn });
   return Array.from({ length: 7 }, (_, i) => {
     const day = addDays(start, i);
     const key = toDateKey(day);
-    const minutes = tasks
-      .filter((t) => !isDone(t))
-      .filter((t) => {
-        const w = workDay(t, timeZone);
-        return w && toDateKey(w) === key;
-      })
-      .reduce((sum, t) => sum + (t.estimated_minutes ?? fallbackMinutes), 0);
+    const minutes = tasks.filter((t) => !isDone(t)).filter((t) => { const w = workDay(t, timeZone); return w && toDateKey(w) === key; }).reduce((sum, t) => sum + (t.estimated_minutes ?? fallbackMinutes), 0);
     return { day, key, minutes };
   });
 }
-
 export const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 export const STATUSES = ["todo", "in_progress", "done"] as const;
 export const STATUS_LABEL: Record<string, string> = { todo: "To do", in_progress: "In progress", done: "Done" };
