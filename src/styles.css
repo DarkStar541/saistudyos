@@ -2068,3 +2068,54 @@ html.theme-neutral .dashboard-stat .text-destructive {
     overscroll-behavior: contain;
   }
 }
+
+
+/* Dashboard summary: keep the two metric groups close and make their units explicit. */
+html.theme-neutral .dashboard-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end !important;
+  column-gap: 1.5rem !important;
+  row-gap: 1rem !important;
+}
+html.theme-neutral .dashboard-heading > div:first-child {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-right: 0 !important;
+}
+html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+  grid-column: 1;
+  grid-row: 2;
+  width: auto;
+  margin: 0 !important;
+  justify-content: flex-start !important;
+  gap: 1rem !important;
+}
+html.theme-neutral .dashboard-heading > button {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: end;
+}
+html.theme-neutral .dashboard-heading .dashboard-summary-gauge {
+  padding-left: .9rem;
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-heading {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: .9rem !important;
+  }
+  html.theme-neutral .dashboard-heading > div:first-child,
+  html.theme-neutral .dashboard-heading .dashboard-gauge-strip,
+  html.theme-neutral .dashboard-heading > button {
+    grid-column: 1;
+  }
+  html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+    grid-row: 2;
+    flex-wrap: wrap;
+  }
+  html.theme-neutral .dashboard-heading > button {
+    grid-row: 3;
+    justify-self: start;
+  }
+}
