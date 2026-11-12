@@ -74,15 +74,15 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 // Applies the saved theme before paint to avoid a flash.
-const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('studyos-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');var s=localStorage.getItem('studyos-visual-style')||'evergreen';if(['evergreen','paper-ink','nocturne','daydream','ember-aurora'].includes(s))r.classList.add('theme-'+s)}catch(e){}`;
+const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('pace-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');var s=localStorage.getItem('pace-visual-style')||'evergreen';if(['evergreen','paper-ink','nocturne','daydream','ember-aurora'].includes(s))r.classList.add('theme-'+s)}catch(e){}`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StudyOS — The student operating system" },
-      { name: "description", content: "Courses, tasks, projects and deadlines in one calm workspace built for students." },
+      { title: "Pace — Make room for what matters." },
+      { name: "description", content: "Pace brings tasks, projects, schedules, and focus together in one calm workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
