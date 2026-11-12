@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useProfile, useSave } from "@/lib/db";
-import { applyTheme, applyStyle, getSavedStyle, type VisualStyle } from "@/lib/theme";
+import { applyTheme } from "@/lib/theme";
 import { PRIORITIES } from "@/lib/task-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,6 @@ const UPCOMING = [
 function SettingsPage() {
   const { data: profile } = useProfile();
   const save = useSave("profiles");
-  const [visualStyle, setVisualStyle] = useState<VisualStyle>("evergreen");
-  useEffect(() => { setVisualStyle(getSavedStyle()); }, []);
   const [f, setF] = useState({ display_name: "", school: "", timezone: "UTC", theme: "system", default_task_view: "list", default_priority: "medium", default_duration_minutes: "60", week_starts_on: "1" });
 
   useEffect(() => {
@@ -73,8 +71,7 @@ function SettingsPage() {
         <Card title="Appearance">
           <div className="appearance-mode">
             <div className="mb-3"><p className="text-sm font-medium">Color mode</p><p className="text-xs text-muted-foreground">
-              Choose light or dark independently of your visual style. Nocturne keeps its intentionally dark
-              console palette.
+              Choose light, dark, or follow your device appearance.
             </p></div>
             <div className="flex flex-wrap gap-2">
               {["light", "dark", "system"].map((t) => (
@@ -82,31 +79,8 @@ function SettingsPage() {
               ))}
             </div>
           </div>
-          <div className="pt-2">
-            <div className="mb-3"><p className="text-sm font-medium">Visual style</p><p className="text-xs text-muted-foreground">Five distinct design languages. Your choice applies across the entire workspace.</p></div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {([
-                { id: "evergreen", name: "Evergreen", note: "Botanical · editorial · warm", swatches: ["#203f32", "#e9e6d8", "#a7b28a"], preview: "evergreen" },
-                { id: "paper-ink", name: "Paper & Ink", note: "Quiet · literary · monochrome", swatches: ["#242424", "#f4f0e8", "#b7afa0"], preview: "paper" },
-                { id: "nocturne", name: "Nocturne", note: "Atmospheric · dramatic · focused", swatches: ["#171d2c", "#29364b", "#d2ad78"], preview: "nocturne" },
-                { id: "daydream", name: "Daydream", note: "Expressive · bright · playful", swatches: ["#6555a5", "#f2e9ff", "#efb7a7"], preview: "daydream" },
-                { id: "ember-aurora", name: "Ember Aurora", note: "Frosted glass · ember glow · aurora", swatches: ["#a65332", "#f5eee4", "#a88bd8"], preview: "ember-aurora" },
-              ] as const).map((item) => (
-                <button key={item.id} type="button" onClick={() => { setVisualStyle(item.id); applyStyle(item.id); }}
-                  aria-pressed={visualStyle === item.id}
-                  className={`style-choice text-left ${visualStyle === item.id ? "is-selected" : ""}`}>
-                  <div className={`style-preview style-preview-${item.preview}`}>
-                    <div className="style-preview-sidebar"><i /><i /><i /></div>
-                    <div className="style-preview-main"><b /><span /><span /><div><i /><i /><i /></div></div>
-                  </div>
-                  <div className="flex items-start justify-between gap-2 pt-3">
-                    <div><p className="font-semibold">{item.name}</p><p className="mt-0.5 text-xs text-muted-foreground">{item.note}</p></div>
-                    <span className="flex shrink-0 gap-1 pt-1">{item.swatches.map((color) => <i key={color} className="size-3 rounded-full ring-1 ring-black/10" style={{ background: color }} />)}</span>
-                  </div>
-                  {visualStyle === item.id && <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">✓ Selected</span>}
-                </button>
-              ))}
-            </div>
+          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+            StudyOS uses one consistent, neutral design across the workspace. You can still choose light, dark, or system appearance above.
           </div>
           <Row label="Week starts on">
             <Select value={f.week_starts_on} onValueChange={(value) => setF((p) => ({ ...p, week_starts_on: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">Monday</SelectItem><SelectItem value="0">Sunday</SelectItem></SelectContent></Select>
