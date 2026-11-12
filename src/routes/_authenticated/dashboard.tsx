@@ -265,7 +265,7 @@ function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
 
 function EmberAuroraDashboard({ ctx }: { ctx: Ctx }) {
   const open=ctx.tasks.filter(t=>t.status!=="done");
-  const today=open.filter(isForToday);
+  const today=open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
   const upcoming=open.filter(t=>isUpcoming(t,14)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??"")).slice(0,6);
   const done=ctx.tasks.length-open.length;
   const pct=ctx.tasks.length?Math.round(done/ctx.tasks.length*100):0;
