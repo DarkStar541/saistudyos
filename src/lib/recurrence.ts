@@ -81,33 +81,34 @@ export function nextOccurrenceDate(rule: RecurrenceRule, from: Date): Date | nul
  * The next occurrence that is still actionable: advances past missed slots so a
  * daily task completed a week late lands on today, not a week ago.
  */
-export function nextPendingOccurrence(rule: RecurrenceRule, scheduled: Date, now = new Date()): Date | null {
+export function nextPendingOccurrence(rule: RecurrenceRule, scheduled: Date, now = new Date(), timeZone?: string | null): Date | null {
   let next = nextOccurrenceDate(rule, scheduled);
+  const today = parsePlanned(dateKeyInTimeZone(now, timeZone)) ?? startOfDay(now);
   let guard = 0;
-  while (next && startOfDay(next) < startOfDay(now) && guard++ < 10000) {
+  while (next && startOfDay(next) < today && guard++ < 10000) {
     next = nextOccurrenceDate(rule, next);
   }
   return next;
 }
 
 /**
- * The day a series stops: an explicit "repeat until" date wins; otherwise the
- * deadline ends the series. The deadline itself never moves.
+ * The day a series stops: an explicit repeat-until date wins; otherwise
+ * the deadline ends the series. The deadline itself never moves.
  */
-export function effectiveRecurrenceEnd(task: { due_at: string | null; recurrence_end?: string | null }): string | null {
+export function effectiveRecurrenceEnd(task: { due_at: string | null; recurrence_end?: string | null }, timeZone?: string | null): string | null {
   if (task.recurrence_end) return task.recurrence_end;
-  return task.due_at ? toDateKey(new Date(task.due_at)) : null;
+  return task.due_at ? dateKeyInTimeZone(new Date(task.due_at), timeZone) : null;
 }
 
 /** Next work occurrence of a series; the deadline stays fixed (one deadline per series). */
-export function nextInstanceDates(task: TaskLike & RecurrenceRule, now = new Date()) {
+export function nextInstanceDates(task: TaskLike & RecurrenceRule, now = new Date(), timeZone?: string | null) {
   const anchor = parsePlanned(task.planned_date);
   if (!anchor) return null;
-  const next = nextPendingOccurrence({ ...task, recurrence_end: effectiveRecurrenceEnd(task) }, anchor, now);
+  const end = effectiveRecurrenceEnd(task, timeZone);
+  const next = nextPendingOccurrence({ ...task, recurrence_end: end }, anchor, now, timeZone);
   if (!next) return null;
   return { due_at: task.due_at, planned_date: toDateKey(next) };
 }
-
 /** Human-readable summary, e.g. "Every 2 weeks on Mon, Wed until Jun 1". */
 export function describeRecurrence(rule: RecurrenceRule): string {
   if (rule.recurrence === "none") return "Never";
