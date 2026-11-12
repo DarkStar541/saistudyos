@@ -179,6 +179,12 @@ export function useSkipOccurrence() {
     mutationFn: async (t: Task) => {
       const patch = nextInstancePatch(t, new Date(), profile?.timezone);
       if (!patch) throw new Error("This series has ended — no future occurrences.");
+      const sid = seriesIdOf(t);
+      const existing = unwrap(
+        await supabase.from("tasks").select("id").eq("recurrence_parent_id", sid)
+          .eq("planned_date", patch.planned_date).neq("status", "done").neq("id", t.id).limit(1),
+      );
+      if (existing.length) throw new Error("That next occurrence already exists. Refresh the task list before skipping.");
       unwrap(await supabase.from("tasks").update(patch).eq("id", t.id));
     },
     onSuccess: () => {
