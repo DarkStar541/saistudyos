@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
 import { calendarDays, dateKeyInTimeZone, isDone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
+import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
 import { TaskDialog } from "@/components/task-dialog";
 import { CourseIcon } from "@/components/course-icon";
@@ -458,6 +459,12 @@ function WeekStrip({ tasks, courseMap, onOpen, timeZone }: Ctx) {
   const todayDate = new Date(year, month - 1, day);
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(todayDate), i));
   const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), timeZone);
+  const projectedByDay = new Map<string, ReturnType<typeof projectRecurringOccurrences<Task>>>();
+  for (const occurrence of projectRecurringOccurrences(tasks, days[0] ?? new Date(), days[days.length - 1] ?? new Date(), new Date(), timeZone)) {
+    const bucket = projectedByDay.get(occurrence.planned_date) ?? [];
+    bucket.push(occurrence);
+    projectedByDay.set(occurrence.planned_date, bucket);
+  }
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
@@ -469,6 +476,11 @@ function WeekStrip({ tasks, courseMap, onOpen, timeZone }: Ctx) {
             {!!entry?.dueCount && <p className="font-display text-[11px] font-semibold text-destructive">{entry.dueCount} due</p>}
             <div className="mt-1 space-y-0.5">
               {entry?.work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} onOpen={onOpen} />)}
+              {(projectedByDay.get(toDateKey(d)) ?? []).map(({ task, planned_date }) => (
+                <button key={`projected-${task.id}-${planned_date}`} type="button" onClick={() => onOpen(task)} title="Projected recurring work — opens the series" className="projected-work-chip">
+                  <span aria-hidden="true">↻</span><span className="truncate">{task.title}</span>
+                </button>
+              ))}
               {entry?.deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
             </div>
           </div>
