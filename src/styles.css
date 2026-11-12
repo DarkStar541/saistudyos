@@ -2045,7 +2045,7 @@ html.theme-neutral .task-calendar .text-destructive {
   color: var(--muted-foreground) !important;
 }
 html.theme-neutral .dashboard-widget[data-widget="overdue"] .dashboard-widget-heading h2 {
-  color: var(--destructive) !important;
+  color: var(--foreground) !important;
 }
 html.theme-neutral .dashboard-stat .text-destructive {
   color: var(--destructive) !important;
