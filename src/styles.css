@@ -1761,3 +1761,112 @@ html.theme-paper-ink .projected-work-chip { border-radius:0; background:transpar
 html.theme-nocturne .projected-work-chip { background:oklch(.24 .035 255); color:oklch(.8 .035 205); }
 html.theme-daydream .projected-work-chip { border:1px dashed color-mix(in oklab,var(--course-purple) 45%,transparent); border-radius:.25rem .65rem .65rem .25rem; background:color-mix(in oklab,var(--course-purple) 10%,var(--card)); }
 html.theme-ember-aurora .projected-work-chip { border-color:color-mix(in oklab,var(--course-purple) 38%,var(--border)); background:color-mix(in oklab,var(--course-purple) 9%,var(--card)); }
+
+
+/* Neutral StudyOS design system — quiet, clear, and consistent. */
+:root {
+  --radius: .75rem;
+  --background: oklch(0.975 0.002 250);
+  --foreground: oklch(0.22 0.008 250);
+  --card: oklch(0.995 0.001 250);
+  --card-foreground: oklch(0.22 0.008 250);
+  --popover: oklch(0.995 0.001 250);
+  --popover-foreground: oklch(0.22 0.008 250);
+  --primary: oklch(0.53 0.19 255);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.004 250);
+  --secondary-foreground: oklch(0.28 0.008 250);
+  --muted: oklch(0.95 0.003 250);
+  --muted-foreground: oklch(0.51 0.01 250);
+  --accent: oklch(0.94 0.025 255);
+  --accent-foreground: oklch(0.36 0.13 255);
+  --border: oklch(0.89 0.004 250);
+  --input: oklch(0.87 0.005 250);
+  --ring: oklch(0.62 0.16 255);
+  --sidebar: oklch(0.985 0.001 250);
+  --sidebar-foreground: oklch(0.25 0.008 250);
+  --sidebar-primary: oklch(0.53 0.19 255);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.025 255);
+  --sidebar-accent-foreground: oklch(0.36 0.13 255);
+  --sidebar-border: oklch(0.90 0.004 250);
+  --sidebar-ring: oklch(0.62 0.16 255);
+  --shadow-card: 0 1px 2px oklch(0.2 0.01 250 / 5%), 0 5px 18px -12px oklch(0.2 0.01 250 / 12%);
+  --shadow-lift: 0 3px 10px oklch(0.2 0.01 250 / 7%), 0 12px 28px -18px oklch(0.2 0.01 250 / 18%);
+}
+.dark {
+  --background: oklch(0.17 0.004 250);
+  --foreground: oklch(0.94 0.003 250);
+  --card: oklch(0.215 0.005 250);
+  --card-foreground: oklch(0.94 0.003 250);
+  --popover: oklch(0.23 0.005 250);
+  --popover-foreground: oklch(0.94 0.003 250);
+  --primary: oklch(0.72 0.14 255);
+  --primary-foreground: oklch(0.17 0.004 250);
+  --secondary: oklch(0.27 0.005 250);
+  --secondary-foreground: oklch(0.92 0.003 250);
+  --muted: oklch(0.25 0.005 250);
+  --muted-foreground: oklch(0.69 0.006 250);
+  --accent: oklch(0.29 0.025 255);
+  --accent-foreground: oklch(0.9 0.04 255);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.14 255);
+  --sidebar: oklch(0.19 0.004 250);
+  --sidebar-foreground: oklch(0.92 0.003 250);
+  --sidebar-primary: oklch(0.72 0.14 255);
+  --sidebar-primary-foreground: oklch(0.17 0.004 250);
+  --sidebar-accent: oklch(0.27 0.02 255);
+  --sidebar-accent-foreground: oklch(0.93 0.01 250);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.72 0.14 255);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 18%), 0 8px 22px -14px oklch(0 0 0 / 30%);
+  --shadow-lift: 0 3px 10px oklch(0 0 0 / 24%), 0 14px 30px -16px oklch(0 0 0 / 38%);
+}
+@layer base {
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: -0.01em; }
+  h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; font-variation-settings: normal; letter-spacing: -0.035em; }
+}
+.app-sidebar {
+  background: var(--sidebar) !important;
+  background-image: none !important;
+  box-shadow: 1px 0 0 var(--border) !important;
+}
+.app-wordmark-mark {
+  border-radius: .65rem !important;
+  box-shadow: none !important;
+}
+.app-nav-link { border-radius: .6rem !important; transform: none !important; }
+.app-nav-link:hover { transform: none !important; }
+.app-nav-link[data-status="active"] { box-shadow: none !important; }
+.page-wash { background: var(--background) !important; }
+.page-intro {
+  padding: 0 0 1.35rem !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.page-intro h1 { font-size: clamp(2rem, 3.2vw, 2.8rem) !important; line-height: 1.12 !important; letter-spacing: -.045em !important; font-weight: 650 !important; }
+.dashboard-heading {
+  border: 0 !important;
+  border-radius: 1rem !important;
+  background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.dashboard-widget {
+  border: 1px solid var(--border) !important;
+  border-radius: .9rem !important;
+  background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease !important;
+}
+.dashboard-widget:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+.course-card:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+.projected-work-chip { border-radius: .4rem !important; }
+.app-mobile-add { box-shadow: var(--shadow-card) !important; }
+button, [role="button"] { transition-duration: 140ms; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
