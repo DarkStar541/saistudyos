@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { colorVar, type Course, type Task } from "@/lib/db";
 import { STATUSES, STATUS_LABEL, calendarDays, isOverdue, toDateKey } from "@/lib/task-utils";
+import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { CalendarTask } from "@/components/calendar-task";
 import { Button } from "@/components/ui/button";
 import { TaskRow, PRIORITY_CLASS } from "@/components/task-row";
@@ -130,6 +131,16 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZon
   }, [month, weekStartsOn]);
 
   const byDay = useMemo(() => calendarDays(tasks, timeZone), [tasks, timeZone]);
+  const projectedByDay = useMemo(() => {
+    const projected = projectRecurringOccurrences(tasks, days[0] ?? month, days[days.length - 1] ?? month, new Date(), timeZone);
+    const grouped = new Map<string, typeof projected>();
+    for (const occurrence of projected) {
+      const items = grouped.get(occurrence.planned_date) ?? [];
+      items.push(occurrence);
+      grouped.set(occurrence.planned_date, items);
+    }
+    return grouped;
+  }, [tasks, days, month, timeZone]);
 
   const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
 
@@ -170,6 +181,11 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZon
               </div>
               <div className="space-y-0.5">
                 {work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} draggable onOpen={onOpen} />)}
+                {mode === "planned" && (projectedByDay.get(key) ?? []).map(({ task, planned_date }) => (
+                  <button key={`projected-${task.id}-${planned_date}`} type="button" onClick={() => onOpen(task)} title="Projected recurring work — opens the series" className="projected-work-chip">
+                    <span aria-hidden="true">↻</span><span className="truncate">{task.title}</span>
+                  </button>
+                ))}
                 {deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
               </div>
             </div>
