@@ -72,7 +72,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
     setApplySeries(false);
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, task?.id]);
+  }, [open, task?.id, profile?.timezone, profile?.default_priority, profile?.default_duration_minutes]);
 
   const projectMilestones = useMemo(() => milestones.filter((m) => m.project_id === f.project_id), [milestones, f.project_id]);
   const patch = (k: keyof typeof f, v: string | number[] | boolean) => setF((p) => ({ ...p, [k]: v }));
