@@ -74,7 +74,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 // Applies the saved theme before paint to avoid a flash.
-const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('pace-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');var s=localStorage.getItem('pace-visual-style')||'evergreen';if(['evergreen','paper-ink','nocturne','daydream','ember-aurora'].includes(s))r.classList.add('theme-'+s)}catch(e){}`;
+const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('studyos-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');var s=localStorage.getItem('studyos-visual-style')||'evergreen';if(['evergreen','paper-ink','nocturne','daydream','ember-aurora'].includes(s))r.classList.add('theme-'+s)}catch(e){}`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
