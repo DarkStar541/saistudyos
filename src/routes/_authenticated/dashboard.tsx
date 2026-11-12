@@ -62,7 +62,7 @@ function Dashboard() {
     const todayKey = dateKeyInTimeZone(now, ctx.timeZone);
     return {
       plannedToday: tasks.filter((task) => isForToday(task, now, ctx.timeZone)).length,
-      dueThisWeek: tasks.filter((task) => isUpcoming(task, 7, now)).length,
+      dueThisWeek: tasks.filter((task) => isUpcoming(task, 7, now, ctx.timeZone)).length,
       overdueCount: tasks.filter((task) => isOverdue(task, now)).length,
       progressToday: todayProgress(tasks, now, ctx.timeZone),
       focusMin: Math.round(sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), ctx.timeZone) === todayKey).reduce((sum, session) => sum + session.duration_seconds, 0) / 60),
@@ -221,7 +221,7 @@ function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
   const open = ctx.tasks.filter((t) => t.status !== "done");
   const today = open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
   const overdue = open.filter((task) => isOverdue(task));
-  const next = open.filter((t) => isUpcoming(t, 14)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
+  const next = open.filter((t) => isUpcoming(t, 14, new Date(), ctx.timeZone)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
   const lead = next[0] ?? today[0];
   return (
     <section className="paper-edition" aria-label="Daily academic edition">
@@ -249,7 +249,7 @@ function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
 function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
   const open=ctx.tasks.filter(t=>t.status!=="done");
   const today=open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
-  const upcoming=open.filter(t=>isUpcoming(t,7)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
+  const upcoming=open.filter(t=>isUpcoming(t,7,new Date(),ctx.timeZone)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
   const progress = todayProgress(ctx.tasks, new Date(), ctx.timeZone);
   const pct = Math.round(progress.completionRatio * 100);
   const todayKey = dateKeyInTimeZone(new Date(), ctx.timeZone);
