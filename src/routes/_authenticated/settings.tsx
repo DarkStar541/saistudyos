@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — StudyOS" }, { name: "description", content: "Profile, theme and task defaults." }, { property: "og:title", content: "Settings — StudyOS" }, { property: "og:description", content: "Profile, theme and task defaults." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Settings — Pace" }, { name: "description", content: "Profile, theme and task defaults." }, { property: "og:title", content: "Settings — Pace" }, { property: "og:description", content: "Profile, theme and task defaults." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: SettingsPage,
 });
 
@@ -80,7 +80,7 @@ function SettingsPage() {
             </div>
           </div>
           <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-            StudyOS uses one consistent, neutral design across the workspace. You can still choose light, dark, or system appearance above.
+            Pace uses one consistent, neutral design across your workspace. You can still choose light, dark, or system appearance above.
           </div>
           <Row label="Week starts on">
             <Select value={f.week_starts_on} onValueChange={(value) => setF((p) => ({ ...p, week_starts_on: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">Monday</SelectItem><SelectItem value="0">Sunday</SelectItem></SelectContent></Select>
