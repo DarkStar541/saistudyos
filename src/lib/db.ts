@@ -141,7 +141,7 @@ export function useToggleTask() {
       const done = t.status !== "done";
       unwrap(await supabase.from("tasks").update({ status: done ? "done" : "todo", completed_at: done ? new Date().toISOString() : null }).eq("id", t.id));
       if (done && t.recurrence !== "none") {
-        const patch = nextInstancePatch(t);
+        const patch = nextInstancePatch(t, new Date(), profile?.timezone);
         if (!patch) return; // series ended
         const sid = seriesIdOf(t);
         // Prevent duplicates: if an open instance of this series already exists, don't spawn another.
@@ -175,7 +175,7 @@ export function useSkipOccurrence() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (t: Task) => {
-      const patch = nextInstancePatch(t);
+      const patch = nextInstancePatch(t, new Date(), profile?.timezone);
       if (!patch) throw new Error("This series has ended — no future occurrences.");
       unwrap(await supabase.from("tasks").update(patch).eq("id", t.id));
     },
