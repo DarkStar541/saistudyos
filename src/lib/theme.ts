@@ -10,7 +10,7 @@ export function applyTheme(theme: string) {
   document.documentElement.classList.toggle("dark", dark);
 }
 
-export function applyStyle(style: VisualStyle) {
+export function applyStyle(_style: VisualStyle) {
   if (typeof document === "undefined") return;
   localStorage.setItem(STYLE_KEY, "neutral");
   const root = document.documentElement;
@@ -19,7 +19,5 @@ export function applyStyle(style: VisualStyle) {
 }
 
 export function getSavedStyle(): VisualStyle {
-  if (typeof window === "undefined") return "evergreen";
-  const saved = localStorage.getItem(STYLE_KEY);
   return "neutral";
 }
