@@ -1,6 +1,6 @@
-# StudyOS
+# Pace
 
-Start Stage 1 of StudyOS following the attached Product Master Specification: user authentication, customizable dashboard, course management, tasks and projects (with dual-date support for due date vs. planned work date, plus list, board, and calendar views), and basic settings.
+Start Stage 1 of Pace following the attached Product Master Specification: user authentication, customizable dashboard, course management, tasks and projects (with dual-date support for due date vs. planned work date, plus list, board, and calendar views), and basic settings.
 
 This project was built with [Lovable](https://lovable.dev).
 
