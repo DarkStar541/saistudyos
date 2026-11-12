@@ -20,8 +20,8 @@ const NAV = [
 function Wordmark() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 px-2">
-      <span className="app-wordmark-mark grid size-8 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">S</span>
-      <span className="text-lg font-semibold tracking-tight">StudyOS</span>
+      <span className="app-wordmark-mark grid size-8 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">P</span>
+      <span className="text-lg font-semibold tracking-tight">Pace</span>
     </Link>
   );
 }
@@ -67,7 +67,7 @@ export function AppShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const initial = (profile?.display_name ?? "S").trim().charAt(0).toUpperCase() || "S";
+  const initial = (profile?.display_name ?? "P").trim().charAt(0).toUpperCase() || "P";
 
   return (
     <div className="min-h-screen bg-background">
