@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence } from "@/lib/recurrence";
-import { calendarDays, dateKeyInTimeZone } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
@@ -71,6 +71,12 @@ describe("saved time zone calendar bucketing", () => {
   it("places an instant on the correct local calendar day", () => {
     const instant = new Date("2026-11-12T02:00:00.000Z");
     expect(dateKeyInTimeZone(instant, "America/Denver")).toBe("2026-11-11");
+  });
+  it("round-trips task deadline inputs through the saved time zone", () => {
+    const iso = "2026-11-12T02:00:00.000Z";
+    const inputs = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(inputs).toEqual({ date: "2026-11-11", time: "19:00" });
+    expect(dateTimeInTimeZoneToIso(inputs.date, inputs.time, "America/Denver")).toBe(iso);
   });
   it("counts a deadline in the selected time zone", () => {
     const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
