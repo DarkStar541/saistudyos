@@ -12,10 +12,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — StudyOS" },
-      { name: "description", content: "Sign in or create your private StudyOS workspace." },
-      { property: "og:title", content: "Sign in — StudyOS" },
-      { property: "og:description", content: "Sign in or create your private StudyOS workspace." },
+      { title: "Sign in — Pace" },
+      { name: "description", content: "Sign in or create your private Pace workspace." },
+      { property: "og:title", content: "Sign in — Pace" },
+      { property: "og:description", content: "Sign in or create your private Pace workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
