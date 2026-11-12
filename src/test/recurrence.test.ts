@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence } from "@/lib/recurrence";
-import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, isUpcoming } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
@@ -80,6 +80,12 @@ describe("saved time zone calendar bucketing", () => {
     const inputs = dateTimeInputInTimeZone(iso, "America/Denver");
     expect(inputs).toEqual({ date: "2026-11-11", time: "19:00" });
     expect(dateTimeInTimeZoneToIso(inputs.date, inputs.time, "America/Denver")).toBe(iso);
+  });
+  it("uses the selected time zone for upcoming-day boundaries", () => {
+    const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
+    const now = new Date("2026-11-11T22:00:00.000Z");
+    expect(isUpcoming(task, 0, now, "America/Denver")).toBe(true);
+    expect(isUpcoming({ ...task, due_at: "2026-11-12T07:00:00.000Z" }, 0, now, "America/Denver")).toBe(false);
   });
   it("counts a deadline in the selected time zone", () => {
     const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
