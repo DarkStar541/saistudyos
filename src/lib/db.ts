@@ -129,13 +129,14 @@ export const seriesIdOf = (t: Task) => t.recurrence_parent_id ?? t.id;
  * Compute the next occurrence of a recurring task. Returns null when the rule
  * has ended. Missed slots are skipped so the next instance lands today or later.
  */
-export function nextInstancePatch(t: Task, now = new Date()): { due_at: string | null; planned_date: string | null } | null {
-  return nextInstanceDates(t, now);
+export function nextInstancePatch(t: Task, now = new Date(), timeZone?: string | null): { due_at: string | null; planned_date: string | null } | null {
+  return nextInstanceDates(t, now, timeZone);
 }
 
 /** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). Optimistic: the checkbox flips instantly and rolls back on failure. */
 export function useToggleTask() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   return useMutation({
     mutationFn: async (t: Task) => {
       const done = t.status !== "done";
@@ -173,6 +174,7 @@ export function useToggleTask() {
 /** Skip the current occurrence of a recurring task: advance it to the next slot without completing it. */
 export function useSkipOccurrence() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   return useMutation({
     mutationFn: async (t: Task) => {
       const patch = nextInstancePatch(t, new Date(), profile?.timezone);
