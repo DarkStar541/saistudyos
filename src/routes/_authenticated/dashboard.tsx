@@ -252,7 +252,10 @@ function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
   const upcoming=open.filter(t=>isUpcoming(t,7)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
   const progress = todayProgress(ctx.tasks, new Date(), ctx.timeZone);
   const pct = Math.round(progress.completionRatio * 100);
-  const todayKey = dateKeyInTimeZone(new Date(), ctx.timeZone);\n  const [year, month, day] = todayKey.split("-").map(Number);\n  const todayDate = new Date(year, month - 1, day);\n  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(todayDate),i));
+  const todayKey = dateKeyInTimeZone(new Date(), ctx.timeZone);
+  const [year, month, day] = todayKey.split("-").map(Number);
+  const todayDate = new Date(year, month - 1, day);
+  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(todayDate),i));
   return (
     <section className="daydream-dashboard" aria-label="Creative study dashboard">
       <div className="daydream-welcome"><div><span className="daydream-sticker">TODAY'S PROGRESS</span><h2>Make today<br/><em>count.</em></h2><p>Your week is yours to shape. Pick a starting point and build some momentum.</p></div><div className="daydream-progress-orbit"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48"/><circle className="daydream-progress-ring" cx="60" cy="60" r="48" style={{strokeDasharray:`${pct/100*302} 302`}}/></svg><strong>{pct}%</strong><span>completed today</span></div></div>
