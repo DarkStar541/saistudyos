@@ -2119,3 +2119,20 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge {
     justify-self: start;
   }
 }
+
+
+/* The lower dashboard metrics should start directly beneath the headline stats,
+   not be centered in the unused middle of the welcome card. */
+html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+  justify-self: start !important;
+  align-self: start !important;
+  width: max-content !important;
+  max-width: 100%;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  justify-content: flex-start !important;
+}
+html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
+  margin-left: 0 !important;
+}
