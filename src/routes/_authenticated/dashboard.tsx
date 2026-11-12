@@ -459,8 +459,9 @@ function WeekStrip({ tasks, courseMap, onOpen, timeZone }: Ctx) {
   const todayDate = new Date(year, month - 1, day);
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(todayDate), i));
   const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), timeZone);
-  const projectedByDay = new Map<string, ReturnType<typeof projectRecurringOccurrences<Task>>>();
-  for (const occurrence of projectRecurringOccurrences(tasks, days[0] ?? new Date(), days[days.length - 1] ?? new Date(), new Date(), timeZone)) {
+  const projected = projectRecurringOccurrences(tasks, days[0] ?? new Date(), days[days.length - 1] ?? new Date(), new Date(), timeZone);
+  const projectedByDay = new Map<string, typeof projected>();
+  for (const occurrence of projected) {
     const bucket = projectedByDay.get(occurrence.planned_date) ?? [];
     bucket.push(occurrence);
     projectedByDay.set(occurrence.planned_date, bucket);
