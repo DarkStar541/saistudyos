@@ -1,5 +1,5 @@
 // Pure date/task helpers. "Due" = actual deadline; "planned" = day the student intends to work on it.
-import { addDays, format, isBefore, isSameDay, startOfDay, startOfWeek } from "date-fns";
+import { addDays, format, isBefore, startOfWeek } from "date-fns";
 
 export type TaskLike = {
   status: string;
