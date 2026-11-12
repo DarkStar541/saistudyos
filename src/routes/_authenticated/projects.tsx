@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { colorVar, useCourses, useMilestones, useProjects, useRemove, useSave, useTasks, type Project, type Task } from "@/lib/db";
+import { colorVar, useCourses, useMilestones, useProfile, useProjects, useRemove, useSave, useTasks, type Project, type Task } from "@/lib/db";
 import { TaskDialog } from "@/components/task-dialog";
 import { TaskRow } from "@/components/task-row";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { DatePicker } from "@/components/date-picker";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { dateTimeInTimeZoneToIso } from "@/lib/task-utils";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({ meta: [{ title: "Projects — StudyOS" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — StudyOS" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -97,6 +98,7 @@ function ProjectsPage() {
 
 function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: Task[]; courses: Map<string, import("@/lib/db").Course> }) {
   const { data: milestones = [] } = useMilestones();
+  const { data: profile } = useProfile();
   const saveM = useSave("milestones");
   const removeM = useRemove("milestones");
   const saveP = useSave("projects");
@@ -122,7 +124,7 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
             </div>
           ))}
         </div>
-        <form className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? new Date(`${date}T23:59`).toISOString() : null, position: ms.length }); setTitle(""); setDate(""); }}>
+        <form className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? dateTimeInTimeZoneToIso(date, "23:59", profile?.timezone) : null, position: ms.length }); setTitle(""); setDate(""); }}>
           <Input className="h-9 w-full min-w-0" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
           <DatePicker value={date} onChange={setDate} placeholder="Milestone date" className="h-9" />
           <Button size="sm" type="submit">Add</Button>
@@ -149,6 +151,7 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
 
 function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { data: courses = [] } = useCourses();
+  const { data: profile } = useProfile();
   const save = useSave("projects");
   const [f, setF] = useState({ name: "", description: "", course_id: "", due: "" });
   return (
@@ -158,7 +161,7 @@ function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
           if (!f.name.trim()) return void toast.error("Name your project");
-          await save.mutateAsync({ name: f.name.trim(), description: f.description || null, course_id: f.course_id || null, due_at: f.due ? new Date(`${f.due}T23:59`).toISOString() : null });
+          await save.mutateAsync({ name: f.name.trim(), description: f.description || null, course_id: f.course_id || null, due_at: f.due ? dateTimeInTimeZoneToIso(f.due, "23:59", profile?.timezone) : null });
           setF({ name: "", description: "", course_id: "", due: "" });
           onOpenChange(false);
         }}>
