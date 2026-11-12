@@ -10,7 +10,8 @@ import { TaskDialog } from "@/components/task-dialog";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/tasks", label: "Tasks", icon: CheckSquare },\n  { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/tasks", label: "Tasks", icon: CheckSquare },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/courses", label: "Courses", icon: BookOpen },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/settings", label: "Settings", icon: Settings },
