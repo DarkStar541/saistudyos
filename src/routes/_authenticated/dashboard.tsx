@@ -73,9 +73,9 @@ function Dashboard() {
   const { plannedToday, dueThisWeek, overdueCount, progressToday, focusMin, weekMin } = metrics;
   const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
-    { value: plannedToday, label: "planned today" },
-    { value: dueThisWeek, label: "due this week" },
-    { value: overdueCount, label: "overdue", tone: overdueCount ? "danger" : undefined },
+    { value: plannedToday, label: "tasks planned today" },
+    { value: dueThisWeek, label: "tasks due this week" },
+    { value: overdueCount, label: "overdue tasks", tone: overdueCount ? "danger" : undefined },
   ];
 
   return (
@@ -97,9 +97,9 @@ function Dashboard() {
         </div>
         {visualStyle !== "nocturne" && (
           <div className="dashboard-gauge-strip" aria-label="Today's progress and workload">
-            <Gauge value={progressToday.completionRatio} label={`${progressToday.completed}/${progressToday.total}`} sub="done today" />
-            <Gauge value={focusMin / 120} label={focusMin >= 60 ? hours(focusMin) : `${focusMin}m`} sub="of 2h focus" />
-            <Gauge value={weekMin / 1200} label={hours(weekMin)} sub="planned this week" />
+            <Gauge value={progressToday.completionRatio} label={`${progressToday.completed}/${progressToday.total}`} sub="tasks completed today" />
+            <Gauge value={focusMin / 120} label={focusMin >= 60 ? hours(focusMin) : `${focusMin}m`} sub="focus today · 2h goal" />
+            <Gauge value={weekMin / 1200} label={hours(weekMin)} sub="scheduled time this week" />
           </div>
         )}
         <Button variant={customizing ? "default" : "outline"} size="sm" onClick={() => setCustomizing((c) => !c)}>
