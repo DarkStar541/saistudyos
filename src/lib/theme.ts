@@ -1,5 +1,5 @@
 export type Theme = "light" | "dark" | "system";
-export type VisualStyle = "neutral";
+export type VisualStyle = "neutral" | "evergreen" | "paper-ink" | "nocturne" | "daydream" | "ember-aurora";
 
 const STYLE_KEY = "studyos-visual-style";
 
