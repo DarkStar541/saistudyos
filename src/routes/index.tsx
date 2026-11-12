@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "StudyOS — Capture anywhere. Organize automatically." },
+      { title: "Pace — Make room for what matters." },
       { name: "description", content: "A private workspace for students: courses, assignments, exams and projects with separate deadlines and work dates." },
-      { property: "og:title", content: "StudyOS — The student operating system" },
+      { property: "og:title", content: "Pace — Make room for what matters." },
       { property: "og:description", content: "Courses, assignments, exams and projects in one calm, customizable workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -28,14 +28,14 @@ function Landing() {
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center px-6 py-5">
         <span className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground"><GraduationCap className="size-4" /></span>StudyOS
+          <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground"><GraduationCap className="size-4" /></span>Pace
         </span>
         <Button asChild variant="ghost" className="ml-auto"><Link to="/auth">Sign in</Link></Button>
       </header>
       <section className="mx-auto max-w-4xl px-6 pb-16 pt-16 text-center md:pt-24">
         <p className="mb-4 inline-block rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">Built for high school & college</p>
         <h1 className="text-5xl font-bold leading-[1.05] md:text-7xl">Capture anywhere.<br /><span className="text-primary">Organize automatically.</span></h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">StudyOS is your private operating system for school — every class, assignment, exam and project in one place.</p>
+        <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">Pace is your private operating system for school — every class, assignment, exam and project in one place.</p>
         <div className="mt-8 flex justify-center gap-3">
           <Button asChild size="lg"><Link to="/auth">Get started free</Link></Button>
         </div>
