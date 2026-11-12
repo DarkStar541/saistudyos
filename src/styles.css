@@ -1870,3 +1870,171 @@ button, [role="button"] { transition-duration: 140ms; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+
+/* Neutral system refinement: consistent page composition and quiet surfaces. */
+html.theme-neutral {
+  color-scheme: light;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+}
+html.dark.theme-neutral { color-scheme: dark; }
+html.theme-neutral body { letter-spacing: -0.012em; line-height: 1.5; }
+html.theme-neutral h1, html.theme-neutral h2, html.theme-neutral h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.035em;
+  font-weight: 620;
+}
+html.theme-neutral main.page-wash > div {
+  max-width: 1360px !important;
+  padding-top: clamp(1.5rem, 3vw, 2.75rem) !important;
+  padding-bottom: 3rem;
+}
+html.theme-neutral .app-sidebar {
+  width: 15.5rem !important;
+  padding: 1.65rem 1.1rem 1.15rem !important;
+  background: var(--sidebar) !important;
+  background-image: none !important;
+  border-right: 1px solid var(--sidebar-border) !important;
+  box-shadow: none !important;
+}
+html.theme-neutral main.md\\:pl-\\[17rem\\] { padding-left: 15.5rem; }
+html.theme-neutral .app-wordmark-mark {
+  width: 2rem; height: 2rem; border-radius: .6rem !important;
+  background: var(--primary) !important; color: var(--primary-foreground) !important;
+  box-shadow: none !important;
+}
+html.theme-neutral .app-nav-link {
+  min-height: 2.55rem; padding: .65rem .75rem !important;
+  border-radius: .55rem !important; font-weight: 500;
+  color: var(--sidebar-foreground);
+}
+html.theme-neutral .app-nav-link[data-status="active"] {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-accent-foreground) !important;
+  box-shadow: none !important;
+}
+html.theme-neutral .app-new-task-button {
+  border-radius: .65rem !important; box-shadow: none !important;
+}
+html.theme-neutral .page-intro {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding: 0 0 1.25rem !important;
+  border: 0 !important; border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+html.theme-neutral .page-intro h1 {
+  margin: 0; font-size: clamp(2rem, 3.1vw, 2.65rem) !important;
+  line-height: 1.15 !important; letter-spacing: -.045em !important;
+  font-weight: 650 !important;
+}
+html.theme-neutral .page-intro h1 .text-primary { color: inherit !important; }
+html.theme-neutral .page-intro .overline-label {
+  margin-bottom: .4rem; font-size: .68rem; letter-spacing: .08em;
+}
+html.theme-neutral .dashboard-heading {
+  min-height: 0 !important; align-items: center !important;
+  gap: 1.25rem; padding: 1.5rem 1.65rem !important;
+  border: 1px solid var(--border) !important; border-radius: .95rem !important;
+  color: var(--foreground) !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .dashboard-heading::after { display: none !important; }
+html.theme-neutral .dashboard-heading h1 {
+  max-width: none; margin-top: .45rem !important;
+  color: var(--foreground) !important; font-size: clamp(1.8rem, 3vw, 2.45rem) !important;
+  line-height: 1.16 !important; letter-spacing: -.045em !important;
+}
+html.theme-neutral .dashboard-heading .overline-label { color: var(--muted-foreground) !important; }
+html.theme-neutral .dashboard-heading button {
+  color: var(--foreground) !important; background: var(--background) !important;
+  border: 1px solid var(--border) !important;
+}
+html.theme-neutral .dashboard-stat {
+  display: inline-flex; gap: .4rem; align-items: baseline;
+  padding: .2rem .8rem .2rem 0 !important; margin-right: .75rem;
+  border: 0 !important; border-radius: 0 !important; border-right: 1px solid var(--border) !important;
+  background: transparent !important;
+}
+html.theme-neutral .dashboard-stat:last-child { border-right: 0 !important; }
+html.theme-neutral .dashboard-stat .text-foreground,
+html.theme-neutral .dashboard-stat .text-muted-foreground { color: inherit !important; }
+html.theme-neutral .dashboard-gauge-strip { justify-content: flex-start; gap: .8rem; }
+html.theme-neutral .dashboard-summary-gauge {
+  min-width: 0; align-items: flex-start; gap: .1rem; padding-left: .8rem;
+  border-left: 1px solid var(--border);
+}
+html.theme-neutral .dashboard-summary-gauge-dial { width: auto; height: auto; }
+html.theme-neutral .dashboard-summary-gauge-dial svg { display: none; }
+html.theme-neutral .dashboard-summary-gauge-dial strong {
+  position: static; display: block; padding: 0; font: 600 1rem var(--font-sans);
+}
+html.theme-neutral .dashboard-summary-gauge > span {
+  font-size: .68rem; white-space: normal; text-align: left;
+}
+html.theme-neutral .dashboard-composition,
+html.theme-neutral .dashboard-customize-layout {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem; align-items: start;
+}
+html.theme-neutral .dashboard-widget {
+  grid-column: span 6; min-width: 0; overflow: hidden;
+  padding: 1.15rem !important; border: 1px solid var(--border) !important;
+  border-radius: .85rem !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .dashboard-widget[data-widget="quickadd"],
+html.theme-neutral .dashboard-widget[data-widget="calendar"] { grid-column: 1 / -1; }
+html.theme-neutral .dashboard-widget > .dashboard-widget-heading {
+  margin-bottom: .9rem; padding-bottom: .7rem;
+  border-bottom: 1px solid var(--border) !important;
+}
+html.theme-neutral .dashboard-widget h2 { font-size: .72rem; letter-spacing: .08em; }
+html.theme-neutral .dashboard-widget:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+html.theme-neutral .page-section,
+html.theme-neutral .rounded-2xl.border.border-border.bg-card {
+  border: 1px solid var(--border) !important; border-radius: .85rem !important;
+  background: var(--card) !important; box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .course-card {
+  border-radius: .85rem !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .course-card > div:first-child { height: 3px; }
+html.theme-neutral .course-card:hover { transform: none !important; border-color: var(--input); }
+html.theme-neutral .projected-work-chip {
+  border-radius: .4rem !important; background: var(--background) !important;
+}
+html.theme-neutral .app-mobile-add { box-shadow: var(--shadow-card) !important; }
+html.theme-neutral input:not([type="checkbox"]):not([type="radio"]),
+html.theme-neutral textarea,
+html.theme-neutral [role="combobox"] {
+  border-radius: .55rem;
+}
+html.theme-neutral button, html.theme-neutral [role="button"] {
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+html.theme-neutral button:active, html.theme-neutral [role="button"]:active { transform: none; }
+html.theme-neutral .appearance-mode,
+html.theme-neutral form > section { border-radius: .85rem; }
+@media (max-width: 900px) {
+  html.theme-neutral main.md\\:pl-\\[17rem\\] { padding-left: 0; }
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-heading { padding: 1.15rem !important; }
+  html.theme-neutral .dashboard-composition,
+  html.theme-neutral .dashboard-customize-layout { grid-template-columns: minmax(0, 1fr); }
+  html.theme-neutral .dashboard-widget,
+  html.theme-neutral .dashboard-widget[data-widget="quickadd"],
+  html.theme-neutral .dashboard-widget[data-widget="calendar"] { grid-column: 1 / -1; }
+  html.theme-neutral .dashboard-gauge-strip { width: 100%; }
+  html.theme-neutral .page-intro { align-items: flex-start; }
+  html.theme-neutral .page-intro h1 { font-size: clamp(1.9rem, 9vw, 2.5rem) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.theme-neutral *, html.theme-neutral *::before, html.theme-neutral *::after {
+    scroll-behavior: auto !important; transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
