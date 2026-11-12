@@ -47,6 +47,9 @@ describe("recurrence intervals and weekday selection", () => {
     expect(next?.getMonth()).toBe(1);
     expect(next?.getDate()).toBe(28);
   });
+  it("keeps the monthly 31st on the last day of February", () => {
+    expect(nextOccurrenceDate({ recurrence: "monthly" }, new Date(2026, 0, 31))?.toDateString()).toBe(new Date(2026, 1, 28).toDateString());
+  });
   it("keeps leap-day yearly recurrence on the last day of February", () => {
     const next = nextOccurrenceDate({ recurrence: "yearly" }, new Date(2024, 1, 29));
     expect(next?.getFullYear()).toBe(2025);
