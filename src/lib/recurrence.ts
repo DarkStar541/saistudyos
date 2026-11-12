@@ -1,6 +1,6 @@
 // Recurrence engine for repeating tasks. Pure functions, tested in src/test/recurrence.test.ts.
 import { addDays, addMonths, addYears, startOfDay, startOfWeek } from "date-fns";
-import { parsePlanned, toDateKey, type TaskLike } from "./task-utils";
+import { dateKeyInTimeZone, parsePlanned, toDateKey, type TaskLike } from "./task-utils";
 
 export type RecurrenceRule = {
   recurrence: string;
