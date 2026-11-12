@@ -81,6 +81,15 @@ describe("saved time zone calendar bucketing", () => {
     expect(inputs).toEqual({ date: "2026-11-11", time: "19:00" });
     expect(dateTimeInTimeZoneToIso(inputs.date, inputs.time, "America/Denver")).toBe(iso);
   });
+  it("uses the saved time zone to derive a recurring series end from its deadline", () => {
+    expect(effectiveRecurrenceEnd({ due_at: "2026-11-12T02:00:00.000Z" }, "America/Denver")).toBe("2026-11-11");
+    const next = nextInstanceDates(
+      base({ planned_date: "2026-11-10", due_at: "2026-11-12T02:00:00.000Z", recurrence: "daily" }),
+      new Date("2026-11-12T02:00:00.000Z"),
+      "America/Denver",
+    );
+    expect(next?.planned_date).toBe("2026-11-11");
+  });
   it("uses the selected time zone for upcoming-day boundaries", () => {
     const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
     const now = new Date("2026-11-11T22:00:00.000Z");
