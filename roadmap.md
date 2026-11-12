@@ -1,4 +1,4 @@
-# StudyOS Roadmap
+# Pace Roadmap
 
 ## Dual-date diagnosis and fix
 - [ ] Diagnose calendar banners, deadline indicators, daily counts and actual recurring settings
