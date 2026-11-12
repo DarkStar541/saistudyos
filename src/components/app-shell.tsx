@@ -70,7 +70,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[17rem] flex-col px-5 py-7 md:flex">
+      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[15.5rem] flex-col px-5 py-7 md:flex">
         <Wordmark />
         <Button className="app-new-task-button mt-9 h-11 justify-start gap-2 rounded-xl shadow-card" onClick={() => setAddOpen(true)}>
           <Plus className="size-4" /> New task
@@ -104,7 +104,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="page-wash pb-24 md:pb-0 md:pl-[17rem]">
+      <main className="page-wash pb-24 md:pb-0 md:pl-[15.5rem]">
         <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-10 md:py-10 xl:px-14">
           <Outlet />
         </div>
