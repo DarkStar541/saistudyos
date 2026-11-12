@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
-import { applyTheme } from "@/lib/theme";
+import { applyTheme, applyStyle, getSavedStyle } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { TaskDialog } from "@/components/task-dialog";
 
@@ -19,10 +19,8 @@ const NAV = [
 function Wordmark() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 px-2">
-      <span className="app-wordmark-mark grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-semibold text-primary-foreground shadow-card">
-        S
-      </span>
-      <span className="font-display text-2xl font-normal italic tracking-tight">StudyOS</span>
+      <span className="app-wordmark-mark grid size-8 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">S</span>
+      <span className="text-lg font-semibold tracking-tight">StudyOS</span>
     </Link>
   );
 }
@@ -35,6 +33,7 @@ export function AppShell() {
 
   useEffect(() => {
     if (profile?.theme) applyTheme(profile.theme);
+    applyStyle(getSavedStyle());
   }, [profile?.theme]);
 
   // Keep system mode in sync if the operating system theme changes mid-session.
@@ -77,7 +76,7 @@ export function AppShell() {
           <Plus className="size-4" /> New task
           <kbd className="ml-auto rounded bg-primary-foreground/20 px-1.5 text-xs">N</kbd>
         </Button>
-        <div className="mt-12 mb-2 px-3"><p className="overline-label">Your space</p><p className="mt-1 text-xs text-sidebar-foreground/50">A calmer way to get things done</p></div>
+        <div className="mt-10 mb-2 px-3"><p className="text-xs font-medium text-muted-foreground">Workspace</p></div>
         <nav className="mt-3 flex flex-1 flex-col gap-1">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
