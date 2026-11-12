@@ -109,6 +109,41 @@ export function nextInstanceDates(task: TaskLike & RecurrenceRule, now = new Dat
   if (!next) return null;
   return { due_at: task.due_at, planned_date: toDateKey(next) };
 }
+export type ProjectedOccurrence<T> = { task: T; planned_date: string };
+
+/** Project future work slots for calendars without writing synthetic task rows to the database. */
+export function projectRecurringOccurrences<T extends TaskLike & RecurrenceRule>(
+  tasks: T[], rangeStart: Date, rangeEnd: Date, now = new Date(), timeZone?: string | null,
+): ProjectedOccurrence<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const task of tasks) {
+    if (task.recurrence === "none" || !task.id || !task.planned_date) continue;
+    const id = task.recurrence_parent_id ?? task.id;
+    const group = groups.get(id) ?? [];
+    group.push(task);
+    groups.set(id, group);
+  }
+  const startKey = toDateKey(rangeStart);
+  const endKey = toDateKey(rangeEnd);
+  const projected: ProjectedOccurrence<T>[] = [];
+  for (const group of groups.values()) {
+    const ordered = [...group].sort((a, b) => (b.planned_date ?? "").localeCompare(a.planned_date ?? ""));
+    const anchorTask = ordered.find((task) => task.status !== "done") ?? ordered[0];
+    if (!anchorTask?.planned_date) continue;
+    const anchor = parsePlanned(anchorTask.planned_date);
+    if (!anchor) continue;
+    const rule = { ...anchorTask, recurrence_end: effectiveRecurrenceEnd(anchorTask, timeZone) };
+    const existingDates = new Set(group.map((task) => task.planned_date));
+    let next = nextPendingOccurrence(rule, anchor, now, timeZone);
+    let guard = 0;
+    while (next && toDateKey(next) <= endKey && guard++ < 400) {
+      const key = toDateKey(next);
+      if (key >= startKey && !existingDates.has(key)) projected.push({ task: anchorTask, planned_date: key });
+      next = nextOccurrenceDate(rule, next);
+    }
+  }
+  return projected.sort((a, b) => a.planned_date.localeCompare(b.planned_date));
+}
 /** Human-readable summary, e.g. "Every 2 weeks on Mon, Wed until Jun 1". */
 export function describeRecurrence(rule: RecurrenceRule): string {
   if (rule.recurrence === "none") return "Never";
