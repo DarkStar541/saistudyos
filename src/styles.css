@@ -2038,3 +2038,11 @@ html.theme-neutral form > section { border-radius: .85rem; }
     animation-duration: .01ms !important;
   }
 }
+
+
+/* Keep overdue styling quiet and consistent in the neutral visual system. */
+html.theme-neutral .dashboard-stat .text-destructive,
+html.theme-neutral .task-calendar .text-destructive,
+html.theme-neutral .task-row .text-destructive {
+  color: var(--muted-foreground) !important;
+}
