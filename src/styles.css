@@ -2018,8 +2018,8 @@ html.theme-neutral button, html.theme-neutral [role="button"] {
 html.theme-neutral button:active, html.theme-neutral [role="button"]:active { transform: none; }
 html.theme-neutral .appearance-mode,
 html.theme-neutral form > section { border-radius: .85rem; }
-@media (max-width: 900px) {
-  html.theme-neutral main[class~="md:pl-[15.5rem]"] { padding-left: 0; }
+@media (max-width: 1023px) {
+  html.theme-neutral .app-main { padding-left: 0 !important; }
 }
 @media (max-width: 700px) {
   html.theme-neutral .dashboard-heading { padding: 1.15rem !important; }
@@ -2049,4 +2049,22 @@ html.theme-neutral .dashboard-widget[data-widget="overdue"] .dashboard-widget-he
 }
 html.theme-neutral .dashboard-stat .text-destructive {
   color: var(--destructive) !important;
+}
+
+
+/* Keep the desktop rail and content breakpoint aligned; support browser zoom. */
+@media (max-width: 1023px) {
+  html.theme-neutral .app-main { padding-left: 0 !important; }
+}
+@media (min-width: 1024px) {
+  html.theme-neutral .app-sidebar {
+    max-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  html.theme-neutral .app-sidebar nav {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
