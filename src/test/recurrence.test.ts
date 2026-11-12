@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence } from "@/lib/recurrence";
+import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence, projectRecurringOccurrences } from "@/lib/recurrence";
 import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, isUpcoming } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
@@ -67,6 +67,20 @@ describe("recurrence intervals and weekday selection", () => {
   });
   it("skips missed occurrences without exceeding the recurrence end", () => {
     expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
+  });
+});
+
+describe("future recurrence projection", () => {
+  it("projects future work slots without creating duplicate existing occurrences", () => {
+    const root = base({ planned_date: "2026-11-09", recurrence: "daily", recurrence_end: "2026-11-13" });
+    const child = { ...root, id: "child", recurrence_parent_id: "s", planned_date: "2026-11-11" };
+    const projected = projectRecurringOccurrences(
+      [root, child],
+      new Date(2026, 10, 9),
+      new Date(2026, 10, 13),
+      new Date(2026, 10, 9),
+    );
+    expect(projected.map((item) => item.planned_date)).toEqual(["2026-11-12", "2026-11-13"]);
   });
 });
 
