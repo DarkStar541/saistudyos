@@ -2040,9 +2040,11 @@ html.theme-neutral form > section { border-radius: .85rem; }
 }
 
 
-/* Keep overdue styling quiet and consistent in the neutral visual system. */
-html.theme-neutral .dashboard-stat .text-destructive,
+/* Keep calendar/task metadata quiet, while the dashboard overdue metric stays clearly urgent. */
 html.theme-neutral .task-calendar .text-destructive,
 html.theme-neutral .task-row .text-destructive {
   color: var(--muted-foreground) !important;
+}
+html.theme-neutral .dashboard-stat .text-destructive {
+  color: var(--destructive) !important;
 }
