@@ -34,7 +34,7 @@ export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?
           )}
           {!compact && task.task_type !== "assignment" && <span className="capitalize">{task.task_type}</span>}
           {task.due_at && (
-            <span className={cn("flex items-center gap-1", overdue && "font-medium text-muted-foreground")}>
+            <span className={cn("flex items-center gap-1", overdue && "font-medium text-destructive")}>
               <CalendarClock className="size-3" /> Due {rel(new Date(task.due_at), true)}
             </span>
           )}
