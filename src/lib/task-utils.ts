@@ -141,10 +141,15 @@ export function todayProgress(tasks: TaskLike[], now = new Date(), timeZone?: st
   return { completed, remaining, total, completionRatio: total ? completed / total : 0, remainingRatio: total ? remaining / total : 0 };
 }
 
-export function isUpcoming(t: TaskLike, days = 7, now = new Date()) {
+export function isUpcoming(t: TaskLike, days = 7, now = new Date(), timeZone?: string | null) {
   if (isDone(t) || !t.due_at) return false;
   const due = new Date(t.due_at);
-  return !isBefore(due, now) && isBefore(due, addDays(startOfDay(now), days + 1));
+  const todayKey = dateKeyInTimeZone(now, timeZone);
+  const [year, month, day] = todayKey.split("-").map(Number);
+  const calendarToday = new Date(year, month - 1, day);
+  const endDate = toDateKey(addDays(calendarToday, days + 1));
+  const endBoundary = dateTimeInTimeZoneToIso(endDate, "00:00", timeZone);
+  return !isBefore(due, now) && isBefore(due, new Date(endBoundary));
 }
 
 /** The day a task is scheduled on a calendar/workload: planned date wins, otherwise due date. */
