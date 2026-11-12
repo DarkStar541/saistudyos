@@ -87,17 +87,27 @@ export function useSave(table: TableName) {
       return unwrap(await supabase.from(table).insert(rest as never).select().single());
     },
     // Optimistic update for existing rows so edits feel instant; inserts wait for the server id.
+    // Profile queries are a single object, while all other table queries are arrays.
     onMutate: async (row) => {
       if (!row["id"]) return undefined;
       await qc.cancelQueries({ queryKey: key });
-      const previous = qc.getQueryData<Record<string, unknown>[]>(key);
-      qc.setQueryData<Record<string, unknown>[]>(key, (old) =>
-        old?.map((r) => (r["id"] === row["id"] ? { ...r, ...row } : r)),
-      );
+      const previous = qc.getQueryData(key);
+      qc.setQueryData(key, (old: unknown) => {
+        if (table === "profiles") {
+          const profile = old as Record<string, unknown> | null | undefined;
+          return profile && profile["id"] === row["id"] ? { ...profile, ...row } : profile;
+        }
+        if (!Array.isArray(old)) return old;
+        return old.map((item) =>
+          item && typeof item === "object" && (item as Record<string, unknown>)["id"] === row["id"]
+            ? { ...(item as Record<string, unknown>), ...row }
+            : item,
+        );
+      });
       return { previous };
     },
     onError: (e: Error, _row, ctx) => {
-      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+      if (ctx) qc.setQueryData(key, ctx.previous);
       toast.error(e.message);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
