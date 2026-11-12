@@ -1898,7 +1898,7 @@ html.theme-neutral .app-sidebar {
   border-right: 1px solid var(--sidebar-border) !important;
   box-shadow: none !important;
 }
-html.theme-neutral main.md\\:pl-\\[17rem\\] { padding-left: 15.5rem; }
+
 html.theme-neutral .app-wordmark-mark {
   width: 2rem; height: 2rem; border-radius: .6rem !important;
   background: var(--primary) !important; color: var(--primary-foreground) !important;
@@ -2019,7 +2019,7 @@ html.theme-neutral button:active, html.theme-neutral [role="button"]:active { tr
 html.theme-neutral .appearance-mode,
 html.theme-neutral form > section { border-radius: .85rem; }
 @media (max-width: 900px) {
-  html.theme-neutral main.md\\:pl-\\[17rem\\] { padding-left: 0; }
+  html.theme-neutral main[class~="md:pl-[15.5rem]"] { padding-left: 0; }
 }
 @media (max-width: 700px) {
   html.theme-neutral .dashboard-heading { padding: 1.15rem !important; }
