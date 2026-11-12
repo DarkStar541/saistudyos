@@ -1745,3 +1745,19 @@ html.theme-ember-aurora .task-calendar {
 @media (prefers-reduced-motion: reduce) {
   .course-card { transition: none; }
 }
+
+.projected-work-chip {
+  display:flex; min-width:0; align-items:center; gap:.3rem;
+  width:100%; padding:.22rem .35rem;
+  border:1px dashed color-mix(in oklab,var(--primary) 42%,var(--border));
+  border-radius:.45rem;
+  background:color-mix(in oklab,var(--primary) 8%,var(--card));
+  color:var(--muted-foreground);
+  font-size:.62rem; line-height:1.35; text-align:left;
+}
+.projected-work-chip > span:first-child { flex:none; color:var(--primary); font-size:.8rem; }
+.projected-work-chip:hover { border-style:solid; color:var(--foreground); }
+html.theme-paper-ink .projected-work-chip { border-radius:0; background:transparent; font-family:Georgia,serif; }
+html.theme-nocturne .projected-work-chip { background:oklch(.24 .035 255); color:oklch(.8 .035 205); }
+html.theme-daydream .projected-work-chip { border:1px dashed color-mix(in oklab,var(--course-purple) 45%,transparent); border-radius:.25rem .65rem .65rem .25rem; background:color-mix(in oklab,var(--course-purple) 10%,var(--card)); }
+html.theme-ember-aurora .projected-work-chip { border-color:color-mix(in oklab,var(--course-purple) 38%,var(--border)); background:color-mix(in oklab,var(--course-purple) 9%,var(--card)); }
