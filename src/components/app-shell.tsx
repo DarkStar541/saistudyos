@@ -1,7 +1,7 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
+import { BookOpen, CalendarDays, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
 import { applyTheme, applyStyle, getSavedStyle } from "@/lib/theme";
@@ -10,7 +10,7 @@ import { TaskDialog } from "@/components/task-dialog";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/tasks", label: "Tasks", icon: CheckSquare },
+  { to: "/tasks", label: "Tasks", icon: CheckSquare },\n  { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/courses", label: "Courses", icon: BookOpen },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -118,7 +118,7 @@ export function AppShell() {
       >
         <Plus className="size-6" />
       </button>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground" activeProps={{ className: "font-semibold text-primary" }}>
             <Icon className="size-5" /> {label}
