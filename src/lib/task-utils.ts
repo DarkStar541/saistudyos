@@ -132,9 +132,16 @@ export function isForToday(t: TaskLike, now = new Date(), timeZone?: string | nu
 /** Shared progress model for dashboard gauges: completed work counts only when it was scheduled for today and completed today. */
 export function todayProgress(tasks: TaskLike[], now = new Date(), timeZone?: string | null) {
   const todayKey = dateKeyInTimeZone(now, timeZone);
+  // Work scheduled for an earlier day rolls forward until its deadline passes.
+  // Completed work should follow the same rule, otherwise the dashboard gauge
+  // loses a task as soon as it is completed after its original planned date.
   const completed = tasks.filter((task) => {
-    const scheduledToday = task.planned_date === todayKey || (!task.planned_date && !!task.due_at && dateKeyInTimeZone(new Date(task.due_at), timeZone) === todayKey);
-    return scheduledToday && isDone(task) && !!task.completed_at && dateKeyInTimeZone(new Date(task.completed_at), timeZone) === todayKey;
+    const scheduledToday = task.planned_date
+      ? task.planned_date <= todayKey
+      : !!task.due_at && dateKeyInTimeZone(new Date(task.due_at), timeZone) === todayKey;
+    return scheduledToday && !isOverdue(task, now) && isDone(task)
+      && !!task.completed_at
+      && dateKeyInTimeZone(new Date(task.completed_at), timeZone) === todayKey;
   }).length;
   const remaining = tasks.filter((task) => isForToday(task, now, timeZone)).length;
   const total = completed + remaining;
