@@ -112,7 +112,16 @@ Status key:
 - [ ] Evaluate integrations based on real student value; Canvas is the relevant LMS context (not Google Classroom)
 - [ ] Keep the architecture portable and avoid unnecessary vendor lock-in
 
-## 7. Release readiness
+## 7. Mobile app experience (PWA)
+- [~] Add a web app manifest, Pace app icon, standalone display metadata and mobile web-app tags
+- [x] Add iPhone/iPad and Android home-screen installation instructions in Settings
+- [x] Respect mobile safe-area insets for the bottom navigation and floating New Task button
+- [ ] Verify installation and launch on real iPhone/iPad and Android devices; confirm auth/session behavior in standalone mode
+- [ ] Add a native install prompt for supported Android browsers and a clear iOS install guide/onboarding affordance
+- [ ] Add carefully scoped offline support for static app assets only; never cache private API responses or user workspace data without an explicit offline-sync design
+- [ ] Evaluate native packaging only if PWA limitations block a concrete requirement (e.g. app-store distribution or platform-specific integrations)
+
+## 8. Release readiness
 - ~~[x]~~ Run the full test suite, including recurrence, timezone and daylight-saving tests (GitHub Actions passed).
 - ~~[x]~~ Run static lint and production build (GitHub Actions passed).
 - [ ] Run browser tests for auth, navigation, CRUD, recurrence, calendar, focus and responsive layouts
@@ -127,4 +136,4 @@ Status key:
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states, first auth/performance optimizations and initial multi-user hardening are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, local timer restoration and analytics charts/heatmap. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
+The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states, first auth/performance optimizations and initial multi-user hardening are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, local timer restoration, analytics charts/heatmap and an initial installable-PWA foundation. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
