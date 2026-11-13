@@ -123,7 +123,7 @@ Status key:
 - [x] Add iPhone/iPad and Android home-screen installation instructions in Settings
 - [x] Respect mobile safe-area insets for the bottom navigation and floating New Task button
 - [ ] Verify installation and launch on real iPhone/iPad and Android devices; confirm auth/session behavior in standalone mode
-- [ ] Add a native install prompt for supported Android browsers and a clear iOS install guide/onboarding affordance
+- [~] Add a native install prompt when the browser exposes `beforeinstallprompt`; detect standalone installation and show an installed state. Keep the iOS Safari manual install guide because iOS does not expose the same prompt API. Verify on real Android and iOS devices
 - [ ] Add carefully scoped offline support for static app assets only; never cache private API responses or user workspace data without an explicit offline-sync design
 - [ ] Evaluate native packaging only if PWA limitations block a concrete requirement (e.g. app-store distribution or platform-specific integrations)
 
