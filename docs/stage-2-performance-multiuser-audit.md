@@ -74,3 +74,23 @@ Capture median and p95 across at least five runs where practical. Record dataset
 The repository has a sound baseline for per-row ownership isolation, plus additional relationship hardening in migration 0002. The browser client does not use a service-role key. However, multi-user readiness is **not certified** until migrations 0002/0003 are confirmed applied and the two-account isolation matrix passes.
 
 Performance optimizations are present and the unbounded focus-history fetch has been capped, but actual published-app performance remains **unmeasured**. Do not close Stage 2 based on CI alone.
+
+
+## Follow-up app-wide performance audit and changes (2026-11-13)
+
+### Confirmed waste removed
+- Dashboard and Focus previously consumed the same 120-day focus-session query as Insights, even though both only display today's focus total. Added a timezone-aware today-only query keyed by timezone and date; Dashboard and Focus now use that smaller result set. Insights retains the 120-day history.
+- Insights previously imported Recharts directly in its route module. The charts now live in a dynamically imported component, so the charting library is loaded only when Insights is opened.
+- TaskDialog was conditionally mounted but statically imported by the app shell and multiple routes. Added a lazy wrapper and replaced direct imports across the app shell, Dashboard, Tasks, Calendar, Projects and Course detail. The editor and its form dependencies are now fetched only when the dialog is opened.
+- Focus session completion previously performed an explicit refetch immediately after the shared save mutation had already invalidated the focus-session query family. Removed the duplicate request.
+
+### Additional audit findings
+- The generated `src/routeTree.gen.ts` statically imports each route module. Route-level component code splitting is not currently evident in the generated tree. This is a high-value remaining optimization, but should be implemented using the supported TanStack Router code-splitting configuration and verified against the Lovable Vite wrapper before changing router generation.
+- Tasks, courses, projects and milestones are still fetched as complete per-user collections. This is simple and appropriate for a small private beta; pagination, selective projections and server-side aggregation should be driven by measured dataset size and query plans rather than introduced prematurely.
+- Dashboard and Focus still depend on the shared tasks query because their widgets/task selector need task records. A future summary endpoint could reduce this further, but should wait until query latency and row counts are measured.
+- No browser profiler, real published-domain trace, bundle analyzer output, or deployed query plans were available. Therefore no numerical speedup is claimed.
+
+### Verification status
+- GitHub CI for earlier commits in this pass passed tests, lint and production build.
+- CI for the final lazy-query, lazy-chart, lazy-dialog and duplicate-refetch commits is pending at the time of this update.
+- Verify first-open TaskDialog loading, Insights chart loading, Dashboard/Focus day-boundary behavior, and actual tab-return timing in the published app.
