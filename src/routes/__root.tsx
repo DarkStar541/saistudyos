@@ -119,8 +119,16 @@ function RootComponent() {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+
+      // Query keys are intentionally simple and not user-id-prefixed. Clear
+      // every cached workspace record at an account boundary so switching
+      // accounts can never briefly render the previous user's cached data.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        queryClient.clear();
+      } else {
+        void queryClient.invalidateQueries();
+      }
+      void router.invalidate();
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
