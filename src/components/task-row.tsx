@@ -1,7 +1,9 @@
 import { addDays, format } from "date-fns";
-import { CalendarClock, Flag, Hammer, Repeat } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { CalendarClock, Flag, Hammer, Repeat, Timer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { colorVar, useToggleTask, type Course, type Task } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { colorVar, useProfile, useToggleTask, type Course, type Task } from "@/lib/db";
 import { dateKeyInTimeZone, isOverdue, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,8 @@ export const PRIORITY_CLASS: Record<string, string> = {
 
 export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Task; course?: Course | undefined; onOpen: (t: Task) => void; compact?: boolean; timeZone?: string }) {
   const toggle = useToggleTask();
+  const navigate = useNavigate();
+  const profile = useProfile().data;
   const done = task.status === "done";
   const overdue = isOverdue(task);
   const plannedLabel = task.planned_date ? relPlanned(task.planned_date, timeZone) : null;
@@ -68,6 +72,7 @@ export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Tas
           {!compact && task.tags.map((t) => <span key={t} className="rounded bg-secondary px-1.5 text-secondary-foreground">#{t}</span>)}
         </div>
       </button>
+      <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground" disabled={done || !profile?.id} aria-label={`Focus on ${task.title}`} title="Focus on this task" onClick={() => { if (!profile?.id) return; localStorage.setItem(`pace-focus-next-task:${profile.id}`, task.id); void navigate({ to: "/focus" }); }}><Timer className="size-3.5" /><span className="hidden sm:inline">Focus</span></Button>
       {task.priority !== "medium" && task.priority !== "low" && <Flag className={cn("mt-0.5 size-3.5", PRIORITY_CLASS[task.priority])} />}
     </div>
   );
