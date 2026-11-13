@@ -13,7 +13,8 @@ export const Route = createFileRoute("/_authenticated/focus")({
   component: FocusPage,
 });
 
-type TimerState = { startedAt: number; endsAt: number; plannedSeconds: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null };
+type TimerKind = "focus" | "short_break" | "long_break";
+type TimerState = { startedAt: number; endsAt: number; plannedSeconds: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null; kind: TimerKind };
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 
 function FocusPage() {
@@ -26,6 +27,7 @@ function FocusPage() {
   const saveSession = useSave("focus_sessions");
   const [selectedTask, setSelectedTask] = useState("");
   const [duration, setDuration] = useState(25);
+  const [mode, setMode] = useState<TimerKind>("focus");
   const [timer, setTimer] = useState<TimerState | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [timerRestored, setTimerRestored] = useState(false);
@@ -40,7 +42,7 @@ function FocusPage() {
       const saved = localStorage.getItem(`pace-focus-timer:${profile.id}`);
       if (saved) {
         const parsed = JSON.parse(saved) as TimerState;
-        if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && typeof parsed.plannedSeconds === "number" && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
+        if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && typeof parsed.plannedSeconds === "number" && ["focus", "short_break", "long_break"].includes(parsed.kind) && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
           setTimer(parsed);
           setSelectedTask(parsed.taskId ?? "");
         }
@@ -83,7 +85,7 @@ function FocusPage() {
         user_id: profile.id,
         task_id: timer.taskId,
         course_id: tasks.find((task) => task.id === timer.taskId)?.course_id ?? null,
-        kind: "focus",
+        kind: timer.kind,
         started_at: started.toISOString(),
         ended_at: new Date(end).toISOString(),
         duration_seconds: completed ? plannedSeconds : seconds,
@@ -138,7 +140,7 @@ function FocusPage() {
       </header>
       <section className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-sm font-medium text-muted-foreground">{timer ? (timer.pausedRemainingMs === null ? "SESSION IN PROGRESS" : "SESSION PAUSED") : "READY WHEN YOU ARE"}</p>
+          <p className="text-sm font-medium text-muted-foreground">{timer ? (timer.pausedRemainingMs === null ? (timer.kind === "focus" ? "FOCUS SESSION" : "BREAK IN PROGRESS") : "SESSION PAUSED") : "READY WHEN YOU ARE"}</p>
           <div className="relative mx-auto my-7 grid size-64 place-items-center rounded-full border-[10px] border-muted sm:size-72" role="timer" aria-live="off">
             <svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 288 288" aria-hidden="true">
               <circle cx="144" cy="144" r="134" fill="none" stroke="currentColor" strokeOpacity=".08" strokeWidth="8" />
