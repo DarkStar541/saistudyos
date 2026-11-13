@@ -6,6 +6,7 @@ import { useFocusSessions, useProfile, useSave, useTasks } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
+import { dateKeyInTimeZone } from "@/lib/task-utils";
 
 export const Route = createFileRoute("/_authenticated/focus")({
   head: () => ({ meta: [{ title: "Focus — Pace" }, { name: "description", content: "A quiet place to work on one thing at a time." }] }),
@@ -27,11 +28,13 @@ function FocusPage() {
   const [duration, setDuration] = useState(25);
   const [timer, setTimer] = useState<TimerState | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [timerRestored, setTimerRestored] = useState(false);
   const finishing = useRef(false);
   const storageKey = profile ? `pace-focus-timer:${profile.id}` : null;
 
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?.id) return;
+    setTimerRestored(false);
     setDuration(profile.focus_minutes || 25);
     try {
       const saved = localStorage.getItem(`pace-focus-timer:${profile.id}`);
@@ -45,6 +48,7 @@ function FocusPage() {
     } catch {
       localStorage.removeItem(`pace-focus-timer:${profile.id}`);
     }
+    setTimerRestored(true);
   }, [profile?.id]);
 
   useEffect(() => {
@@ -54,17 +58,17 @@ function FocusPage() {
   }, [timer]);
 
   useEffect(() => {
-    if (!storageKey) return;
+    if (!storageKey || !timerRestored) return;
     if (timer) localStorage.setItem(storageKey, JSON.stringify(timer));
     else localStorage.removeItem(storageKey);
-  }, [timer, storageKey]);
+  }, [timer, storageKey, timerRestored]);
 
   const plannedSeconds = timer?.plannedSeconds ?? duration * 60;
   const remaining = timer
     ? Math.max(0, Math.ceil((timer.pausedRemainingMs ?? Math.max(0, timer.endsAt - now)) / 1000))
     : plannedSeconds;
   const selected = tasks.find((task) => task.id === (timer?.taskId ?? selectedTask));
-  const todaySessions = sessions.filter((session) => session.kind === "focus" && new Date(session.started_at).toDateString() === new Date().toDateString());
+  const todaySessions = sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), profile?.timezone) === dateKeyInTimeZone(new Date(), profile?.timezone));
   const todayMinutes = Math.round(todaySessions.reduce((sum, session) => sum + session.duration_seconds, 0) / 60);
   const activeTasks = tasks.filter((task) => task.status !== "done");
 
