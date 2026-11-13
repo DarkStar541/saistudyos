@@ -19,9 +19,10 @@ export const Route = createFileRoute("/_authenticated/calendar")({
 function CalendarPage() {
   const tasksQuery = useTasks();
   const coursesQuery = useCourses();
+  const profileQuery = useProfile();
   const { data: tasks = [] } = tasksQuery;
   const { data: courses = [] } = coursesQuery;
-  const { data: profile } = useProfile();
+  const { data: profile } = profileQuery;
   const [showCompleted, setShowCompleted] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const courseMap = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses]);
@@ -30,8 +31,9 @@ function CalendarPage() {
     [tasks, showCompleted],
   );
 
-  if (tasksQuery.isLoading || coursesQuery.isLoading) return <QueryState loading loadingLabel="Loading your calendar…" />;
-  if (tasksQuery.error || coursesQuery.error) return <QueryState error={tasksQuery.error ?? coursesQuery.error} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch()]); }} />;
+  if (tasksQuery.isLoading || coursesQuery.isLoading || profileQuery.isLoading) return <QueryState loading loadingLabel="Loading your calendar…" />;
+  const queryError = tasksQuery.error ?? coursesQuery.error ?? profileQuery.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch(), profileQuery.refetch()]); }} />;
 
   return (
     <div>
