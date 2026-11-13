@@ -142,6 +142,12 @@ Rules:
     return json({ error: "The AI returned an unreadable proposal. Try a shorter capture." }, 502);
   }
 
+  const expectedKeys = ["title", "description", "courseName", "taskType", "priority", "dueDate", "dueTime", "plannedDate", "estimatedMinutes", "clarificationQuestion"];
+  if (Object.keys(proposal).some((key) => !expectedKeys.includes(key)) ||
+      expectedKeys.some((key) => !(key in proposal))) {
+    return json({ error: "The AI returned an unexpected proposal shape. Try again." }, 422);
+  }
+
   const title = typeof proposal.title === "string" ? proposal.title.trim().slice(0, 160) : "";
   if (!title || typeof proposal.title !== "string") return json({ error: "The AI couldn't identify a task title. Try rephrasing it." }, 422);
   if (!validDate(proposal.dueDate) || !validDate(proposal.plannedDate)) return json({ error: "The AI returned an invalid date. Please enter the date yourself." }, 422);
