@@ -32,7 +32,7 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
   calendar: { label: "This week", wide: true },
   workload: { label: "Weekly workload" },
   courses: { label: "Recent courses" },
-  ai: { label: "AI assistant" },
+  ai: { label: "AI Quick Add" },
 };
 
 function Dashboard() {
