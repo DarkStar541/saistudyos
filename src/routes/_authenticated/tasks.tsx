@@ -39,8 +39,9 @@ function TasksPage() {
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
   const filtered = tasks.filter((t) => (!courseFilter || t.course_id === courseFilter) && (showDone || view === "board" || t.status !== "done"));
 
-  if (tasksQuery.isLoading || coursesQuery.isLoading) return <QueryState loading loadingLabel="Loading your tasks…" />;
-  if (tasksQuery.error || coursesQuery.error) return <QueryState error={tasksQuery.error ?? coursesQuery.error} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch()]); }} />;
+  if (tasksQuery.isLoading || coursesQuery.isLoading || profileQuery.isLoading) return <QueryState loading loadingLabel="Loading your tasks…" />;
+  const queryError = tasksQuery.error ?? coursesQuery.error ?? profileQuery.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch(), profileQuery.refetch()]); }} />;
 
   return (
     <div>
