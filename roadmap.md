@@ -107,7 +107,7 @@ Status key:
 - [ ] Validate AI Quick Add output server-side and map inferred courses only to courses owned by the signed-in user (Stage 3 architecture documented in docs/stage-3-ai-quick-add-architecture.md)
 - [ ] Add rate limits and safe failure handling to AI endpoints
 - [ ] Require confirmation when AI Quick Add is uncertain before creating or changing data
-- [ ] Review OAuth redirects, session refresh, logout and password-reset flows
+- [~] Review auth flows: persisted-session redirects and automatic refresh are configured; sign-out now checks Supabase errors before clearing local cache and redirecting. OAuth redirect and password-recovery behavior still need browser verification
 - [~] Signup creates a separate private workspace and explains account-level privacy; beta remains open-signup for the shared-friend test. Verify with two separate synthetic accounts
 
 ## 6. AI Quick Add and integrations
