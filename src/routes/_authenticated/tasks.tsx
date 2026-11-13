@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
-  head: () => ({ meta: [{ title: "Tasks — StudyOS" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — StudyOS" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Tasks — Pace" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — Pace" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TasksPage,
 });
 
@@ -61,8 +61,8 @@ function TasksPage() {
           </label>
         )}
       </div>
-      {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
-      {view === "board" && <BoardView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
+      {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} timeZone={profile?.timezone} />}
+      {view === "board" && <BoardView tasks={filtered} courses={courseMap} onOpen={setEditing} timeZone={profile?.timezone} />}
       {view === "calendar" && <CalendarView tasks={filtered} courses={courseMap} onOpen={setEditing} weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1} timeZone={profile?.timezone} />}
       {(creating || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }} task={editing} defaults={courseFilter ? { course_id: courseFilter } : undefined} />}
     </div>
