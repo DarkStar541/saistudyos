@@ -5,7 +5,7 @@ import { addDays, format, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, dateKeyInTimeZone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
@@ -82,7 +82,7 @@ function Dashboard() {
     <div>
       <header className="dashboard-heading mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="mr-auto">
-          <p className="overline-label">YOUR STUDY SPACE <span className="mx-2 opacity-50">/</span> {format(new Date(), "EEEE, MMMM d")}</p>
+          <p className="overline-label">YOUR STUDY SPACE <span className="mx-2 opacity-50">/</span> {format(parsePlanned(dateKeyInTimeZone(new Date(), ctx.timeZone)) ?? new Date(), "EEEE, MMMM d")}</p>
           <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
             {greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}
           </h1>
