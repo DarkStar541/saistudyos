@@ -104,17 +104,17 @@ Status key:
 - [x] Clarify during signup that each account gets its own private workspace
 - [~] Review existing RLS: profiles are scoped by auth.uid() = id; courses, projects, milestones, tasks, subtasks and focus_sessions are scoped by auth.uid() = user_id. Separate-account browser verification remains open
 - [~] Supabase browser client uses the publishable key, not a service-role key; complete repository/deployment secret audit remains open
-- [ ] Validate AI Quick Add output server-side and map inferred courses only to courses owned by the signed-in user (Stage 3 architecture documented in docs/stage-3-ai-quick-add-architecture.md)
-- [ ] Add rate limits and safe failure handling to AI endpoints
-- [ ] Require confirmation when AI Quick Add is uncertain before creating or changing data
+- [~] Add authenticated Gemini Edge Function with strict server-side output validation and course matching against only the signed-in user's RLS-scoped active courses; deploy and two-account test remain
+- [~] Add atomic database-backed limit of 10 AI parse requests per user per minute, request-size cap, provider timeout and safe error handling; apply migration and verify live endpoint behavior
+- [~] Dashboard AI proposal editor supports review/edit and explicit confirmation before task insert; verify clarification and failure-retry flows in browser
 - [~] Review auth flows: persisted-session redirects and automatic refresh are configured; sign-out now checks Supabase errors before clearing local cache and redirecting. OAuth redirect and password-recovery behavior still need browser verification
 - [~] Signup creates a separate private workspace and explains account-level privacy; beta remains open-signup for the shared-friend test. Verify with two separate synthetic accounts
 
 ## 6. AI Quick Add and integrations
-- [ ] Build natural-language task capture using the user's saved course list
-- [ ] Infer course, due date, assignment type and priority from short input
-- [ ] Ask for clarification when the inference is ambiguous
-- [ ] Keep capture fast and low-friction for situations where the student cannot open a laptop or phone
+- [~] Implement Dashboard AI Quick Add proposal flow using an authenticated Edge Function and the user's active course list; migration, Gemini secret and function deployment are required before it runs
+- [~] Gemini parser proposes course, deadline, work date, task type, priority and estimate; exact course matching and strict response validation are implemented, browser accuracy testing remains
+- [~] Return a clarification when course matching is unknown/ambiguous and expose editable proposal fields; verify real examples in browser
+- [~] Add a compact Dashboard AI capture widget with one-step proposal and review; persistent cross-device Capture Inbox remains future work
 - [ ] Evaluate integrations based on real student value; Canvas is the relevant LMS context (not Google Classroom)
 - [ ] Keep the architecture portable and avoid unnecessary vendor lock-in
 
