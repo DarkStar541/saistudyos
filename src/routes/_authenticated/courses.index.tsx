@@ -5,15 +5,19 @@ import { colorVar, useCourses, useTasks } from "@/lib/db";
 import { CourseDialog } from "@/components/course-dialog";
 import { CourseIcon } from "@/components/course-icon";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/courses/")({
-  head: () => ({ meta: [{ title: "Courses — StudyOS" }, { name: "description", content: "Manage your classes, schedules and teachers." }, { property: "og:title", content: "Courses — StudyOS" }, { property: "og:description", content: "Manage your classes, schedules and teachers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Courses — Pace" }, { name: "description", content: "Manage your classes, schedules and teachers." }, { property: "og:title", content: "Courses — Pace" }, { property: "og:description", content: "Manage your classes, schedules and teachers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: CoursesPage,
 });
 
 function CoursesPage() {
-  const { data: courses = [], isLoading } = useCourses();
-  const { data: tasks = [] } = useTasks();
+  const coursesQuery = useCourses();
+  const tasksQuery = useTasks();
+  const { data: courses = [] } = coursesQuery;
+  const { data: tasks = [] } = tasksQuery;
   const [open, setOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const list = courses.filter((c) => showArchived || !c.archived);
@@ -25,14 +29,17 @@ function CoursesPage() {
     return counts;
   }, [tasks]);
 
+  if (coursesQuery.isLoading || tasksQuery.isLoading) return <QueryState loading loadingLabel="Loading your courses…" />;
+  if (coursesQuery.error || tasksQuery.error) return <QueryState error={coursesQuery.error ?? tasksQuery.error} onRetry={() => { void Promise.all([coursesQuery.refetch(), tasksQuery.refetch()]); }} />;
+
   return (
     <div>
       <div className="page-intro mb-8 flex flex-wrap items-end gap-3 border-b border-border/70 pb-6">
         <div className="mr-auto"><p className="overline-label mb-2">YOUR ACADEMIC LANDSCAPE</p><h1 className="text-5xl font-semibold">Courses<span className="text-primary">.</span></h1><p className="mt-2 text-sm text-muted-foreground">Every class, its work, and the semester ahead.</p></div>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Archived</label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground"><Checkbox checked={showArchived} onCheckedChange={(checked) => setShowArchived(checked === true)} /> Archived</label>
         <Button onClick={() => setOpen(true)}><Plus className="size-4" /> New course</Button>
       </div>
-      {!isLoading && !list.length && (
+      {!list.length && (
         <div className="rounded-2xl border border-dashed border-border p-12 text-center">
           <p className="font-medium">Add your first class</p>
           <p className="mt-1 text-sm text-muted-foreground">Courses keep your tasks, exams and notes organised.</p>
