@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { dateTimeInTimeZoneToIso } from "@/lib/task-utils";
 
 export const Route = createFileRoute("/_authenticated/projects")({
-  head: () => ({ meta: [{ title: "Projects — StudyOS" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — StudyOS" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Projects — Pace" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — Pace" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ProjectsPage,
 });
 
