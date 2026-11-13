@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
 import { applyTheme, applyStyle, getSavedStyle } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -129,7 +129,7 @@ export function AppShell() {
         ))}
       </nav>
 
-      {addOpen && <TaskDialog open={addOpen} onOpenChange={setAddOpen} />}
+      {addOpen && <LazyTaskDialog open={addOpen} onOpenChange={setAddOpen} />}
     </div>
   );
 }
