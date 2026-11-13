@@ -2296,3 +2296,25 @@ html.theme-neutral .dashboard-customize-layout > [data-widget="calendar"] {
   .app-mobile-nav { display: grid !important; }
   .app-mobile-add { display: grid !important; }
 }
+
+
+/* AI Quick Add is the primary Dashboard capture action. */
+.dashboard-ai-quick-add {
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.055), hsl(var(--card)) 58%);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  box-shadow: 0 2px 10px hsl(var(--foreground) / 0.035);
+}
+.dashboard-ai-quick-add .dashboard-widget-heading {
+  border-bottom-color: hsl(var(--primary) / 0.18);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-ai-quick-add {
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .dashboard-ai-quick-add:focus-within {
+    border-color: hsl(var(--primary) / 0.48);
+    box-shadow: 0 4px 18px hsl(var(--primary) / 0.09);
+  }
+}
