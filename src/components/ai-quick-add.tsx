@@ -4,25 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCourses, useProfile, useSave } from "@/lib/db";
 import { dateTimeInTimeZoneToIso, PRIORITIES, TASK_TYPES } from "@/lib/task-utils";
+import { aiQuickAddProposalSchema, type AiQuickAddProposal } from "@/lib/ai-quick-add";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Proposal = {
-  title: string;
-  description: string | null;
-  courseId: string | null;
-  courseName: string | null;
-  courseUnresolved: boolean;
-  taskType: string;
-  priority: string;
-  dueDate: string | null;
-  dueTime: string | null;
-  plannedDate: string | null;
-  estimatedMinutes: number | null;
-  clarificationQuestion: string | null;
-};
+type Proposal = AiQuickAddProposal;
 
 const NONE = "__none__";
 const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1).replace("_", " ");
@@ -46,10 +34,9 @@ export function AiQuickAdd() {
         body: { text: capture.trim() },
       });
       if (error) throw new Error(data?.error || error.message || "Couldn't interpret that capture.");
-      if (!data?.proposal || typeof data.proposal.title !== "string") {
-        throw new Error(data?.error || "The AI returned an invalid proposal.");
-      }
-      setProposal(data.proposal as Proposal);
+      const validated = aiQuickAddProposalSchema.safeParse(data?.proposal);
+      if (!validated.success) throw new Error(data?.error || "The AI returned an invalid proposal. Try again.");
+      setProposal(validated.data);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "AI Quick Add is unavailable.");
     } finally {
