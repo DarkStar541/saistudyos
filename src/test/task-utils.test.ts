@@ -6,6 +6,7 @@ import {
   isUpcoming,
   nextOccurrence,
   todayProgress,
+  uniqueDeadlineTasks,
   weeklyWorkload,
 } from "@/lib/task-utils";
 
@@ -108,6 +109,18 @@ describe("dual dates", () => {
   });
   it("weekly recurrence moves 7 days", () => {
     expect(nextOccurrence("weekly", new Date(2026, 10, 4))?.getDate()).toBe(11);
+  });
+});
+
+describe("recurring deadline de-duplication", () => {
+  it("counts one deadline per recurring series while retaining separate work occurrences", () => {
+    const tasks = [
+      { id: "root", status: "done", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-04", recurrence_parent_id: null },
+      { id: "child-1", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-05", recurrence_parent_id: "root" },
+      { id: "child-2", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-06", recurrence_parent_id: "root" },
+      { id: "other", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: null, recurrence_parent_id: null },
+    ];
+    expect(uniqueDeadlineTasks(tasks).map((task) => task.id).sort()).toEqual(["child-1", "other"]);
   });
 });
 
