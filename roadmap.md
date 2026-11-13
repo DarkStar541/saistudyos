@@ -115,6 +115,7 @@ Status key:
 - [~] Gemini parser proposes course, deadline, work date, task type, priority and estimate; exact course matching and strict response validation are implemented, browser accuracy testing remains
 - [~] Return a clarification when course matching is unknown/ambiguous and expose editable proposal fields; verify real examples in browser
 - [~] Add a compact Dashboard AI capture widget with one-step proposal and review; persistent cross-device Capture Inbox remains future work
+- ~~[x]~~ Pin AI Quick Add as the first, full-width Dashboard widget for all accounts; give it a restrained primary-accent surface and keep it present during customization
 - [ ] Evaluate integrations based on real student value; Canvas is the relevant LMS context (not Google Classroom)
 - [ ] Keep the architecture portable and avoid unnecessary vendor lock-in
 
