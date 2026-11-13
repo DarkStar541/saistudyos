@@ -21,8 +21,8 @@ Status key:
 - ~~[x]~~ Suppress projected dates already represented by actual task rows
 - ~~[x]~~ Add a duplicate guard when skipping a recurring occurrence
 - ~~[x]~~ Improve whole-series editing while preserving per-occurrence planned dates and completed history
-- [~] Resolve the remaining dual-date discrepancy: planned/work dates and due/deadline dates remain separate; saved-timezone labels now cover task lists, boards, task rows, projects, dashboard and Calendar; carried-forward completions count in Today progress; recurring deadlines are de-duplicated in dashboard counts and lists. Full scenario verification remains pending.
-- [ ] Verify real user scenarios (including MathXL and Catapult Design), month boundaries, weekends, timezone changes, series edits, skips, completion and deletion
+- [~] Resolve the remaining dual-date discrepancy: planned/work dates and due/deadline dates remain separate; saved-timezone labels cover task lists, boards, task rows, projects, dashboard and Calendar; carried-forward completions count in Today progress; recurring deadlines are de-duplicated in dashboard counts and lists. Synthetic recurrence/timezone/DST regression tests pass; browser and real-data scenario checks remain pending.
+- [~] Verify real user scenarios: automated synthetic coverage includes MathXL-style weekday schedules, month boundaries, weekends, timezone/DST conversion, recurrence ends and catch-up. Still verify actual MathXL/Catapult Design records and end-to-end edits, skips, completion and deletion in the app.
 - [ ] Consider database-level protection against concurrent duplicate recurrence generation
 
 ### Calendar, Projects and controls
@@ -32,8 +32,8 @@ Status key:
 - ~~[x]~~ Replace targeted native dropdown/date controls in Tasks, Courses, Settings, Projects and Dashboard Quick Capture
 - ~~[x]~~ Align overdue widget heading with the other neutral widget headings
 - ~~[x]~~ Correct Dashboard lower-metric alignment
-- [~] Add recurring-series deadline de-duplication to dashboard counts/lists and a regression test; verify calendar event counts, due counts and projections against real user data
-- [~] Replace native checkboxes in Tasks and Courses with shared controls; native time inputs remain for platform time selection. Finish the broader control audit.
+- [~] Add recurring-series deadline de-duplication to dashboard counts/lists and regression tests; unit coverage passes. Verify calendar event counts, due counts and projections against real user data in the browser.
+- ~~[x]~~ Replace native checkboxes in Tasks and Courses with shared controls; the remaining native time inputs are intentional platform-native time pickers. No native date/dropdown controls remain in the audited core routes.
 
 ## 2. Section 2.1 — Complete visual transformation
 
@@ -42,7 +42,7 @@ Status key:
 - ~~[x]~~ Establish the neutral, restrained, broadly appealing design direction
 - ~~[x]~~ Replace old runtime theme selection with one consistent neutral visual style
 - ~~[x]~~ Keep light, dark and system appearance options
-- [~] Apply one neutral system for typography, spacing, hierarchy, surfaces, borders, shadows, color and interaction states; complete a route-by-route visual review and browser verification.
+- [~] Apply one neutral system for typography, spacing, hierarchy, surfaces, borders, shadows, color and interaction states. Neutral runtime styling and system-font stack are in place; route-by-route visual review and browser verification remain.
 - [ ] Keep the interface calm and practical; avoid excessive gradients, glass effects, decorative gauges and unnecessary animation
 
 ### App shell and core pages
@@ -55,7 +55,7 @@ Status key:
 - [~] Calendar: page, timezone-aware month/today behavior and neutral styling foundations are in place; finish full-page review
 - [~] Settings: neutral card and appearance foundations are in place; finish the full page visual review
 - ~~[x]~~ Create the Pace public landing page with product explanation, feature overview, preview and calls to action
-- [ ] Review and refine auth, password-reset and onboarding screens for a consistent Pace experience
+- [~] Refine auth and password-reset screens for consistent Pace branding, accessible labels and browser autofill. Browser verification remains; no separate onboarding flow exists yet.
 
 ### Responsive and accessibility polish
 - ~~[x]~~ Make the sidebar/navigation scrollable
@@ -76,12 +76,12 @@ Status key:
 - ~~[x]~~ Preserve Supabase persistent sessions and automatic token refresh; do not store auth tokens in JavaScript-readable cookies
 
 ### Remaining performance work
-- [ ] Measure cold load, warm navigation, auth restoration, dashboard load, dialog open, task toggle and calendar navigation
-- [ ] Compare before/after timings on the same deployment and device
+- [ ] Measure cold load, warm navigation, auth restoration, dashboard load, dialog open, task toggle and calendar navigation in the published app/preview; no browser timing harness is available through the current GitHub-only workflow.
+- [ ] Compare before/after timings on the same deployment and device; removing unused Google Fonts requests reduces external font work, but runtime gains still need measurement.
 - [ ] Profile slow queries, unnecessary renders and large route bundles; optimize only where measurements show a bottleneck
 - [ ] Investigate intermittent login failures if they persist after the auth fast-path change
 - [ ] Verify session restoration in embedded Lovable preview and the published domain separately
-- [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail; verify session-expiry behavior and retry flows
+- [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail. Static build passes; verify session-expiry behavior and retry flows in the browser.
 
 ## 4. Focus and productivity features
 - [ ] Create Focus and Insights routes/pages before their visual refinement; neither route exists yet
@@ -111,8 +111,8 @@ Status key:
 - [ ] Keep the architecture portable and avoid unnecessary vendor lock-in
 
 ## 7. Release readiness
-- [ ] Run the full test suite, including recurrence and timezone tests
-- [ ] Run lint and production build
+- ~~[x]~~ Run the full test suite, including recurrence, timezone and daylight-saving tests (GitHub Actions passed).
+- ~~[x]~~ Run static lint and production build (GitHub Actions passed).
 - [ ] Run browser tests for auth, navigation, CRUD, recurrence, calendar, focus and responsive layouts
 - [ ] Verify data isolation with at least two synthetic user accounts
 - [ ] Verify no regressions in light/dark/system appearance
