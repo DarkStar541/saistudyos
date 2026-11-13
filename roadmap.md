@@ -21,7 +21,7 @@ Status key:
 - ~~[x]~~ Suppress projected dates already represented by actual task rows
 - ~~[x]~~ Add a duplicate guard when skipping a recurring occurrence
 - ~~[x]~~ Improve whole-series editing while preserving per-occurrence planned dates and completed history
-- [ ] Resolve the remaining dual-date discrepancy: distinguish planned/work dates from due/deadline dates consistently across calendar banners, deadline indicators, daily counts and recurrence settings
+- [~] Resolve the remaining dual-date discrepancy: planned/work dates and due/deadline dates remain separate; saved-timezone labels now cover task lists, boards, task rows, projects, dashboard and Calendar; carried-forward completions count in Today progress; recurring deadlines are de-duplicated in dashboard counts and lists. Full scenario verification remains pending.
 - [ ] Verify real user scenarios (including MathXL and Catapult Design), month boundaries, weekends, timezone changes, series edits, skips, completion and deletion
 - [ ] Consider database-level protection against concurrent duplicate recurrence generation
 
@@ -32,8 +32,8 @@ Status key:
 - ~~[x]~~ Replace targeted native dropdown/date controls in Tasks, Courses, Settings, Projects and Dashboard Quick Capture
 - ~~[x]~~ Align overdue widget heading with the other neutral widget headings
 - ~~[x]~~ Correct Dashboard lower-metric alignment
-- [ ] Verify calendar event counts, due counts and recurring projections against real data
-- [ ] Finish auditing any remaining native controls outside the files already checked
+- [~] Add recurring-series deadline de-duplication to dashboard counts/lists and a regression test; verify calendar event counts, due counts and projections against real user data
+- [~] Replace native checkboxes in Tasks and Courses with shared controls; native time inputs remain for platform time selection. Finish the broader control audit.
 
 ## 2. Section 2.1 — Complete visual transformation
 
@@ -42,20 +42,18 @@ Status key:
 - ~~[x]~~ Establish the neutral, restrained, broadly appealing design direction
 - ~~[x]~~ Replace old runtime theme selection with one consistent neutral visual style
 - ~~[x]~~ Keep light, dark and system appearance options
-- [ ] Finish one coherent design system across every screen: typography, spacing, hierarchy, surfaces, borders, shadows, color and interaction states
+- [~] Apply one neutral system for typography, spacing, hierarchy, surfaces, borders, shadows, color and interaction states; complete a route-by-route visual review and browser verification.
 - [ ] Keep the interface calm and practical; avoid excessive gradients, glass effects, decorative gauges and unnecessary animation
 
 ### App shell and core pages
 - ~~[x]~~ Refresh the app shell, wordmark and navigation styling
 - ~~[x]~~ Add shared page-header styling and responsive layout foundations
 - ~~[x]~~ Refresh Courses index/detail hierarchy
-- [~] Dashboard: neutral surface, header, cards and spacing foundations are in place; finish the full page review
-- [ ] Tasks: complete visual refinement
-- [ ] Projects: complete visual refinement
-- [~] Calendar: page and neutral styling foundations are in place; finish full-page review
-- [ ] Settings: complete visual refinement
-- [ ] Focus: complete visual refinement
-- [ ] Insights: complete visual refinement
+- [~] Dashboard: neutral surface, header, cards and spacing foundations are in place; Pace metadata and timezone behavior corrected; finish the full page review
+- [~] Tasks: neutral page foundation and shared controls in place; finish the full page visual review
+- [~] Projects: neutral page foundation and saved-timezone deadline labels in place; finish the full page visual review
+- [~] Calendar: page, timezone-aware month/today behavior and neutral styling foundations are in place; finish full-page review
+- [~] Settings: neutral card and appearance foundations are in place; finish the full page visual review
 - ~~[x]~~ Create the Pace public landing page with product explanation, feature overview, preview and calls to action
 - [ ] Review and refine auth, password-reset and onboarding screens for a consistent Pace experience
 
@@ -83,9 +81,10 @@ Status key:
 - [ ] Profile slow queries, unnecessary renders and large route bundles; optimize only where measurements show a bottleneck
 - [ ] Investigate intermittent login failures if they persist after the auth fast-path change
 - [ ] Verify session restoration in embedded Lovable preview and the published domain separately
-- [ ] Add graceful loading/error states for network and session failures
+- [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail; verify session-expiry behavior and retry flows
 
 ## 4. Focus and productivity features
+- [ ] Create Focus and Insights routes/pages before their visual refinement; neither route exists yet
 - [ ] Complete Focus Mode page and navigation entry
 - [ ] Add task-to-focus entry point
 - [ ] Finish focus duration, break and related settings
