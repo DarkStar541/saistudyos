@@ -84,14 +84,13 @@ Status key:
 - [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail. Static build passes; verify session-expiry behavior and retry flows in the browser.
 
 ## 4. Focus and productivity features
-- [ ] Create Focus and Insights routes/pages before their visual refinement; neither route exists yet
-- [ ] Complete Focus Mode page and navigation entry
-- [ ] Add task-to-focus entry point
-- [ ] Finish focus duration, break and related settings
-- [ ] Verify timer correctness using timestamps (not interval-only elapsed-time tracking), including refresh, tab suspension and resume
-- [ ] Complete Insights page with productivity, workload and focus summaries
-- [ ] Add useful charts, heatmap and period selector
-- [ ] Ensure analytics use correct timezone and date semantics
+- [~] Create authenticated Focus and Insights routes/pages; initial implementations are committed, pending CI and browser verification
+- [~] Add Focus Mode page, navigation entry and task selection for session context
+- [ ] Add a direct task-detail-to-focus shortcut
+- [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; verify refresh, tab suspension, pause accounting and session persistence in browser
+- [ ] Add short/long break modes and editable focus/break duration settings
+- [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap
+- [~] Group Insights data using profile timezone and separate planned-work dates from completion timestamps; validate DST and date-boundary behavior
 
 ## 5. Security, privacy and multi-user readiness
 - [ ] Audit Row Level Security policies and confirm strict per-user data isolation
@@ -125,4 +124,4 @@ Status key:
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. Regression tests have been added but **have not been run**; browser visuals, responsive behavior, live auth and performance timings also remain unverified. The next priority is automated test/build/lint execution and real-data browser verification, followed by measured performance profiling. The `main` branch remains untouched.
+The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation. These new pages have not yet passed CI or browser verification; timer persistence, break modes, direct task-to-focus navigation and analytics edge cases remain open. The `main` branch remains untouched.
