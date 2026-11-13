@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { QueryState } from "@/components/query-state";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({ meta: [{ title: "Tasks — Pace" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — Pace" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -63,7 +64,7 @@ function TasksPage() {
         </Select>
         {view !== "board" && (
           <label className="flex items-center gap-2 text-muted-foreground">
-            <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Show completed
+            <Checkbox checked={showDone} onCheckedChange={(checked) => setShowDone(checked === true)} /> Show completed
           </label>
         )}
       </div>
