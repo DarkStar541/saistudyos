@@ -12,7 +12,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const TASK_TYPES = ["assignment", "homework", "project", "exam", "quiz", "reading", "study", "other"];
+const TASK_TYPES = ["assignment", "homework", "exam", "quiz", "lab", "reading", "essay", "project", "study", "other"];
 const PRIORITIES = ["low", "medium", "high"];
 
 function validDate(value: unknown): value is string | null {
@@ -108,7 +108,7 @@ Default estimated minutes: ${profile?.default_duration_minutes ?? 60}
 Capture: ${JSON.stringify(body.text.trim())}
 
 Return JSON with exactly these keys:
-{"title":string,"description":string|null,"courseName":string|null,"taskType":"assignment"|"homework"|"project"|"exam"|"quiz"|"reading"|"study"|"other","priority":"low"|"medium"|"high","dueDate":"YYYY-MM-DD"|null,"dueTime":"HH:mm"|null,"plannedDate":"YYYY-MM-DD"|null,"estimatedMinutes":integer|null,"clarificationQuestion":string|null}
+{"title":string,"description":string|null,"courseName":string|null,"taskType":"assignment"|"homework"|"exam"|"quiz"|"lab"|"reading"|"essay"|"project"|"study"|"other","priority":"low"|"medium"|"high","dueDate":"YYYY-MM-DD"|null,"dueTime":"HH:mm"|null,"plannedDate":"YYYY-MM-DD"|null,"estimatedMinutes":integer|null,"clarificationQuestion":string|null}
 Rules:
 - Distinguish deadline (dueDate) from work date (plannedDate). Never copy one into the other without explicit meaning.
 - Resolve relative dates from the supplied student local date and timezone.
