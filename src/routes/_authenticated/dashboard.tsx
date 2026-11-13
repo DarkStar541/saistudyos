@@ -5,7 +5,7 @@ import { addDays, format, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, dateKeyInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, hourInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
@@ -59,7 +59,7 @@ function Dashboard() {
     persist(next);
   };
 
-  const hour = new Date().getHours();
+  const hour = hourInTimeZone(new Date(), ctx.timeZone);
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
 
