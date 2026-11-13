@@ -60,7 +60,7 @@ export function ListView({ tasks, courses, onOpen, timeZone }: ViewProps) {
             {label} <span className="font-normal">· {items.length}</span>
           </h3>
           <div className="rounded-2xl border border-border bg-card p-1 shadow-card">
-            {items.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={onOpen} />)}
+            {items.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={onOpen} timeZone={timeZone} />)}
           </div>
         </section>
       ))}
