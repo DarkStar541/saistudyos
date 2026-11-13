@@ -86,7 +86,7 @@ Status key:
 ## 4. Focus and productivity features
 - [~] Create authenticated Focus and Insights routes/pages; initial implementations are committed, pending CI and browser verification
 - [~] Add Focus Mode page, navigation entry and task selection for session context
-- [~] Add a direct task-detail-to-focus shortcut via the task editor; verify the navigation handoff in browser
+- [~] Add a Focus button directly on task rows and in the task editor; verify both navigation handoffs in browser
 - [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; add unit coverage for elapsed/remaining time and pause accounting; browser refresh, tab suspension and session persistence still need verification
 - [~] Add short/long break modes and editable focus/break duration settings in Settings; browser verification remains
 - [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap
