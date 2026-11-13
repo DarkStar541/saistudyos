@@ -84,10 +84,10 @@ function CoursePage() {
             {exams.length ? exams.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} compact timeZone={profile?.timezone} />) : <p className="px-3 py-2 text-sm text-muted-foreground">No exams scheduled.</p>}
           </Section>
           <Section title="Assignments & tasks" action={<Button size="sm" variant="ghost" onClick={() => setTaskOpen("assignment")}><Plus className="size-4" /> Task</Button>}>
-            {work.length ? work.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} />) : <p className="px-3 py-2 text-sm text-muted-foreground">All caught up.</p>}
+            {work.length ? work.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} timeZone={profile?.timezone} />) : <p className="px-3 py-2 text-sm text-muted-foreground">All caught up.</p>}
           </Section>
           {!!done.length && (
-            <Section title={`Completed · ${done.length}`}>{done.slice(0, 10).map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} compact />)}</Section>
+            <Section title={`Completed · ${done.length}`}>{done.slice(0, 10).map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} compact timeZone={profile?.timezone} />)}</Section>
           )}
         </div>
         <div className="space-y-6">
