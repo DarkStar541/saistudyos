@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/date-picker";
 import { cn } from "@/lib/utils";
 
-type Props = {
+export type TaskDialogProps = {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   task?: Task | null | undefined;
@@ -28,7 +28,7 @@ type Props = {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ");
 const NONE = "__none__";
 
-export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
+export function TaskDialog({ open, onOpenChange, task, defaults }: TaskDialogProps) {
   const navigate = useNavigate();
   const { data: courses = [] } = useCourses();
   const { data: projects = [] } = useProjects();
