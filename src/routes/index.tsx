@@ -6,7 +6,6 @@ import {
   Check,
   CheckCircle2,
   Clock3,
-  Layers3,
   ListTodo,
   Sparkles,
 } from "lucide-react";
