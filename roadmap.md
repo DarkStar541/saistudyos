@@ -88,7 +88,7 @@ Status key:
 - [~] Add Focus Mode page, navigation entry and task selection for session context
 - [ ] Add a direct task-detail-to-focus shortcut
 - [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; verify refresh, tab suspension, pause accounting and session persistence in browser
-- [ ] Add short/long break modes and editable focus/break duration settings
+- [~] Add short/long break modes and editable focus/break duration settings in Settings; browser verification remains
 - [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap
 - [~] Group Insights data using profile timezone and separate planned-work dates from completion timestamps; validate DST and date-boundary behavior
 
@@ -124,4 +124,4 @@ Status key:
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation. These new pages have not yet passed CI or browser verification; timer persistence, break modes, direct task-to-focus navigation and analytics edge cases remain open. The `main` branch remains untouched.
+The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, local timer restoration and analytics charts/heatmap. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
