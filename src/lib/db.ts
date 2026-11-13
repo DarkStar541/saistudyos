@@ -21,7 +21,7 @@ const unwrap = <D,>(r: { data: D | null; error: { message: string } | null }) =>
 
 // Data changes only through our own mutations, which invalidate these keys —
 // so a 60s staleTime safely kills repeat fetches on every navigation.
-const STALE = 60_000;
+const STALE = 5 * 60_000; // Mutations invalidate immediately; keep read-only revisits instant for five minutes.
 
 export const profileQuery = queryOptions({
   queryKey: ["profile"],
