@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CalendarView } from "@/components/task-views";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { useCourses, useProfile, useTasks, type Task } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/query-state";
@@ -55,7 +55,7 @@ function CalendarPage() {
         timeZone={profile?.timezone}
       />
       {editing && (
-        <TaskDialog
+        <LazyTaskDialog
           open={true}
           onOpenChange={(open) => { if (!open) setEditing(null); }}
           task={editing}
