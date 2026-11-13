@@ -76,9 +76,9 @@ Status key:
 - ~~[x]~~ Preserve Supabase persistent sessions and automatic token refresh; do not store auth tokens in JavaScript-readable cookies
 
 ### Remaining performance work
-- [ ] Measure cold load, warm navigation, auth restoration, dashboard load, dialog open, task toggle and calendar navigation in the published app/preview; no browser timing harness is available through the current GitHub-only workflow.
-- [ ] Compare before/after timings on the same deployment and device; removing unused Google Fonts requests reduces external font work, but runtime gains still need measurement.
-- [ ] Profile slow queries, unnecessary renders and large route bundles; optimize only where measurements show a bottleneck
+- [~] Code-level performance audit completed and documented in `docs/stage-2-performance-multiuser-audit.md`; focus-session history fetch is bounded to 120 days and composite per-user query indexes are defined in migration 0003. Published-app cold/warm load, auth restoration, dashboard, dialog, task toggle and calendar timings remain unmeasured.
+- [ ] Compare before/after timings on the same deployment and device; runtime gains still need measurement.
+- [~] Repository query-path audit completed; focus history no longer downloads unbounded lifetime records. Full slow-query plans, render profiling and route-bundle profiling require deployed database/browser measurements.
 - [ ] Investigate intermittent login failures if they persist after the auth fast-path change
 - [ ] Verify session restoration in embedded Lovable preview and the published domain separately
 - [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail. Static build passes; verify session-expiry behavior and retry flows in the browser.
