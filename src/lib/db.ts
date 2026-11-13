@@ -61,7 +61,12 @@ export const subtasksQuery = queryOptions({
 export const focusSessionsQuery = queryOptions({
   queryKey: ["focus_sessions"],
   staleTime: STALE,
-  queryFn: async () => unwrap(await supabase.from("focus_sessions").select("*").order("started_at", { ascending: false })) as FocusSession[],
+  queryFn: async () => {
+    // Insights only exposes 7/30/90-day views and a 12-week heatmap.
+    // Keep a 120-day buffer for timezone boundaries without downloading an unbounded history.
+    const since = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString();
+    return unwrap(await supabase.from("focus_sessions").select("*").gte("started_at", since).order("started_at", { ascending: false })) as FocusSession[];
+  },
 });
 
 export const useProfile = () => useQuery(profileQuery);
