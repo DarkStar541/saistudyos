@@ -6,6 +6,7 @@ import { useFocusSessions, useProfile, useTasks } from "@/lib/db";
 import { dateKeyInTimeZone, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { QueryState } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
+import { focusMinutesByDate } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights — Pace" }, { name: "description", content: "Understand your study patterns and focus habits." }] }),
@@ -34,10 +35,10 @@ function InsightsPage() {
       return { key, label: format(date, period === 7 ? "EEE" : "MMM d"), focusMinutes: 0, completedTasks: 0, plannedTasks: 0 };
     });
     const byKey = new Map(days.map((day) => [day.key, day]));
-    for (const session of sessions) {
-      if (session.kind !== "focus") continue;
-      const bucket = byKey.get(dateKeyInTimeZone(new Date(session.started_at), timeZone));
-      if (bucket) bucket.focusMinutes += Math.round(session.duration_seconds / 60);
+    const focusByDate = focusMinutesByDate(sessions, timeZone);
+    for (const [key, minutes] of focusByDate) {
+      const bucket = byKey.get(key);
+      if (bucket) bucket.focusMinutes = minutes;
     }
     for (const task of tasks) {
       if (task.completed_at) {
@@ -53,12 +54,12 @@ function InsightsPage() {
     const heat = Array.from({ length: 84 }, (_, index) => {
       const date = addDays(heatStart, index);
       const key = dateKeyInTimeZone(date, timeZone);
-      const minutes = sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), timeZone) === key)
-        .reduce((sum, session) => sum + session.duration_seconds, 0) / 60;
-      return { key, label: format(date, "MMM d"), minutes: Math.round(minutes) };
+      const minutes = focusByDate.get(key) ?? 0;
+      return { key, label: format(date, "MMM d"), minutes };
     });
     const totalFocus = days.reduce((sum, day) => sum + day.focusMinutes, 0);
     const completed = days.reduce((sum, day) => sum + day.completedTasks, 0);
+    const planned = days.reduce((sum, day) => sum + day.plannedTasks, 0);
     const average = Math.round(totalFocus / period);
     return { days, heat, totalFocus, completed, planned, average, activeDays: heat.filter((day) => day.minutes > 0).length };
   }, [tasks, sessions, period, timeZone]);
