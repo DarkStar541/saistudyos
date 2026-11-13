@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { getSavedStyle, type VisualStyle } from "@/lib/theme";
 import { addDays, format, startOfDay } from "date-fns";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useTodayFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
 import { calendarDays, dateKeyInTimeZone, hourInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
