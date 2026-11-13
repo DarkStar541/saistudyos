@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { Paperclip, Plus, SkipForward, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace("_", "
 const NONE = "__none__";
 
 export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
+  const navigate = useNavigate();
   const { data: courses = [] } = useCourses();
   const { data: projects = [] } = useProjects();
   const { data: milestones = [] } = useMilestones();
@@ -370,9 +372,12 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
 
           <div className="flex items-center justify-between gap-2 pt-2">
             {task ? (
-              <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { await remove.mutateAsync(task.id); onOpenChange(false); }}>
-                <Trash2 className="size-4" /> Delete
-              </Button>
+              <div className="flex flex-wrap gap-1">
+                {task.status !== "done" && <Button type="button" variant="outline" size="sm" onClick={() => { if (profile?.id) localStorage.setItem(`pace-focus-next-task:${profile.id}`, task.id); onOpenChange(false); void navigate({ to: "/focus" }); }}>Focus on this task</Button>}
+                <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { await remove.mutateAsync(task.id); onOpenChange(false); }}>
+                  <Trash2 className="size-4" /> Delete
+                </Button>
+              </div>
             ) : <span />}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
