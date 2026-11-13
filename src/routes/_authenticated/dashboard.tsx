@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Pace" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — Pace" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -34,10 +35,14 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
 };
 
 function Dashboard() {
-  const { data: profile } = useProfile();
-  const { data: tasks = [] } = useTasks();
-  const { data: courses = [] } = useCourses();
-  const { data: sessions = [] } = useFocusSessions();
+  const profileQuery = useProfile();
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const sessionsQuery = useFocusSessions();
+  const { data: profile } = profileQuery;
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: sessions = [] } = sessionsQuery;
   const saveProfile = useSave("profiles");
   const [customizing, setCustomizing] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -77,6 +82,10 @@ function Dashboard() {
     { value: dueThisWeek, label: "tasks due this week" },
     { value: overdueCount, label: "overdue tasks", tone: overdueCount ? "danger" : undefined },
   ];
+  const queries = [profileQuery, tasksQuery, coursesQuery, sessionsQuery];
+  if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your workspace…" />;
+  const queryError = queries.find((query) => query.error)?.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
 
   return (
     <div>
