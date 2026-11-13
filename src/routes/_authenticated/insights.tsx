@@ -60,7 +60,7 @@ function InsightsPage() {
     const totalFocus = days.reduce((sum, day) => sum + day.focusMinutes, 0);
     const completed = days.reduce((sum, day) => sum + day.completedTasks, 0);
     const average = Math.round(totalFocus / period);
-    return { days, heat, totalFocus, completed, average, activeDays: heat.filter((day) => day.minutes > 0).length };
+    return { days, heat, totalFocus, completed, planned, average, activeDays: heat.filter((day) => day.minutes > 0).length };
   }, [tasks, sessions, period, timeZone]);
 
   if (profileQuery.isLoading || tasksQuery.isLoading || sessionsQuery.isLoading) return <QueryState loading loadingLabel="Building your insights…" />;
@@ -77,9 +77,10 @@ function InsightsPage() {
           {([7, 30, 90] as Period[]).map((value) => <Button key={value} size="sm" variant={period === value ? "secondary" : "ghost"} aria-pressed={period === value} onClick={() => setPeriod(value)}>{value} days</Button>)}
         </div>
       </header>
-      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label={`Focus time · ${period} days`} value={`${Math.floor(data.totalFocus / 60)}h ${data.totalFocus % 60}m`} />
         <Metric label="Tasks completed" value={String(data.completed)} />
+        <Metric label="Planned work items" value={String(data.planned)} />
         <Metric label="Average focus / day" value={`${data.average} min`} />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
@@ -106,7 +107,7 @@ function InsightsPage() {
                 <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} interval={period === 90 ? 13 : period === 30 ? 4 : 0} />
                 <YAxis allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
-                <Bar dataKey="completedTasks" name="Completed tasks" fill="var(--chart-2)" radius={[5, 5, 0, 0]} />
+                <Bar dataKey="completedTasks" name="Completed tasks" fill="var(--primary)" radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
