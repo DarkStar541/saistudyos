@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight,
   BookOpen,
@@ -12,6 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
+  beforeLoad: async () => {
+    // A persisted Supabase session means this is a returning user: skip the
+    // public landing page and send them straight to their private workspace.
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) throw redirect({ to: "/dashboard" });
+  },
   head: () => ({
     meta: [
       { title: "Pace — Make room for what matters." },
