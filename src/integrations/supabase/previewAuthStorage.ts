@@ -105,6 +105,13 @@ export function brokeredPreviewStorage(): PreviewAuthStorage | undefined {
     getItem: async (key) => {
       // Sent with GET and REMOVE so an editor that never cached this session can check or revoke it.
       const local = readLocal(key);
+      // A cached session is already available synchronously. Do not make every
+      // returning user wait for the editor bridge (which can take up to 2 seconds).
+      // Broker lookup is only needed when this origin has no local session yet.
+      if (local !== null && local !== undefined) {
+        firstGet = false;
+        return local;
+      }
       let res = await request('lovable-preview-auth:get', key, local ?? undefined);
       if (!res && firstGet) {
         await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY));
