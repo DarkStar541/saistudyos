@@ -163,7 +163,7 @@ function Dashboard() {
               <div className="dashboard-widget-heading mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
                 {customizing && <GripVertical className="size-4 text-muted-foreground" />}
                 <h2 className="overline-label">{WIDGETS[key]?.label}</h2>
-                {customizing && (
+                {customizing && key !== "ai" && (
                   <div className="ml-auto flex gap-1">
                     <Button size="icon" variant="ghost" className="size-7" disabled={index === 0} onClick={() => moveTo(key, index - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="size-7" disabled={index === layout.length - 1} onClick={() => moveTo(key, index + 1)} aria-label="Move down"><ArrowDown className="size-3.5" /></Button>
