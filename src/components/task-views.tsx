@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { colorVar, type Course, type Task } from "@/lib/db";
-import { STATUSES, STATUS_LABEL, calendarDays, isOverdue, toDateKey } from "@/lib/task-utils";
+import { STATUSES, STATUS_LABEL, calendarDays, dateKeyInTimeZone, isOverdue, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { CalendarTask } from "@/components/calendar-task";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ function useMove() {
   };
 }
 
-export function ListView({ tasks, courses, onOpen }: ViewProps) {
+export function ListView({ tasks, courses, onOpen, timeZone }: ViewProps) {
   const groups = useMemo(() => {
     const now = new Date();
     const g = { Overdue: [] as Task[], "No deadline": [] as Task[], Done: [] as Task[] };
@@ -34,15 +34,17 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
       else if (isOverdue(t, now)) g.Overdue.push(t);
       else if (!t.due_at) g["No deadline"].push(t);
       else {
-        const k = format(new Date(t.due_at), "yyyy-MM-dd");
+        const k = dateKeyInTimeZone(new Date(t.due_at), timeZone);
         (dated[k] ??= []).push(t);
       }
     }
     const out: [string, Task[]][] = [];
     if (g.Overdue.length) out.push(["Overdue", g.Overdue]);
+    const todayKey = dateKeyInTimeZone(now, timeZone);
     for (const k of Object.keys(dated).sort()) {
-      const d = new Date(`${k}T00:00`);
-      out.push([isToday(d) ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k] ?? []]);
+      const d = parsePlanned(k);
+      if (!d) continue;
+      out.push([k === todayKey ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k] ?? []]);
     }
     if (g["No deadline"].length) out.push(["No deadline", g["No deadline"]]);
     if (g.Done.length) out.push(["Done", g.Done]);
@@ -66,7 +68,7 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
   );
 }
 
-export function BoardView({ tasks, courses, onOpen }: ViewProps) {
+export function BoardView({ tasks, courses, onOpen, timeZone }: ViewProps) {
   const move = useMove();
   const [over, setOver] = useState<string | null>(null);
   return (
@@ -91,6 +93,8 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
             <div className="space-y-2">
               {items.map((t) => {
                 const c = t.course_id ? courses.get(t.course_id) : undefined;
+                const dueKey = t.due_at ? dateKeyInTimeZone(new Date(t.due_at), timeZone) : null;
+                const dueDate = dueKey ? parsePlanned(dueKey) : null;
                 return (
                   <button
                     key={t.id}
@@ -103,7 +107,7 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
                     <p className="text-sm font-medium">{t.title}</p>
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                       {c && <span>{c.code || c.name}</span>}
-                      {t.due_at && <span className={cn(isOverdue(t) && "text-destructive")}>Due {format(new Date(t.due_at), "MMM d")}</span>}
+                      {dueDate && <span className={cn(isOverdue(t) && "text-destructive")}>Due {format(dueDate, "MMM d")}</span>}
                       {t.planned_date && <span className="text-primary">Work {format(new Date(`${t.planned_date}T00:00`), "MMM d")}</span>}
                       <Flag className={cn("ml-auto size-3", PRIORITY_CLASS[t.priority])} />
                     </div>
