@@ -33,7 +33,17 @@ export function AiQuickAdd() {
       const { data, error } = await supabase.functions.invoke("ai-quick-add", {
         body: { text: capture.trim() },
       });
-      if (error) throw new Error(data?.error || error.message || "Couldn't interpret that capture.");
+      if (error) {
+        let detail = data?.error as string | undefined;
+        const response = (error as { context?: unknown }).context;
+        if (!detail && response instanceof Response) {
+          try {
+            const payload = await response.clone().json() as { error?: string };
+            detail = payload.error;
+          } catch { /* Use the SDK's safe generic message below. */ }
+        }
+        throw new Error(detail || error.message || "Couldn't interpret that capture.");
+      }
       const validated = aiQuickAddProposalSchema.safeParse(data?.proposal);
       if (!validated.success) throw new Error(data?.error || "The AI returned an invalid proposal. Try again.");
       setProposal(validated.data);
