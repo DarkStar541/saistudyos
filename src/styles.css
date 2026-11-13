@@ -2161,8 +2161,9 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   button:not(:disabled):active,
   [role="button"]:not([aria-disabled="true"]):active,
   a[href]:active {
-    translate: 0 0;
-    scale: 0.985;
+    translate: 0 0 !important;
+    scale: 0.985 !important;
+    box-shadow: none !important;
   }
 
   button:focus-visible,
@@ -2226,17 +2227,20 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  button:not(:disabled):hover,
-  [role="button"]:not([aria-disabled="true"]):hover {
-    translate: 0 -1px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
-    filter: brightness(1.015);
-  }
+/* One hover treatment for every enabled button, including native buttons
+   and buttons rendered by page-specific dashboard components. Do not gate
+   this on pointer capability: some desktop/browser environments report
+   hover capability inconsistently. */
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  translate: 0 -1px !important;
+  scale: 1 !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08) !important;
+  filter: brightness(1.015);
+}
 
-  a[href]:hover {
-    text-decoration-thickness: 1.5px;
-  }
+a[href]:hover {
+  text-decoration-thickness: 1.5px;
 }
 
 @media (prefers-reduced-motion: reduce) {
