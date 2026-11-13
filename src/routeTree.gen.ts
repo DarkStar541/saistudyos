@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedFocusRouteImport } from './routes/_authenticated/focus'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedCoursesIndexRouteImport } from './routes/_authenticated/courses.index'
 import { Route as AuthenticatedCoursesCourseIdRouteImport } from './routes/_authenticated/courses.$courseId'
 
@@ -66,6 +67,11 @@ const AuthenticatedFocusRoute = AuthenticatedFocusRouteImport.update({
   path: '/focus',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/focus': typeof AuthenticatedFocusRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -116,6 +123,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/focus': typeof AuthenticatedFocusRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -131,6 +139,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/calendar'
     | '/focus'
+    | '/insights'
     | '/dashboard'
     | '/projects'
     | '/settings'
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/calendar'
     | '/_authenticated/focus'
+    | '/_authenticated/insights'
     | '/_authenticated/dashboard'
     | '/_authenticated/projects'
     | '/_authenticated/settings'
@@ -200,6 +210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/focus': {
       id: '/_authenticated/focus'
@@ -261,6 +278,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedFocusRoute: typeof AuthenticatedFocusRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -272,6 +290,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedFocusRoute: AuthenticatedFocusRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
