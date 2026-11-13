@@ -93,13 +93,16 @@ Status key:
 - [~] Group Insights data using profile timezone and separate planned-work dates from completion timestamps; validate DST and date-boundary behavior
 
 ## 5. Security, privacy and multi-user readiness
-- [ ] Audit Row Level Security policies and confirm strict per-user data isolation
-- [ ] Confirm no service-role secrets are exposed to the browser
+- [~] Add database relationship guards so projects, milestones, tasks and focus sessions cannot reference another user's course/project/task; migration `0002_multi_user_relationship_hardening.sql` is committed but must still be applied to the connected database
+- [x] Clear the client query cache on sign-in/sign-out account boundaries to prevent stale workspace data appearing after an account switch
+- [x] Clarify during signup that each account gets its own private workspace
+- [~] Review existing RLS: profiles are scoped by auth.uid() = id; courses, projects, milestones, tasks, subtasks and focus_sessions are scoped by auth.uid() = user_id. Separate-account browser verification remains open
+- [~] Supabase browser client uses the publishable key, not a service-role key; complete repository/deployment secret audit remains open
 - [ ] Validate AI Quick Add output server-side and map inferred courses only to courses owned by the signed-in user
 - [ ] Add rate limits and safe failure handling to AI endpoints
 - [ ] Require confirmation when AI Quick Add is uncertain before creating or changing data
 - [ ] Review OAuth redirects, session refresh, logout and password-reset flows
-- [ ] Keep beta invite-gated; test with synthetic data and separate test accounts
+- [~] Signup creates a separate private workspace and explains account-level privacy; beta remains open-signup for the shared-friend test. Verify with two separate synthetic accounts
 
 ## 6. AI Quick Add and integrations
 - [ ] Build natural-language task capture using the user's saved course list
@@ -113,7 +116,7 @@ Status key:
 - ~~[x]~~ Run the full test suite, including recurrence, timezone and daylight-saving tests (GitHub Actions passed).
 - ~~[x]~~ Run static lint and production build (GitHub Actions passed).
 - [ ] Run browser tests for auth, navigation, CRUD, recurrence, calendar, focus and responsive layouts
-- [ ] Verify data isolation with at least two synthetic user accounts
+- [ ] Verify data isolation with at least two separate accounts in the published app after the relationship-hardening migration is applied
 - [ ] Verify no regressions in light/dark/system appearance
 - [ ] Review loading, empty, error and offline states
 - [ ] Update README, deployment URL and product metadata where needed
@@ -124,4 +127,4 @@ Status key:
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, local timer restoration and analytics charts/heatmap. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
+The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states, first auth/performance optimizations and initial multi-user hardening are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, local timer restoration and analytics charts/heatmap. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
