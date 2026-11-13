@@ -80,7 +80,7 @@ export function AppShell() {
           <kbd className="ml-auto rounded bg-primary-foreground/20 px-1.5 text-xs">N</kbd>
         </Button>
         <div className="mt-10 mb-2 px-3"><p className="text-xs font-medium text-muted-foreground">Workspace</p></div>
-        <nav className="mt-3 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain">
+        <nav className="mt-3 flex flex-col gap-1">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
