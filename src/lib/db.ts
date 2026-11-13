@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { nextInstanceDates } from "./recurrence";
+import { dateKeyInTimeZone, dateTimeInTimeZoneToIso } from "./task-utils";
 
 type T = Database["public"]["Tables"];
 export type Profile = T["profiles"]["Row"];
@@ -76,6 +77,29 @@ export const useMilestones = () => useQuery(milestonesQuery);
 export const useTasks = () => useQuery(tasksQuery);
 export const useSubtasks = () => useQuery(subtasksQuery);
 export const useFocusSessions = () => useQuery(focusSessionsQuery);
+
+/** Fetch only today's focus sessions for Dashboard and Focus; Insights uses the 120-day query. */
+export function useTodayFocusSessions(timeZone: string | null | undefined, enabled = true) {
+  const zone = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const today = dateKeyInTimeZone(new Date(), zone);
+  const [year, month, day] = today.split("-").map(Number);
+  const tomorrow = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+
+  return useQuery({
+    queryKey: ["focus_sessions", "today", zone, today],
+    enabled,
+    staleTime: STALE,
+    queryFn: async () => {
+      const start = dateTimeInTimeZoneToIso(today, "00:00", zone);
+      const end = dateTimeInTimeZoneToIso(tomorrow, "00:00", zone);
+      return unwrap(
+        await supabase.from("focus_sessions").select("*")
+          .gte("started_at", start).lt("started_at", end)
+          .order("started_at", { ascending: false }),
+      ) as FocusSession[];
+    },
+  });
+}
 
 type TableName = "courses" | "projects" | "milestones" | "tasks" | "subtasks" | "profiles" | "focus_sessions";
 
