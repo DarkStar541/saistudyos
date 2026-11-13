@@ -410,8 +410,7 @@ main.page-wash > div { max-width: 1580px !important; padding-top: clamp(1.5rem, 
   box-shadow: var(--shadow-card);
 }
 h1 { letter-spacing: -0.045em !important; }
-button, [role="button"] { transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
-button:active, [role="button"]:active { transform: scale(0.985); }
+/* Button motion is centralized in the universal interaction layer. */
 @media (max-width: 767px) {
   .app-sidebar { display: none; }
   .dashboard-heading { min-height: 17rem; }
@@ -2254,5 +2253,7 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   .interactive-surface {
     transition: none !important;
     transform: none !important;
+    translate: none !important;
+    scale: none !important;
   }
 }
