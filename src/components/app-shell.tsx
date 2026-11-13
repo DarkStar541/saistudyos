@@ -73,7 +73,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[15.5rem] flex-col overflow-y-auto overscroll-contain px-5 py-7 min-[960px]:flex">
+      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[15.5rem] flex-col overflow-y-auto overscroll-contain px-5 py-7 min-[900px]:flex">
         <Wordmark />
         <Button className="app-new-task-button mt-9 h-11 justify-start gap-2 rounded-xl shadow-card" onClick={() => setAddOpen(true)}>
           <Plus className="size-4" /> New task
@@ -107,7 +107,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="app-main page-wash pb-24 min-[960px]:pb-0 min-[960px]:pl-[15.5rem]">
+      <main className="app-main page-wash pb-24 min-[900px]:pb-0 min-[900px]:pl-[15.5rem]">
         <div className="mx-auto max-w-[1440px] px-4 py-6 lg:px-10 lg:py-10 xl:px-14">
           <Outlet />
         </div>
@@ -117,11 +117,11 @@ export function AppShell() {
       <button
         aria-label="New task"
         onClick={() => setAddOpen(true)}
-        className="app-mobile-add fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lift min-[960px]:hidden"
+        className="app-mobile-add fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lift min-[900px]:hidden"
       >
         <Plus className="size-6" />
       </button>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md min-[960px]:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md min-[900px]:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className="group flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:text-foreground" activeProps={{ className: "font-semibold text-primary" }}>
             <Icon className="size-5 transition-transform duration-150 group-hover:-translate-y-0.5 motion-reduce:transition-none" /> {label}
