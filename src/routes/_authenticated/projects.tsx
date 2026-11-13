@@ -16,14 +16,20 @@ import { DatePicker } from "@/components/date-picker";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { dateTimeInTimeZoneToIso } from "@/lib/task-utils";
+import { dateKeyInTimeZone, dateTimeInTimeZoneToIso, parsePlanned } from "@/lib/task-utils";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({ meta: [{ title: "Projects — Pace" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — Pace" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ProjectsPage,
 });
 
+const deadlineLabel = (iso: string, timeZone?: string | null) => {
+  const day = parsePlanned(dateKeyInTimeZone(new Date(iso), timeZone));
+  return day ? format(day, "MMM d") : "";
+};
+
 function ProjectsPage() {
+  const { data: profile } = useProfile();
   const { data: projects = [] } = useProjects();
   const { data: courses = [] } = useCourses();
   const { data: tasks = [] } = useTasks();
@@ -77,7 +83,7 @@ function ProjectsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{p.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {[course?.name, p.due_at && `Due ${format(new Date(p.due_at), "MMM d")}`, p.status !== "active" && p.status].filter(Boolean).join(" · ") || "No deadline"}
+                    {[course?.name, p.due_at && `Due ${deadlineLabel(p.due_at, profile?.timezone)}`, p.status !== "active" && p.status].filter(Boolean).join(" · ") || "No deadline"}
                   </p>
                 </div>
                 <div className="hidden w-40 sm:block">
@@ -86,7 +92,7 @@ function ProjectsPage() {
                 </div>
                 <ChevronDown className={cn("size-4 transition-transform", openId === p.id && "rotate-180")} />
               </button>
-              {openId === p.id && <ProjectDetail project={p} tasks={pt} courses={courseMap} />}
+              {openId === p.id && <ProjectDetail project={p} tasks={pt} courses={courseMap} timeZone={profile?.timezone} />}
             </div>
           );
         })}
@@ -96,7 +102,7 @@ function ProjectsPage() {
   );
 }
 
-function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: Task[]; courses: Map<string, import("@/lib/db").Course> }) {
+function ProjectDetail({ project, tasks, courses, timeZone }: { project: Project; tasks: Task[]; courses: Map<string, import("@/lib/db").Course>; timeZone?: string }) {
   const { data: milestones = [] } = useMilestones();
   const { data: profile } = useProfile();
   const saveM = useSave("milestones");
@@ -119,7 +125,7 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
             <div key={m.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/60">
               <Checkbox checked={m.done} onCheckedChange={(v) => saveM.mutate({ id: m.id, done: !!v })} />
               <span className={cn("flex-1 text-sm", m.done && "line-through opacity-60")}>{m.title}</span>
-              {m.due_at && <span className="text-xs text-muted-foreground">{format(new Date(m.due_at), "MMM d")}</span>}
+              {m.due_at && <span className="text-xs text-muted-foreground">{deadlineLabel(m.due_at, timeZone)}</span>}
               <button onClick={() => removeM.mutate(m.id)} aria-label="Remove milestone"><Trash2 className="size-3.5 text-muted-foreground" /></button>
             </div>
           ))}
