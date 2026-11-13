@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — StudyOS" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — StudyOS" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Pace" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — Pace" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Dashboard,
 });
 
@@ -226,7 +226,7 @@ function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
   const lead = next[0] ?? today[0];
   return (
     <section className="paper-edition" aria-label="Daily academic edition">
-      <div className="paper-edition-masthead"><span>THE STUDYOS REVIEW</span><span>{format(new Date(),"EEEE · MMMM d, yyyy")}</span><span>VOL. 01 / DAILY</span></div>
+      <div className="paper-edition-masthead"><span>THE PACE REVIEW</span><span>{format(new Date(),"EEEE · MMMM d, yyyy")}</span><span>VOL. 01 / DAILY</span></div>
       <div className="paper-edition-title"><span>YOUR ACADEMIC DAILY</span><h2>Today, in focus.</h2><p>A clear account of what matters, what is next, and what can wait.</p></div>
       <div className="paper-edition-grid">
         <aside className="paper-edition-brief">
@@ -314,7 +314,7 @@ function NocturneControlDeck({ tasks, courses }: { tasks: Task[]; courses: Cours
     <section className="nocturne-control-deck" aria-label="Academic operations control center">
       <div className="nocturne-console-topline">
         <div>
-          <p className="nocturne-eyebrow">STUDYOS / OPERATIONS</p>
+          <p className="nocturne-eyebrow">PACE / OPERATIONS</p>
           <h2>Control center<span>_</span></h2>
           <p className="nocturne-console-subtitle">A live overview of your academic workload.</p>
         </div>
@@ -383,10 +383,10 @@ function TaskList({ items, ctx, empty }: { items: Task[]; ctx: Ctx; empty: strin
 function Widget({ id, ...ctx }: { id: string } & Ctx) {
   const { tasks } = ctx;
   switch (id) {
-    case "today": return <TaskList items={tasks.filter((t) => isForToday(t))} ctx={ctx} empty="Nothing planned for today." />;
+    case "today": return <TaskList items={tasks.filter((t) => isForToday(t, new Date(), ctx.timeZone))} ctx={ctx} empty="Nothing planned for today." />;
     case "overdue": return <TaskList items={tasks.filter((t) => isOverdue(t))} ctx={ctx} empty="No overdue work. Nice." />;
-    case "upcoming": return <TaskList items={tasks.filter((t) => isUpcoming(t, 7) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
-    case "exams": return <TaskList items={tasks.filter((t) => isUpcoming(t, 30) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
+    case "upcoming": return <TaskList items={tasks.filter((t) => isUpcoming(t, 7, new Date(), ctx.timeZone) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
+    case "exams": return <TaskList items={tasks.filter((t) => isUpcoming(t, 30, new Date(), ctx.timeZone) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
     case "quickadd": return <QuickCapture />;
     case "workload": return <Workload {...ctx} />;
     case "calendar": return <WeekStrip {...ctx} />;
@@ -396,7 +396,7 @@ function Widget({ id, ...ctx }: { id: string } & Ctx) {
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><Sparkles className="size-4" /></span>
         <div className="text-sm">
           <p className="font-medium">AI Quick Add — coming in Stage 2</p>
-          <p className="text-muted-foreground">Type shorthand like "bio ch 7 test fri" and StudyOS will fill in the course and dates. Not connected yet.</p>
+          <p className="text-muted-foreground">Type shorthand like "bio ch 7 test fri" and Pace will fill in the course and dates. Not connected yet.</p>
         </div>
       </div>
     );
