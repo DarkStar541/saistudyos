@@ -59,6 +59,24 @@ describe("today progress", () => {
     });
   });
 
+  it("counts carried-forward work when it is completed today", () => {
+    const tasks = [
+      {
+        status: "done",
+        due_at: new Date(2026, 10, 8, 23, 59).toISOString(),
+        planned_date: "2026-11-02",
+        completed_at: new Date(2026, 10, 4, 10).toISOString(),
+      },
+    ];
+    expect(todayProgress(tasks, now)).toMatchObject({
+      completed: 1,
+      remaining: 0,
+      total: 1,
+      completionRatio: 1,
+      remainingRatio: 0,
+    });
+  });
+
   it("does not count work completed on a different day in today's gauge", () => {
     const tasks = [
       {
