@@ -93,6 +93,26 @@ function SettingsPage() {
             <Select value={f.week_starts_on} onValueChange={(value) => setF((p) => ({ ...p, week_starts_on: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">Monday</SelectItem><SelectItem value="0">Sunday</SelectItem></SelectContent></Select>
           </Row>
         </Card>
+        <Card title="Install Pace on your phone">
+          <p className="text-sm text-muted-foreground">Add Pace to your home screen for a full-screen app experience and faster access to task capture. Sign in with the same account you use on the web.</p>
+          <div className="rounded-lg border border-border bg-muted/40 p-3">
+            <p className="text-sm font-medium">iPhone or iPad</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Open <a className="font-medium text-foreground underline underline-offset-4" href="https://saispace.lovable.app">saispace.lovable.app</a> in Safari.</li>
+              <li>Tap Share, then Add to Home Screen.</li>
+              <li>Leave “Open as Web App” enabled, then tap Add.</li>
+            </ol>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/40 p-3">
+            <p className="text-sm font-medium">Android</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Open Pace in Chrome.</li>
+              <li>Open the browser menu and choose Install app (or Add to Home screen).</li>
+              <li>Confirm the installation.</li>
+            </ol>
+          </div>
+          <p className="text-xs text-muted-foreground">Pace uses the same online account and data as the website. Offline task creation and native app-store distribution are not enabled yet.</p>
+        </Card>
         <Card title="Task defaults">
           <Row label="Default task view">
             <Select value={f.default_task_view} onValueChange={(value) => setF((p) => ({ ...p, default_task_view: value }))}><SelectTrigger className={sel}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="list">List</SelectItem><SelectItem value="board">Board</SelectItem><SelectItem value="calendar">Calendar</SelectItem></SelectContent></Select>
