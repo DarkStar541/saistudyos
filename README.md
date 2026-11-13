@@ -4,7 +4,7 @@ Start Stage 1 of Pace following the attached Product Master Specification: user 
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://saistudyos.lovable.app
+**Live app**: https://saispace.lovable.app
 
 ## Build with Lovable
 
