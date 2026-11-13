@@ -33,3 +33,28 @@ export function resumeClock<T extends FocusClock>(clock: T, now = Date.now()): T
     pausedAt: null,
   };
 }
+
+export type FocusSessionKind = "focus" | "short_break" | "long_break";
+export type FocusTimerState = FocusClock & {
+  taskId: string | null;
+  kind: FocusSessionKind;
+};
+
+export function createFocusTimerState(
+  kind: FocusSessionKind,
+  durationMinutes: number,
+  taskId: string | null,
+  startedAt = Date.now(),
+): FocusTimerState {
+  const plannedSeconds = Math.max(1, Math.round(durationMinutes * 60));
+  return {
+    startedAt,
+    endsAt: startedAt + plannedSeconds * 1000,
+    plannedSeconds,
+    pausedRemainingMs: null,
+    pausedAt: null,
+    accumulatedPausedMs: 0,
+    taskId: kind === "focus" ? taskId : null,
+    kind,
+  };
+}
