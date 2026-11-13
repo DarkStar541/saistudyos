@@ -4,24 +4,29 @@ import { ArrowLeft, Archive, FileUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { colorVar, useCourses, useRemove, useSave, useTasks, type Task } from "@/lib/db";
+import { colorVar, useCourses, useProfile, useRemove, useSave, useTasks, type Task } from "@/lib/db";
 import { CourseDialog, DAY_NAMES, type Slot } from "@/components/course-dialog";
 import { CourseIcon } from "@/components/course-icon";
 import { TaskDialog } from "@/components/task-dialog";
 import { TaskRow } from "@/components/task-row";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/query-state";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/courses/$courseId")({
-  head: () => ({ meta: [{ title: "Course — StudyOS" }, { name: "description", content: "Course details, assignments, exams and notes." }, { property: "og:title", content: "Course — StudyOS" }, { property: "og:description", content: "Course details, assignments, exams and notes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Course — Pace" }, { name: "description", content: "Course details, assignments, exams and notes." }, { property: "og:title", content: "Course — Pace" }, { property: "og:description", content: "Course details, assignments, exams and notes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: CoursePage,
 });
 
 function CoursePage() {
   const { courseId } = Route.useParams();
-  const { data: courses = [], isLoading } = useCourses();
-  const { data: tasks = [] } = useTasks();
+  const coursesQuery = useCourses();
+  const tasksQuery = useTasks();
+  const profileQuery = useProfile();
+  const { data: courses = [] } = coursesQuery;
+  const { data: tasks = [] } = tasksQuery;
+  const { data: profile } = profileQuery;
   const course = courses.find((c) => c.id === courseId);
   const save = useSave("courses");
   const remove = useRemove("courses");
@@ -47,7 +52,10 @@ function CoursePage() {
   const work = mine.filter((t) => !["exam", "quiz"].includes(t.task_type) && t.status !== "done");
   const done = mine.filter((t) => t.status === "done");
 
-  if (isLoading) return null;
+  const queries = [coursesQuery, tasksQuery, profileQuery];
+  if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your course…" />;
+  const queryError = queries.find((query) => query.error)?.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
   if (!course) return <p className="text-muted-foreground">Course not found. <Link to="/courses" className="text-primary underline">Back to courses</Link></p>;
   const schedule = (course.schedule as Slot[]) ?? [];
 
@@ -73,7 +81,7 @@ function CoursePage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Section title="Upcoming exams" action={<Button size="sm" variant="ghost" onClick={() => setTaskOpen("exam")}><Plus className="size-4" /> Exam</Button>}>
-            {exams.length ? exams.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} compact />) : <p className="px-3 py-2 text-sm text-muted-foreground">No exams scheduled.</p>}
+            {exams.length ? exams.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} compact timeZone={profile?.timezone} />) : <p className="px-3 py-2 text-sm text-muted-foreground">No exams scheduled.</p>}
           </Section>
           <Section title="Assignments & tasks" action={<Button size="sm" variant="ghost" onClick={() => setTaskOpen("assignment")}><Plus className="size-4" /> Task</Button>}>
             {work.length ? work.map((t) => <TaskRow key={t.id} task={t} course={course} onOpen={setEditing} />) : <p className="px-3 py-2 text-sm text-muted-foreground">All caught up.</p>}
