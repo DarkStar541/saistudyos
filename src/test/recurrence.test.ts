@@ -178,6 +178,25 @@ describe("3. deadline + separate repeat end", () => {
   });
 });
 
+describe("calendar recurring projections", () => {
+  it("does not project future work from a fully completed series", () => {
+    const completed = [
+      { ...base({ planned_date: "2026-11-10", recurrence: "weekdays", recurrence_end: "2026-11-30" }), status: "done" },
+      { ...base({ planned_date: "2026-11-11", recurrence: "weekdays", recurrence_end: "2026-11-30" }), id: "s-1", recurrence_parent_id: "s", status: "done" },
+    ];
+    expect(projectRecurringOccurrences(completed, new Date("2026-11-12T00:00:00"), new Date("2026-11-18T00:00:00"), new Date("2026-11-12T12:00:00"))).toEqual([]);
+  });
+
+  it("continues projecting from the latest open occurrence while retaining completed dates", () => {
+    const tasks = [
+      { ...base({ planned_date: "2026-11-10", recurrence: "weekdays", recurrence_end: "2026-11-30" }), status: "done" },
+      { ...base({ planned_date: "2026-11-12", recurrence: "weekdays", recurrence_end: "2026-11-30" }), id: "s-1", recurrence_parent_id: "s", status: "todo" },
+    ];
+    const projected = projectRecurringOccurrences(tasks, new Date("2026-11-12T00:00:00"), new Date("2026-11-18T00:00:00"), new Date("2026-11-12T12:00:00"));
+    expect(projected.map((item) => item.planned_date)).toEqual(["2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18"]);
+  });
+});
+
 describe("series deadline counting and edits", () => {
   it("completed instances don't duplicate the deadline; open one is counted", () => {
     const s = series(base({ due_at: dueOn("2026-11-12") })).map((t, i, a) => ({ ...t, status: i < a.length - 1 ? "done" : "todo" }));
