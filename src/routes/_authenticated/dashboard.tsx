@@ -51,7 +51,9 @@ function Dashboard() {
   const [visualStyle] = useState<VisualStyle>(() => getSavedStyle());
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
-  const layout = ((profile?.dashboard_widgets as string[] | undefined) ?? []).filter((k) => WIDGETS[k]);
+  const savedLayout = ((profile?.dashboard_widgets as string[] | undefined) ?? []).filter((k) => WIDGETS[k]);
+  // AI Quick Add is a core Pace action: keep it visible and first for every account.
+  const layout = ["ai", ...savedLayout.filter((key) => key !== "ai")];
   const hidden = Object.keys(WIDGETS).filter((k) => !layout.includes(k));
   const persist = (next: string[]) => profile && saveProfile.mutate({ id: profile.id, dashboard_widgets: next });
   const moveTo = (key: string, idx: number) => {
@@ -141,8 +143,7 @@ function Dashboard() {
               key={key}
               data-widget={key}
               style={
-                visualStyle === "nocturne" &&
-                ["upcoming", "exams", "quickadd", "calendar", "ai"].includes(key)
+                (key === "ai" || (visualStyle === "nocturne" && ["upcoming", "exams", "quickadd", "calendar"].includes(key)))
                   ? { gridColumn: "1 / -1" }
                   : undefined
               }
@@ -152,6 +153,7 @@ function Dashboard() {
               onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, index); setDragKey(null); }}
               className={cn(
                 "dashboard-widget relative transition-shadow",
+                key === "ai" && "dashboard-ai-quick-add",
                 visualStyle === "nocturne" && ["upcoming", "exams"].includes(key) && "nocturne-widget-wide",
                 !customizing && "hover:shadow-lift",
                 customizing && "cursor-move ring-1 ring-primary/30",
