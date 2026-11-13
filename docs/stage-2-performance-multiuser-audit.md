@@ -94,3 +94,12 @@ Performance optimizations are present and the unbounded focus-history fetch has 
 - GitHub CI for earlier commits in this pass passed tests, lint and production build.
 - CI for the final lazy-query, lazy-chart, lazy-dialog and duplicate-refetch commits is pending at the time of this update.
 - Verify first-open TaskDialog loading, Insights chart loading, Dashboard/Focus day-boundary behavior, and actual tab-return timing in the published app.
+
+
+## Route-level code splitting (2026-11-13)
+
+- Enabled TanStack Router automatic route code splitting via `tanstackStart.router.autoCodeSplitting: true` in `vite.config.ts`. This uses the existing TanStack Start/Vite plugin supplied by the Lovable wrapper; no duplicate router plugin was added.
+- The configuration change passed GitHub Actions unit tests, ESLint and production build (run #215).
+- Expected effect: route component modules are loaded on demand rather than all route components being included in the initial route bundle. The shared root route and critical route configuration remain part of the initial application path.
+- Not yet measured: initial JS transfer size, emitted route chunk list, first navigation latency, repeat navigation cache behavior, and deployed browser performance. Do not claim a measured speedup until these are profiled on the same build/device.
+- Follow-up verification: inspect the production output for distinct route chunks; test direct loading and in-app navigation to Dashboard, Focus, Tasks, Calendar, Projects, Courses, Settings and Insights; verify lazy route loading errors recover correctly.
