@@ -87,7 +87,7 @@ Status key:
 - [~] Create authenticated Focus and Insights routes/pages; initial implementations are committed, pending CI and browser verification
 - [~] Add Focus Mode page, navigation entry and task selection for session context
 - [ ] Add a direct task-detail-to-focus shortcut
-- [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; verify refresh, tab suspension, pause accounting and session persistence in browser
+- [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; add unit coverage for elapsed/remaining time and pause accounting; browser refresh, tab suspension and session persistence still need verification
 - [~] Add short/long break modes and editable focus/break duration settings in Settings; browser verification remains
 - [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap
 - [~] Group Insights data using profile timezone and separate planned-work dates from completion timestamps; validate DST and date-boundary behavior
