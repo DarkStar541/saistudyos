@@ -5,7 +5,7 @@ import { addDays, format, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, dateKeyInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
@@ -68,8 +68,8 @@ function Dashboard() {
     const todayKey = dateKeyInTimeZone(now, ctx.timeZone);
     return {
       plannedToday: tasks.filter((task) => isForToday(task, now, ctx.timeZone)).length,
-      dueThisWeek: tasks.filter((task) => isUpcoming(task, 7, now, ctx.timeZone)).length,
-      overdueCount: tasks.filter((task) => isOverdue(task, now)).length,
+      dueThisWeek: uniqueDeadlineTasks(tasks).filter((task) => isUpcoming(task, 7, now, ctx.timeZone)).length,
+      overdueCount: uniqueDeadlineTasks(tasks).filter((task) => isOverdue(task, now)).length,
       progressToday: todayProgress(tasks, now, ctx.timeZone),
       focusMin: Math.round(sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), ctx.timeZone) === todayKey).reduce((sum, session) => sum + session.duration_seconds, 0) / 60),
       weekMin: weeklyWorkload(tasks, now, ctx.weekStartsOn, ctx.fallback, ctx.timeZone).reduce((sum, day) => sum + day.minutes, 0),
@@ -394,8 +394,8 @@ function Widget({ id, ...ctx }: { id: string } & Ctx) {
   switch (id) {
     case "today": return <TaskList items={tasks.filter((t) => isForToday(t, new Date(), ctx.timeZone))} ctx={ctx} empty="Nothing planned for today." />;
     case "overdue": return <TaskList items={tasks.filter((t) => isOverdue(t))} ctx={ctx} empty="No overdue work. Nice." />;
-    case "upcoming": return <TaskList items={tasks.filter((t) => isUpcoming(t, 7, new Date(), ctx.timeZone) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
-    case "exams": return <TaskList items={tasks.filter((t) => isUpcoming(t, 30, new Date(), ctx.timeZone) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
+    case "upcoming": return <TaskList items={uniqueDeadlineTasks(tasks).filter((t) => isUpcoming(t, 7, new Date(), ctx.timeZone) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
+    case "exams": return <TaskList items={uniqueDeadlineTasks(tasks).filter((t) => isUpcoming(t, 30, new Date(), ctx.timeZone) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
     case "quickadd": return <QuickCapture />;
     case "workload": return <Workload {...ctx} />;
     case "calendar": return <WeekStrip {...ctx} />;
