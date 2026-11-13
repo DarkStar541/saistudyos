@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { QueryState } from "@/components/query-state";
+import { AiQuickAdd } from "@/components/ai-quick-add";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Pace" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — Pace" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -400,15 +401,7 @@ function Widget({ id, ...ctx }: { id: string } & Ctx) {
     case "workload": return <Workload {...ctx} />;
     case "calendar": return <WeekStrip {...ctx} />;
     case "courses": return <RecentCourses courses={ctx.courses} />;
-    case "ai": return (
-      <div className="flex items-start gap-3 py-1">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><Sparkles className="size-4" /></span>
-        <div className="text-sm">
-          <p className="font-medium">AI Quick Add — coming in Stage 2</p>
-          <p className="text-muted-foreground">Type shorthand like "bio ch 7 test fri" and Pace will fill in the course and dates. Not connected yet.</p>
-        </div>
-      </div>
-    );
+    case "ai": return <AiQuickAdd />;
     default: return null;
   }
 }
