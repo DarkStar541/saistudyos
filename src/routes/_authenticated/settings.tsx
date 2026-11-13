@@ -21,6 +21,11 @@ const zones = typeof Intl.supportedValuesOf === "function"
   ? Intl.supportedValuesOf("timeZone")
   : ["UTC", "America/Denver", "America/Los_Angeles", "America/Chicago", "America/New_York", "Europe/London", "Asia/Kolkata"];
 
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 const UPCOMING = [
   ["AI Quick Add & Capture Inbox", "Planned"],
   ["Canvas LMS", "Stage 3"],
@@ -33,6 +38,46 @@ function SettingsPage() {
   const { data: profile } = profileQuery;
   const save = useSave("profiles");
   const [f, setF] = useState({ display_name: "", school: "", timezone: "UTC", theme: "system", default_task_view: "list", default_priority: "medium", default_duration_minutes: "60", week_starts_on: "1", focus_minutes: "25", short_break_minutes: "5", long_break_minutes: "15", long_break_every: "4" });
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    const standalone = window.matchMedia("(display-mode: standalone)").matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsInstalled(standalone);
+
+    const onBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const onInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+      toast.success("Pace was added to your device");
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function installPace() {
+    if (!installPrompt || installing) return;
+    setInstalling(true);
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") setInstallPrompt(null);
+    } catch {
+      toast.error("Pace couldn't open the install prompt. Use your browser menu instead.");
+    } finally {
+      setInstalling(false);
+    }
+  }
 
   useEffect(() => {
     if (!profile) return;
@@ -95,6 +140,13 @@ function SettingsPage() {
         </Card>
         <Card title="Install Pace on your phone">
           <p className="text-sm text-muted-foreground">Add Pace to your home screen for a full-screen app experience and faster access to task capture. Sign in with the same account you use on the web.</p>
+          {isInstalled ? (
+            <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm font-medium">Pace is installed on this device.</p>
+          ) : installPrompt ? (
+            <Button type="button" onClick={installPace} disabled={installing} className="w-full sm:w-auto">
+              {installing ? "Opening install prompt…" : "Install Pace"}
+            </Button>
+          ) : null}
           <div className="rounded-lg border border-border bg-muted/40 p-3">
             <p className="text-sm font-medium">iPhone or iPad</p>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
