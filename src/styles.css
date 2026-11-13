@@ -2256,3 +2256,77 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   }
 }
 
+
+
+/* Dashboard-specific interaction coverage.
+   Several dashboard editions use native buttons rather than the shared Button
+   component; this keeps their hover, press and keyboard feedback consistent. */
+html.theme-neutral .dashboard-heading button,
+html.theme-neutral .dashboard-widget button,
+html.theme-neutral .dashboard-widget a[href],
+html.theme-neutral .paper-edition button,
+html.theme-neutral .daydream-dashboard button,
+html.theme-neutral .ember-aurora-dashboard button,
+html.theme-neutral .nocturne-control-deck button,
+html.theme-neutral .dashboard-composition [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease,
+    transform 150ms ease !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.theme-neutral .dashboard-heading button:not(:disabled):hover,
+  html.theme-neutral .dashboard-widget button:not(:disabled):hover,
+  html.theme-neutral .dashboard-widget a[href]:hover,
+  html.theme-neutral .paper-edition button:hover,
+  html.theme-neutral .daydream-dashboard button:hover,
+  html.theme-neutral .ember-aurora-dashboard button:hover,
+  html.theme-neutral .nocturne-control-deck button:not(:disabled):hover,
+  html.theme-neutral .dashboard-composition [role="button"]:not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 7px color-mix(in oklab, var(--foreground) 9%, transparent);
+  }
+}
+
+html.theme-neutral .dashboard-heading button:not(:disabled):active,
+html.theme-neutral .dashboard-widget button:not(:disabled):active,
+html.theme-neutral .dashboard-widget a[href]:active,
+html.theme-neutral .paper-edition button:active,
+html.theme-neutral .daydream-dashboard button:active,
+html.theme-neutral .ember-aurora-dashboard button:active,
+html.theme-neutral .nocturne-control-deck button:not(:disabled):active,
+html.theme-neutral .dashboard-composition [role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(.985) !important;
+  box-shadow: none;
+}
+
+html.theme-neutral .dashboard-heading button:focus-visible,
+html.theme-neutral .dashboard-widget button:focus-visible,
+html.theme-neutral .dashboard-widget a[href]:focus-visible,
+html.theme-neutral .paper-edition button:focus-visible,
+html.theme-neutral .daydream-dashboard button:focus-visible,
+html.theme-neutral .ember-aurora-dashboard button:focus-visible,
+html.theme-neutral .nocturne-control-deck button:focus-visible,
+html.theme-neutral .dashboard-composition [role="button"]:focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-neutral .dashboard-heading button,
+  html.theme-neutral .dashboard-widget button,
+  html.theme-neutral .dashboard-widget a[href],
+  html.theme-neutral .paper-edition button,
+  html.theme-neutral .daydream-dashboard button,
+  html.theme-neutral .ember-aurora-dashboard button,
+  html.theme-neutral .nocturne-control-deck button,
+  html.theme-neutral .dashboard-composition [role="button"] {
+    transition: none !important;
+    transform: none !important;
+  }
+}
