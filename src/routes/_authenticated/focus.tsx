@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Pause, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { useCourses, useFocusSessions, useProfile, useSave, useTasks, type Task } from "@/lib/db";
+import { useFocusSessions, useProfile, useSave, useTasks } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
@@ -12,17 +12,15 @@ export const Route = createFileRoute("/_authenticated/focus")({
   component: FocusPage,
 });
 
-type TimerState = { startedAt: number; endsAt: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null };
+type TimerState = { startedAt: number; endsAt: number; plannedSeconds: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null };
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 
 function FocusPage() {
   const profileQuery = useProfile();
   const tasksQuery = useTasks();
-  const coursesQuery = useCourses();
   const sessionsQuery = useFocusSessions();
   const profile = profileQuery.data;
   const tasks = tasksQuery.data ?? [];
-  const courses = coursesQuery.data ?? [];
   const sessions = sessionsQuery.data ?? [];
   const saveSession = useSave("focus_sessions");
   const [selectedTask, setSelectedTask] = useState("");
@@ -39,7 +37,7 @@ function FocusPage() {
       const saved = localStorage.getItem(`pace-focus-timer:${profile.id}`);
       if (saved) {
         const parsed = JSON.parse(saved) as TimerState;
-        if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
+        if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && typeof parsed.plannedSeconds === "number" && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
           setTimer(parsed);
           setSelectedTask(parsed.taskId ?? "");
         }
@@ -61,9 +59,10 @@ function FocusPage() {
     else localStorage.removeItem(storageKey);
   }, [timer, storageKey]);
 
+  const plannedSeconds = timer?.plannedSeconds ?? duration * 60;
   const remaining = timer
     ? Math.max(0, Math.ceil((timer.pausedRemainingMs ?? Math.max(0, timer.endsAt - now)) / 1000))
-    : duration * 60;
+    : plannedSeconds;
   const selected = tasks.find((task) => task.id === (timer?.taskId ?? selectedTask));
   const todaySessions = sessions.filter((session) => session.kind === "focus" && new Date(session.started_at).toDateString() === new Date().toDateString());
   const todayMinutes = Math.round(todaySessions.reduce((sum, session) => sum + session.duration_seconds, 0) / 60);
@@ -74,7 +73,7 @@ function FocusPage() {
     finishing.current = true;
     const end = Date.now();
     const started = new Date(timer.startedAt);
-    const seconds = timer.pausedRemainingMs !== null ? Math.max(0, Math.floor((duration * 60_000 - timer.pausedRemainingMs) / 1000)) : Math.max(0, Math.floor((end - timer.startedAt - timer.accumulatedPausedMs) / 1000));
+    const seconds = timer.pausedRemainingMs !== null ? Math.max(0, Math.floor((plannedSeconds * 1000 - timer.pausedRemainingMs) / 1000)) : Math.max(0, Math.floor((end - timer.startedAt - timer.accumulatedPausedMs) / 1000));
     try {
       await saveSession.mutateAsync({
         user_id: profile.id,
@@ -83,8 +82,8 @@ function FocusPage() {
         kind: "focus",
         started_at: started.toISOString(),
         ended_at: new Date(end).toISOString(),
-        duration_seconds: completed ? duration * 60 : seconds,
-        planned_seconds: duration * 60,
+        duration_seconds: completed ? plannedSeconds : seconds,
+        planned_seconds: plannedSeconds,
         completed,
       });
       setTimer(null);
@@ -99,11 +98,11 @@ function FocusPage() {
 
   useEffect(() => {
     if (timer && timer.pausedRemainingMs === null && remaining === 0) void finish(true);
-  }, [remaining, timer?.startedAt]);
+  }, [remaining, timer, finish]);
 
   function start() {
     const startAt = Date.now();
-    setTimer({ startedAt: startAt, endsAt: startAt + duration * 60_000, pausedRemainingMs: null, pausedAt: null, accumulatedPausedMs: 0, taskId: selectedTask || null });
+    setTimer({ startedAt: startAt, endsAt: startAt + duration * 60_000, plannedSeconds: duration * 60, pausedRemainingMs: null, pausedAt: null, accumulatedPausedMs: 0, taskId: selectedTask || null });
     setNow(startAt);
   }
   function pause() {
@@ -120,12 +119,12 @@ function FocusPage() {
     finishing.current = false;
   }
 
-  if (profileQuery.isLoading || tasksQuery.isLoading || coursesQuery.isLoading || sessionsQuery.isLoading) return <QueryState loading loadingLabel="Preparing your focus space…" />;
-  const error = profileQuery.error ?? tasksQuery.error ?? coursesQuery.error ?? sessionsQuery.error;
-  if (error) return <QueryState error={error} onRetry={() => { void Promise.all([profileQuery.refetch(), tasksQuery.refetch(), coursesQuery.refetch(), sessionsQuery.refetch()]); }} />;
+  if (profileQuery.isLoading || tasksQuery.isLoading || sessionsQuery.isLoading) return <QueryState loading loadingLabel="Preparing your focus space…" />;
+  const error = profileQuery.error ?? tasksQuery.error ?? sessionsQuery.error;
+  if (error) return <QueryState error={error} onRetry={() => { void Promise.all([profileQuery.refetch(), tasksQuery.refetch(), sessionsQuery.refetch()]); }} />;
   if (!profile) return <QueryState error={new Error("Your profile is unavailable. Please sign in again.")} />;
 
-  const progress = timer ? Math.min(100, Math.max(0, ((duration * 60 - remaining) / (duration * 60)) * 100)) : 0;
+  const progress = timer ? Math.min(100, Math.max(0, ((plannedSeconds - remaining) / plannedSeconds) * 100)) : 0;
   return (
     <div className="mx-auto max-w-4xl">
       <header className="page-intro mb-8 border-b border-border/70 pb-6">
