@@ -20,6 +20,15 @@ const rel = (d: Date, withTime = false, timeZone?: string) => {
   return `${label} ${time}`;
 };
 
+const relPlanned = (dayKey: string, timeZone?: string) => {
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const today = parsePlanned(todayKey);
+  const tomorrowKey = today ? toDateKey(addDays(today, 1)) : "";
+  const day = parsePlanned(dayKey);
+  if (!day) return dayKey;
+  return dayKey === todayKey ? "Today" : dayKey === tomorrowKey ? "Tomorrow" : format(day, "EEE MMM d");
+};
+
 export const PRIORITY_CLASS: Record<string, string> = {
   low: "text-muted-foreground",
   medium: "text-[var(--course-blue)]",
@@ -31,7 +40,7 @@ export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Tas
   const toggle = useToggleTask();
   const done = task.status === "done";
   const overdue = isOverdue(task);
-  const planned = parsePlanned(task.planned_date);
+  const plannedLabel = task.planned_date ? relPlanned(task.planned_date, timeZone) : null;
   return (
     <div className={cn("group flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent/50", done && "opacity-55")}>
       <Checkbox className="mt-0.5 rounded-full" checked={done} onCheckedChange={() => toggle.mutate(task)} aria-label={`Complete ${task.title}`} />
@@ -50,9 +59,9 @@ export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Tas
               <CalendarClock className="size-3" /> Due {rel(new Date(task.due_at), true, timeZone)}
             </span>
           )}
-          {planned && (
+          {plannedLabel && (
             <span className="flex items-center gap-1 text-primary">
-              <Hammer className="size-3" /> Work {rel(planned, false, timeZone)}
+              <Hammer className="size-3" /> Work {plannedLabel}
             </span>
           )}
           {task.recurrence !== "none" && <Repeat className="size-3" />}
