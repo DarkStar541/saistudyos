@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Pause, Play, RotateCcw, Square } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Pause, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useCourses, useFocusSessions, useProfile, useSave, useTasks, type Task } from "@/lib/db";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
@@ -13,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/focus")({
   component: FocusPage,
 });
 
-type TimerState = { startedAt: number; endsAt: number; pausedRemainingMs: number | null; taskId: string | null };
+type TimerState = { startedAt: number; endsAt: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null };
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 
 function FocusPage() {
@@ -40,7 +39,7 @@ function FocusPage() {
       const saved = localStorage.getItem(`pace-focus-timer:${profile.id}`);
       if (saved) {
         const parsed = JSON.parse(saved) as TimerState;
-        if (parsed && typeof parsed.startedAt === "number" && (typeof parsed.endsAt === "number" || parsed.pausedRemainingMs !== null)) {
+        if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
           setTimer(parsed);
           setSelectedTask(parsed.taskId ?? "");
         }
@@ -65,7 +64,6 @@ function FocusPage() {
   const remaining = timer
     ? Math.max(0, Math.ceil((timer.pausedRemainingMs ?? Math.max(0, timer.endsAt - now)) / 1000))
     : duration * 60;
-  const elapsed = timer ? Math.max(0, Math.min(duration * 60, Math.floor((duration * 60_000 - (timer.pausedRemainingMs ?? Math.max(0, timer.endsAt - now))) / 1000))) : 0;
   const selected = tasks.find((task) => task.id === (timer?.taskId ?? selectedTask));
   const todaySessions = sessions.filter((session) => session.kind === "focus" && new Date(session.started_at).toDateString() === new Date().toDateString());
   const todayMinutes = Math.round(todaySessions.reduce((sum, session) => sum + session.duration_seconds, 0) / 60);
@@ -76,7 +74,7 @@ function FocusPage() {
     finishing.current = true;
     const end = Date.now();
     const started = new Date(timer.startedAt);
-    const seconds = Math.max(0, Math.floor((end - timer.startedAt - (timer.pausedRemainingMs !== null ? 0 : 0)) / 1000));
+    const seconds = timer.pausedRemainingMs !== null ? Math.max(0, Math.floor((duration * 60_000 - timer.pausedRemainingMs) / 1000)) : Math.max(0, Math.floor((end - timer.startedAt - timer.accumulatedPausedMs) / 1000));
     try {
       await saveSession.mutateAsync({
         user_id: profile.id,
@@ -85,7 +83,7 @@ function FocusPage() {
         kind: "focus",
         started_at: started.toISOString(),
         ended_at: new Date(end).toISOString(),
-        duration_seconds: completed ? Math.max(seconds, duration * 60) : seconds,
+        duration_seconds: completed ? duration * 60 : seconds,
         planned_seconds: duration * 60,
         completed,
       });
@@ -105,16 +103,16 @@ function FocusPage() {
 
   function start() {
     const startAt = Date.now();
-    setTimer({ startedAt: startAt, endsAt: startAt + duration * 60_000, pausedRemainingMs: null, taskId: selectedTask || null });
+    setTimer({ startedAt: startAt, endsAt: startAt + duration * 60_000, pausedRemainingMs: null, pausedAt: null, accumulatedPausedMs: 0, taskId: selectedTask || null });
     setNow(startAt);
   }
   function pause() {
     if (!timer || timer.pausedRemainingMs !== null) return;
-    setTimer({ ...timer, pausedRemainingMs: Math.max(0, timer.endsAt - Date.now()) });
+    setTimer({ ...timer, pausedRemainingMs: Math.max(0, timer.endsAt - Date.now()), pausedAt: Date.now() });
   }
   function resume() {
     if (!timer || timer.pausedRemainingMs === null) return;
-    setTimer({ ...timer, endsAt: Date.now() + timer.pausedRemainingMs, pausedRemainingMs: null });
+    setTimer({ ...timer, endsAt: Date.now() + timer.pausedRemainingMs, pausedRemainingMs: null, accumulatedPausedMs: timer.accumulatedPausedMs + (timer.pausedAt ? Date.now() - timer.pausedAt : 0), pausedAt: null });
     setNow(Date.now());
   }
   function reset() {
