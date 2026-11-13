@@ -59,9 +59,9 @@ function Dashboard() {
     persist(next);
   };
 
+  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
   const hour = hourInTimeZone(new Date(), ctx.timeZone);
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
 
   const metrics = useMemo(() => {
     const now = new Date();
