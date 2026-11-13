@@ -39,7 +39,8 @@ function SettingsPage() {
     setF({
       display_name: profile.display_name ?? "", school: profile.school ?? "", timezone: profile.timezone, theme: profile.theme,
       default_task_view: profile.default_task_view, default_priority: profile.default_priority,
-      default_duration_minutes: String(profile.default_duration_minutes), week_starts_on: String(profile.week_starts_on),\n      focus_minutes: String(profile.focus_minutes), short_break_minutes: String(profile.short_break_minutes), long_break_minutes: String(profile.long_break_minutes), long_break_every: String(profile.long_break_every),
+      default_duration_minutes: String(profile.default_duration_minutes), week_starts_on: String(profile.week_starts_on),
+      focus_minutes: String(profile.focus_minutes), short_break_minutes: String(profile.short_break_minutes), long_break_minutes: String(profile.long_break_minutes), long_break_every: String(profile.long_break_every),
     });
   }, [profile]);
 
@@ -55,7 +56,9 @@ function SettingsPage() {
     await save.mutateAsync({
       id: profile!.id, display_name: f.display_name.slice(0, 80) || null, school: f.school.slice(0, 120) || null, timezone: f.timezone,
       theme: f.theme, default_task_view: f.default_task_view, default_priority: f.default_priority,
-      default_duration_minutes: Math.max(5, Math.min(600, parseInt(f.default_duration_minutes) || 60)), week_starts_on: +f.week_starts_on,\n      focus_minutes: Math.max(5, Math.min(180, parseInt(f.focus_minutes) || 25)), short_break_minutes: Math.max(1, Math.min(60, parseInt(f.short_break_minutes) || 5)),\n      long_break_minutes: Math.max(1, Math.min(60, parseInt(f.long_break_minutes) || 15)), long_break_every: Math.max(2, Math.min(12, parseInt(f.long_break_every) || 4)),
+      default_duration_minutes: Math.max(5, Math.min(600, parseInt(f.default_duration_minutes) || 60)), week_starts_on: +f.week_starts_on,
+      focus_minutes: Math.max(5, Math.min(180, parseInt(f.focus_minutes) || 25)), short_break_minutes: Math.max(1, Math.min(60, parseInt(f.short_break_minutes) || 5)),
+      long_break_minutes: Math.max(1, Math.min(60, parseInt(f.long_break_minutes) || 15)), long_break_every: Math.max(2, Math.min(12, parseInt(f.long_break_every) || 4)),
     });
     applyTheme(f.theme);
     toast.success("Settings saved");
