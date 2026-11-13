@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { colorVar, useCourses, useMilestones, useProfile, useProjects, useRemove, useSave, useTasks, type Project, type Task } from "@/lib/db";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { TaskRow } from "@/components/task-row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,7 +161,7 @@ function ProjectDetail({ project, tasks, courses, timeZone }: { project: Project
         </div>
         {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact timeZone={timeZone} />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
       </div>
-      {(taskOpen || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />}
+      {(taskOpen || editing) && <LazyTaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />}
     </div>
   );
 }
