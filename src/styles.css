@@ -2004,10 +2004,7 @@ html.theme-neutral textarea,
 html.theme-neutral [role="combobox"] {
   border-radius: .55rem;
 }
-html.theme-neutral button, html.theme-neutral [role="button"] {
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
-}
-html.theme-neutral button:active, html.theme-neutral [role="button"]:active { transform: none; }
+/* Button interaction motion is defined once in the universal interaction layer below. */
 html.theme-neutral .appearance-mode,
 html.theme-neutral form > section { border-radius: .85rem; }
 @media (max-width: 1023px) {
@@ -2153,18 +2150,20 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   [role="switch"]:not([aria-disabled="true"]),
   [role="tab"]:not([aria-disabled="true"]) {
     transition:
-      color 150ms ease,
-      background-color 150ms ease,
-      border-color 150ms ease,
-      box-shadow 150ms ease,
-      opacity 150ms ease,
-      transform 150ms ease;
+      color 150ms ease-out,
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      opacity 150ms ease-out,
+      translate 150ms ease-out,
+      scale 150ms ease-out;
   }
 
   button:not(:disabled):active,
   [role="button"]:not([aria-disabled="true"]):active,
   a[href]:active {
-    transform: scale(0.985);
+    translate: 0 0;
+    scale: 0.985;
   }
 
   button:focus-visible,
@@ -2231,6 +2230,8 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
 @media (hover: hover) and (pointer: fine) {
   button:not(:disabled):hover,
   [role="button"]:not([aria-disabled="true"]):hover {
+    translate: 0 -1px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
     filter: brightness(1.015);
   }
 
@@ -2253,69 +2254,5 @@ html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   .interactive-surface {
     transition: none !important;
     transform: none !important;
-  }
-}
-
-
-
-/* Dashboard controls use the exact same motion values as the shared Button.
-   Use individual transform properties so they match Tailwind's translate/scale
-   utilities instead of layering a separate transform animation on top. */
-html.theme-neutral .dashboard-heading button,
-html.theme-neutral .dashboard-widget button,
-html.theme-neutral .dashboard-widget a[href],
-html.theme-neutral .paper-edition button,
-html.theme-neutral .daydream-dashboard button,
-html.theme-neutral .ember-aurora-dashboard button,
-html.theme-neutral .nocturne-control-deck button,
-html.theme-neutral .dashboard-composition [role="button"] {
-  transition:
-    translate 150ms ease-out,
-    scale 150ms ease-out,
-    box-shadow 150ms ease-out,
-    background-color 150ms ease-out,
-    color 150ms ease-out,
-    border-color 150ms ease-out !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html.theme-neutral .dashboard-heading button:not(:disabled):hover,
-  html.theme-neutral .dashboard-widget button:not(:disabled):hover,
-  html.theme-neutral .dashboard-widget a[href]:hover,
-  html.theme-neutral .paper-edition button:hover,
-  html.theme-neutral .daydream-dashboard button:hover,
-  html.theme-neutral .ember-aurora-dashboard button:hover,
-  html.theme-neutral .nocturne-control-deck button:not(:disabled):hover,
-  html.theme-neutral .dashboard-composition [role="button"]:not([aria-disabled="true"]):hover {
-    translate: 0 -1px !important;
-    box-shadow: var(--tw-shadow, 0 1px 2px rgb(0 0 0 / 0.12));
-  }
-}
-
-html.theme-neutral .dashboard-heading button:not(:disabled):active,
-html.theme-neutral .dashboard-widget button:not(:disabled):active,
-html.theme-neutral .dashboard-widget a[href]:active,
-html.theme-neutral .paper-edition button:active,
-html.theme-neutral .daydream-dashboard button:active,
-html.theme-neutral .ember-aurora-dashboard button:active,
-html.theme-neutral .nocturne-control-deck button:not(:disabled):active,
-html.theme-neutral .dashboard-composition [role="button"]:not([aria-disabled="true"]):active {
-  translate: 0 0 !important;
-  scale: .985 !important;
-  box-shadow: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.theme-neutral .dashboard-heading button,
-  html.theme-neutral .dashboard-widget button,
-  html.theme-neutral .dashboard-widget a[href],
-  html.theme-neutral .paper-edition button,
-  html.theme-neutral .daydream-dashboard button,
-  html.theme-neutral .ember-aurora-dashboard button,
-  html.theme-neutral .nocturne-control-deck button,
-  html.theme-neutral .dashboard-composition [role="button"] {
-    transition: none !important;
-    translate: none !important;
-    scale: none !important;
   }
 }
