@@ -149,16 +149,23 @@ function FocusPage() {
             <div><p className="font-display text-6xl font-semibold tabular-nums tracking-tight">{formatTime(remaining)}</p><p className="mt-2 text-sm text-muted-foreground">{timer ? (timer.pausedRemainingMs === null ? "Time remaining" : "Paused") : `${duration} minute session`}</p></div>
           </div>
           {!timer && <div className="mx-auto mb-5 max-w-sm space-y-3 text-left">
-            <label className="block text-sm font-medium">Work on</label>
-            <Select value={selectedTask || "__none__"} onValueChange={(value) => setSelectedTask(value === "__none__" ? "" : value)}>
-              <SelectTrigger><SelectValue placeholder="Choose a task (optional)" /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">No specific task</SelectItem>{activeTasks.map((task) => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)}</SelectContent>
-            </Select>
-            <label className="block text-sm font-medium">Session length</label>
-            <Select value={String(duration)} onValueChange={(value) => setDuration(Number(value))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{[15, 20, 25, 30, 45, 50, 60, 90].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} minutes</SelectItem>)}</SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {([{ id: "focus", label: "Focus", minutes: profile.focus_minutes }, { id: "short_break", label: "Short break", minutes: profile.short_break_minutes }, { id: "long_break", label: "Long break", minutes: profile.long_break_minutes }] as const).map((option) => (
+                <Button key={option.id} type="button" size="sm" variant={mode === option.id ? "secondary" : "outline"} aria-pressed={mode === option.id} onClick={() => { setMode(option.id); setDuration(option.minutes); }}>{option.label}</Button>
+              ))}
+            </div>
+            {mode === "focus" && <>
+              <label className="block text-sm font-medium">Work on</label>
+              <Select value={selectedTask || "__none__"} onValueChange={(value) => setSelectedTask(value === "__none__" ? "" : value)}>
+                <SelectTrigger><SelectValue placeholder="Choose a task (optional)" /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">No specific task</SelectItem>{activeTasks.map((task) => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)}</SelectContent>
+              </Select>
+              <label className="block text-sm font-medium">Session length</label>
+              <Select value={String(duration)} onValueChange={(value) => setDuration(Number(value))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{[15, 20, 25, 30, 45, 50, 60, 90].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} minutes</SelectItem>)}</SelectContent>
+              </Select>
+            </>}
           </div>}
           {timer && selected && <p className="mb-5 text-sm text-muted-foreground">Working on <span className="font-medium text-foreground">{selected.title}</span></p>}
           <div className="flex flex-wrap justify-center gap-2">
