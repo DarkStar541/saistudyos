@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
 import { applyTheme, applyStyle, getSavedStyle } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 
 const NAV = [
@@ -63,9 +64,13 @@ export function AppShell() {
   }, []);
 
   async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Couldn't sign out. Please try again.");
+      return;
+    }
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 
