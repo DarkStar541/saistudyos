@@ -2261,3 +2261,20 @@ a[href]:hover {
     scale: none !important;
   }
 }
+
+
+/* Dashboard Customize: neutral theme uses a 12-column grid. The generic
+   auto-placement rule above must not collapse widgets into a single track. */
+html.theme-neutral .dashboard-customize-layout > [data-widget] {
+  grid-column: span 6 !important;
+  min-width: 0;
+}
+html.theme-neutral .dashboard-customize-layout > [data-widget="quickadd"],
+html.theme-neutral .dashboard-customize-layout > [data-widget="calendar"] {
+  grid-column: 1 / -1 !important;
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-customize-layout > [data-widget] {
+    grid-column: 1 / -1 !important;
+  }
+}
