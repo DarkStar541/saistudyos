@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Pace" }, { name: "description", content: "Profile, theme and task defaults." }, { property: "og:title", content: "Settings — Pace" }, { property: "og:description", content: "Profile, theme and task defaults." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -28,7 +29,8 @@ const UPCOMING = [
 ] as const;
 
 function SettingsPage() {
-  const { data: profile } = useProfile();
+  const profileQuery = useProfile();
+  const { data: profile } = profileQuery;
   const save = useSave("profiles");
   const [f, setF] = useState({ display_name: "", school: "", timezone: "UTC", theme: "system", default_task_view: "list", default_priority: "medium", default_duration_minutes: "60", week_starts_on: "1" });
 
@@ -41,7 +43,9 @@ function SettingsPage() {
     });
   }, [profile]);
 
-  if (!profile) return null;
+  if (profileQuery.isLoading) return <QueryState loading loadingLabel="Loading your settings…" />;
+  if (profileQuery.error) return <QueryState error={profileQuery.error} onRetry={() => { void profileQuery.refetch(); }} />;
+  if (!profile) return <QueryState error={new Error("Your profile is unavailable. Please sign in again.")} onRetry={() => { void profileQuery.refetch(); }} />;
   // Keep the saved zone selectable even if the browser omits a legacy IANA alias.
   const timezoneOptions = [...new Set([...zones, profile.timezone])].filter(Boolean).sort();
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
