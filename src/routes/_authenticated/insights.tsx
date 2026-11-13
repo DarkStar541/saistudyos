@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { addDays, format, parseISO } from "date-fns";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
 import { useFocusSessions, useProfile, useTasks } from "@/lib/db";
 import { dateKeyInTimeZone, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { QueryState } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { focusMinutesByDate } from "@/lib/insights";
+
+const InsightsCharts = lazy(() => import("@/components/insights-charts").then((module) => ({ default: module.InsightsCharts })));
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights — Pace" }, { name: "description", content: "Understand your study patterns and focus habits." }] }),
@@ -84,36 +86,9 @@ function InsightsPage() {
         <Metric label="Planned work items" value={String(data.planned)} />
         <Metric label="Average focus / day" value={`${data.average} min`} />
       </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
-          <h2 className="font-semibold">Daily focus</h2><p className="mt-1 text-sm text-muted-foreground">Minutes spent in recorded focus sessions.</p>
-          <div className="mt-5 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.days} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} interval={period === 90 ? 13 : period === 30 ? 4 : 0} />
-                <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
-                <Bar dataKey="focusMinutes" name="Focus minutes" fill="var(--primary)" radius={[5, 5, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
-          <h2 className="font-semibold">Completed work</h2><p className="mt-1 text-sm text-muted-foreground">Tasks marked complete on each day.</p>
-          <div className="mt-5 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.days} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} interval={period === 90 ? 13 : period === 30 ? 4 : 0} />
-                <YAxis allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
-                <Bar dataKey="completedTasks" name="Completed tasks" fill="var(--primary)" radius={[5, 5, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
+      <Suspense fallback={<div className="grid gap-5 xl:grid-cols-2"><div className="h-80 animate-pulse rounded-2xl bg-muted" /><div className="h-80 animate-pulse rounded-2xl bg-muted" /></div>}>
+        <InsightsCharts data={data.days} period={period} />
+      </Suspense>
       <section className="mt-5 rounded-2xl border border-border bg-card p-5 shadow-card">
         <div className="flex flex-wrap items-end justify-between gap-2"><div><h2 className="font-semibold">Focus activity</h2><p className="mt-1 text-sm text-muted-foreground">The last 12 weeks, based on your saved timezone.</p></div><p className="text-sm text-muted-foreground">{data.activeDays} active days</p></div>
         <div className="mt-5 grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-2">
