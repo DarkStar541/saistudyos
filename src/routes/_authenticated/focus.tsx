@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
 import { dateKeyInTimeZone } from "@/lib/task-utils";
-import { elapsedSeconds, pauseClock, remainingSeconds, resumeClock, type FocusClock } from "@/lib/focus-timer";
+import { createFocusTimerState, elapsedSeconds, pauseClock, remainingSeconds, resumeClock, type FocusTimerState, type FocusSessionKind } from "@/lib/focus-timer";
 
 export const Route = createFileRoute("/_authenticated/focus")({
   head: () => ({ meta: [{ title: "Focus — Pace" }, { name: "description", content: "A quiet place to work on one thing at a time." }] }),
   component: FocusPage,
 });
 
-type TimerKind = "focus" | "short_break" | "long_break";
-type TimerState = FocusClock & { taskId: string | null; kind: TimerKind };
+type TimerKind = FocusSessionKind;
+type TimerState = FocusTimerState;
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 
 function FocusPage() {
@@ -94,7 +94,7 @@ function FocusPage() {
       await saveSession.mutateAsync({
         user_id: profile.id,
         task_id: timer.taskId,
-        course_id: tasks.find((task) => task.id === timer.taskId)?.course_id ?? null,
+        course_id: timer.kind === "focus" ? tasks.find((task) => task.id === timer.taskId)?.course_id ?? null : null,
         kind: timer.kind,
         started_at: started.toISOString(),
         ended_at: new Date(end).toISOString(),
@@ -118,7 +118,7 @@ function FocusPage() {
 
   function start() {
     const startAt = Date.now();
-    setTimer({ startedAt: startAt, endsAt: startAt + duration * 60_000, plannedSeconds: duration * 60, pausedRemainingMs: null, pausedAt: null, accumulatedPausedMs: 0, taskId: selectedTask || null });
+    setTimer(createFocusTimerState(mode, duration, selectedTask || null, startAt));
     setNow(startAt);
   }
   function pause() {
@@ -179,7 +179,7 @@ function FocusPage() {
           </div>}
           {timer && selected && <p className="mb-5 text-sm text-muted-foreground">Working on <span className="font-medium text-foreground">{selected.title}</span></p>}
           <div className="flex flex-wrap justify-center gap-2">
-            {!timer ? <Button size="lg" onClick={start}><Play className="mr-2 size-4" /> Start focus</Button> : <>
+            {!timer ? <Button size="lg" onClick={start}><Play className="mr-2 size-4" /> Start {mode === "focus" ? "focus" : mode === "short_break" ? "short break" : "long break"}</Button> : <>
               {timer.pausedRemainingMs === null ? <Button size="lg" variant="outline" onClick={pause}><Pause className="mr-2 size-4" /> Pause</Button> : <Button size="lg" onClick={resume}><Play className="mr-2 size-4" /> Resume</Button>}
               <Button size="lg" variant="outline" onClick={() => void finish(false)} disabled={saveSession.isPending}><Check className="mr-2 size-4" /> Finish early</Button>
               <Button size="lg" variant="ghost" onClick={reset}><RotateCcw className="mr-2 size-4" /> Discard</Button>
