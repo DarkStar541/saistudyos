@@ -148,3 +148,28 @@ describe("independent calendar dates", () => {
     expect(days.get("2026-11-06")?.work).toHaveLength(1);
   });
 });
+
+
+describe("Insights focus aggregation", () => {
+  it("aggregates focus sessions by the profile timezone and excludes breaks", async () => {
+    const { focusMinutesByDate } = await import("@/lib/insights");
+    const sessions = [
+      { kind: "focus", started_at: "2026-11-13T01:30:00.000Z", duration_seconds: 1_200 },
+      { kind: "focus", started_at: "2026-11-13T02:00:00.000Z", duration_seconds: 600 },
+      { kind: "short_break", started_at: "2026-11-13T02:15:00.000Z", duration_seconds: 300 },
+      { kind: "focus", started_at: "2026-11-14T01:00:00.000Z", duration_seconds: 900 },
+    ];
+    expect(focusMinutesByDate(sessions, "America/Denver")).toEqual(new Map([
+      ["2026-11-12", 30],
+      ["2026-11-13", 15],
+    ]));
+  });
+
+  it("ignores zero or negative-duration sessions", async () => {
+    const { focusMinutesByDate } = await import("@/lib/insights");
+    expect(focusMinutesByDate([
+      { kind: "focus", started_at: "2026-11-13T12:00:00.000Z", duration_seconds: 0 },
+      { kind: "focus", started_at: "2026-11-13T12:00:00.000Z", duration_seconds: -30 },
+    ], "UTC").size).toBe(0);
+  });
+});
