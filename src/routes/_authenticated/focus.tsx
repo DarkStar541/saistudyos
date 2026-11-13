@@ -113,7 +113,8 @@ function FocusPage() {
         completed,
       });
       setTimer(null);
-      await sessionsQuery.refetch();
+      // useSave invalidates the focus_sessions query family on settle.
+      // A manual refetch here would issue a second identical database request.
       toast.success(completed ? "Focus session completed" : "Focus session saved");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't save the focus session");
