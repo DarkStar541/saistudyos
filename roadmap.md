@@ -84,12 +84,12 @@ Status key:
 - [~] Add reusable loading, error and retry states to Dashboard, Tasks, Calendar, Projects, Settings, Courses and Course detail. Static build passes; verify session-expiry behavior and retry flows in the browser.
 
 ## 4. Focus and productivity features
-- [~] Create authenticated Focus and Insights routes/pages; initial implementations are committed, pending CI and browser verification
+- [~] Create authenticated Focus and Insights routes/pages; implementations and regression coverage are committed; browser verification remains
 - [~] Add Focus Mode page, navigation entry and task selection for session context
 - [~] Add a Focus button directly on task rows and in the task editor; verify both navigation handoffs in browser
-- [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; add unit coverage for elapsed/remaining time and pause accounting; browser refresh, tab suspension and session persistence still need verification
+- [~] Implement timestamp-based focus countdown with pause/resume, early finish, discard and local timer restoration; preserve selected focus/short-break/long-break kind and associate tasks only with focus sessions. Unit coverage includes elapsed/remaining time, pause accounting and session metadata; browser refresh, tab suspension and session persistence still need verification
 - [~] Add short/long break modes and editable focus/break duration settings in Settings; browser verification remains
-- [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap
+- [~] Add Insights page with focus and completed-task charts, 7/30/90-day period selector and 12-week activity heatmap; fix planned-work aggregation and aggregate focus sessions once per timezone date instead of rescanning all sessions for each heatmap day
 - [~] Group Insights data using profile timezone and separate planned-work dates from completion timestamps; validate DST and date-boundary behavior
 
 ## 5. Security, privacy and multi-user readiness
@@ -99,7 +99,7 @@ Status key:
 - [x] Clarify during signup that each account gets its own private workspace
 - [~] Review existing RLS: profiles are scoped by auth.uid() = id; courses, projects, milestones, tasks, subtasks and focus_sessions are scoped by auth.uid() = user_id. Separate-account browser verification remains open
 - [~] Supabase browser client uses the publishable key, not a service-role key; complete repository/deployment secret audit remains open
-- [ ] Validate AI Quick Add output server-side and map inferred courses only to courses owned by the signed-in user
+- [ ] Validate AI Quick Add output server-side and map inferred courses only to courses owned by the signed-in user (Stage 3 architecture documented in docs/stage-3-ai-quick-add-architecture.md)
 - [ ] Add rate limits and safe failure handling to AI endpoints
 - [ ] Require confirmation when AI Quick Add is uncertain before creating or changing data
 - [ ] Review OAuth redirects, session refresh, logout and password-reset flows
@@ -148,4 +148,10 @@ Keep the Settings page's **Coming next** section aligned with this roadmap. Thes
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states, first auth/performance optimizations and initial multi-user hardening are committed to `design/neutral-apple-inspired`. The next roadmap stage now has initial Focus and Insights pages, authenticated routes and navigation, configurable focus/break durations, timestamp-based pause/resume timing, selected break-kind preservation, local timer restoration, analytics charts/heatmap and an initial installable-PWA foundation. New work has not yet passed CI or browser verification; direct task-to-focus navigation, timer/session persistence tests and analytics edge cases remain open. The `main` branch remains untouched.
+Stage 2 implementation is substantially complete, but **Stage 2 is not closed**: remaining gates are browser/real-data verification, applying and verifying migration `0002_multi_user_relationship_hardening.sql` in the connected Supabase database, two-account isolation checks, responsive/theme/accessibility review and published-app performance measurements. Do not mark those items complete from CI alone.
+
+Recent code work on `design/neutral-apple-inspired`: responsive app-shell breakpoint switches to bottom navigation below a 1100px CSS viewport; Focus timer preserves focus/short-break/long-break kind and associates tasks only with focus sessions; Insights now computes planned-work totals and aggregates focus minutes once by profile-timezone date; regression tests cover Focus metadata and timezone-aware Insights aggregation.
+
+Stage 3 preparation: secure AI Quick Add & Capture Inbox architecture is documented in `docs/stage-3-ai-quick-add-architecture.md`. Before implementation, confirm supported server-side execution and secret configuration. The model must propose structured task data only; it must not write tasks. Require user confirmation before task creation. Canvas LMS and Google Calendar remain later Stage 3 integration investigations; AI Hub & Knowledge Library remains Stage 4.
+
+The `main` branch remains untouched. Do not merge without explicit approval.
