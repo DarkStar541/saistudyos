@@ -24,9 +24,10 @@ const VIEWS = [
 function TasksPage() {
   const tasksQuery = useTasks();
   const coursesQuery = useCourses();
+  const profileQuery = useProfile();
   const { data: tasks = [] } = tasksQuery;
   const { data: courses = [] } = coursesQuery;
-  const { data: profile } = useProfile();
+  const { data: profile } = profileQuery;
   const [view, setView] = useState<string>("list");
   const [courseFilter, setCourseFilter] = useState("");
   const [showDone, setShowDone] = useState(false);
