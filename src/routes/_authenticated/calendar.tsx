@@ -4,6 +4,7 @@ import { CalendarView } from "@/components/task-views";
 import { TaskDialog } from "@/components/task-dialog";
 import { useCourses, useProfile, useTasks, type Task } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -16,8 +17,10 @@ export const Route = createFileRoute("/_authenticated/calendar")({
 });
 
 function CalendarPage() {
-  const { data: tasks = [] } = useTasks();
-  const { data: courses = [] } = useCourses();
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
   const { data: profile } = useProfile();
   const [showCompleted, setShowCompleted] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -26,6 +29,9 @@ function CalendarPage() {
     () => tasks.filter((task) => showCompleted || task.status !== "done"),
     [tasks, showCompleted],
   );
+
+  if (tasksQuery.isLoading || coursesQuery.isLoading) return <QueryState loading loadingLabel="Loading your calendar…" />;
+  if (tasksQuery.error || coursesQuery.error) return <QueryState error={tasksQuery.error ?? coursesQuery.error} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch()]); }} />;
 
   return (
     <div>
