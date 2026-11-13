@@ -127,8 +127,12 @@ export function projectRecurringOccurrences<T extends TaskLike & RecurrenceRule>
   const endKey = toDateKey(rangeEnd);
   const projected: ProjectedOccurrence<T>[] = [];
   for (const group of groups.values()) {
-    const ordered = [...group].sort((a, b) => (b.planned_date ?? "").localeCompare(a.planned_date ?? ""));
-    const anchorTask = ordered.find((task) => task.status !== "done") ?? ordered[0];
+    // Only an actionable occurrence keeps a recurring series alive. If every
+    // stored occurrence is completed, do not resurrect it as synthetic work.
+    const open = group.filter((task) => task.status !== "done");
+    if (!open.length) continue;
+    const ordered = [...open].sort((a, b) => (b.planned_date ?? "").localeCompare(a.planned_date ?? ""));
+    const anchorTask = ordered[0];
     if (!anchorTask?.planned_date) continue;
     const anchor = parsePlanned(anchorTask.planned_date);
     if (!anchor) continue;
