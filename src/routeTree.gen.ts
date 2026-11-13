@@ -108,6 +108,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/focus': typeof AuthenticatedFocusRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -151,6 +153,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/focus'
+    | '/insights'
     | '/dashboard'
     | '/projects'
     | '/settings'
