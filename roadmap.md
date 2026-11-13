@@ -95,6 +95,7 @@ Status key:
 ## 5. Security, privacy and multi-user readiness
 - [~] Add database relationship guards so projects, milestones, tasks and focus sessions cannot reference another user's course/project/task; migration `0002_multi_user_relationship_hardening.sql` is committed but must still be applied to the connected database
 - [x] Clear the client query cache on sign-in/sign-out account boundaries to prevent stale workspace data appearing after an account switch
+- [x] Redirect returning users with a persisted session from the public root URL directly to their Dashboard; signed-out visitors still see the landing page
 - [x] Clarify during signup that each account gets its own private workspace
 - [~] Review existing RLS: profiles are scoped by auth.uid() = id; courses, projects, milestones, tasks, subtasks and focus_sessions are scoped by auth.uid() = user_id. Separate-account browser verification remains open
 - [~] Supabase browser client uses the publishable key, not a service-role key; complete repository/deployment secret audit remains open
