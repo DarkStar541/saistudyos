@@ -1,9 +1,9 @@
--- Private, server-only quota counters for AI Quick Add.
+-- One private counter row per user; the active minute bucket is overwritten,
+-- so rate limiting does not accumulate an unbounded history table.
 create table if not exists public.ai_quick_add_rate_limits (
-  user_id uuid not null,
+  user_id uuid primary key,
   window_start timestamptz not null,
-  request_count integer not null default 0 check (request_count >= 0),
-  primary key (user_id, window_start)
+  request_count integer not null default 0 check (request_count >= 0)
 );
 
 alter table public.ai_quick_add_rate_limits enable row level security;
@@ -27,9 +27,16 @@ begin
 
   insert into public.ai_quick_add_rate_limits (user_id, window_start, request_count)
   values (p_user_id, p_window_start, 1)
-  on conflict (user_id, window_start)
-  do update set request_count = public.ai_quick_add_rate_limits.request_count + 1
-  where public.ai_quick_add_rate_limits.request_count < p_limit
+  on conflict (user_id)
+  do update set
+    window_start = excluded.window_start,
+    request_count = case
+      when public.ai_quick_add_rate_limits.window_start = excluded.window_start
+        then public.ai_quick_add_rate_limits.request_count + 1
+      else 1
+    end
+  where public.ai_quick_add_rate_limits.window_start <> excluded.window_start
+     or public.ai_quick_add_rate_limits.request_count < p_limit
   returning request_count into updated_count;
 
   return updated_count is not null;
