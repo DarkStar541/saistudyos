@@ -77,6 +77,11 @@ Status key:
 
 ### Remaining performance work
 - [~] Code-level performance audit completed and documented in `docs/stage-2-performance-multiuser-audit.md`; focus-session history fetch is bounded to 120 days and composite per-user query indexes are defined in migration 0003. Published-app cold/warm load, auth restoration, dashboard, dialog, task toggle and calendar timings remain unmeasured.
+- [~] Split today-only focus-session fetching from the 120-day Insights query; Dashboard and Focus now request only the current profile-timezone day.
+- [~] Lazy-load Recharts charts so the charting library is fetched only when Insights is opened.
+- [~] Lazy-load TaskDialog and its form dependencies so the editor bundle is fetched only when the user opens task creation/editing.
+- [x] Remove the redundant Focus-session refetch after save; the mutation already invalidates the focus-session query family.
+- [ ] Enable or implement route-level code splitting; generated routeTree currently imports all route modules eagerly, so route component code may still be included in the initial application bundle.
 - [ ] Compare before/after timings on the same deployment and device; runtime gains still need measurement.
 - [~] Repository query-path audit completed; focus history no longer downloads unbounded lifetime records. Full slow-query plans, render profiling and route-bundle profiling require deployed database/browser measurements.
 - [ ] Investigate intermittent login failures if they persist after the auth fast-path change
