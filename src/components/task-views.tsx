@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { addDays, addMonths, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, addMonths, endOfMonth, endOfWeek, format, isSameMonth, startOfMonth, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,7 +123,7 @@ export function BoardView({ tasks, courses, onOpen, timeZone }: ViewProps) {
 }
 
 export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZone }: ViewProps & { weekStartsOn?: 0 | 1 }) {
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const [month, setMonth] = useState(() => startOfMonth(parsePlanned(dateKeyInTimeZone(new Date(), timeZone)) ?? new Date()));
   const [mode, setMode] = useState<"planned" | "due">("planned");
   const move = useMove();
   const days = useMemo(() => {
@@ -146,7 +146,8 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZon
     return grouped;
   }, [tasks, days, month, timeZone]);
 
-  const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(parsePlanned(todayKey) ?? new Date(), { weekStartsOn }), i), "EEE"));
 
   return (
     <div className="task-calendar rounded-2xl border border-border bg-card p-3 shadow-card md:p-4">
@@ -180,7 +181,7 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZon
               className={cn("min-h-20 bg-card p-1 md:min-h-28", !isSameMonth(d, month) && "bg-muted/40 text-muted-foreground")}
             >
               <div className="mb-1 flex flex-wrap items-center gap-1">
-                <span className={cn("grid size-6 place-items-center rounded-full", isToday(d) && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</span>
+                <span className={cn("grid size-6 place-items-center rounded-full", key === todayKey && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</span>
                 {!!entry?.dueCount && <span className="text-[10px] font-semibold text-destructive">{entry.dueCount} due</span>}
               </div>
               <div className="space-y-0.5">
