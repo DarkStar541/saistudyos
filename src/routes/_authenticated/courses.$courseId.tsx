@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { colorVar, useCourses, useProfile, useRemove, useSave, useTasks, type Task } from "@/lib/db";
 import { CourseDialog, DAY_NAMES, type Slot } from "@/components/course-dialog";
 import { CourseIcon } from "@/components/course-icon";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { TaskRow } from "@/components/task-row";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/query-state";
@@ -113,7 +113,7 @@ function CoursePage() {
       </div>
 
       <CourseDialog open={edit} onOpenChange={setEdit} course={course} />
-      {(taskOpen || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(null); setEditing(null); } }} task={editing} defaults={{ course_id: course.id, task_type: taskOpen ?? "assignment" }} />}
+      {(taskOpen || editing) && <LazyTaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(null); setEditing(null); } }} task={editing} defaults={{ course_id: course.id, task_type: taskOpen ?? "assignment" }} />}
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
           <AlertDialogHeader>
