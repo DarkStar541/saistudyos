@@ -30,7 +30,8 @@ const deadlineLabel = (iso: string, timeZone?: string | null) => {
 };
 
 function ProjectsPage() {
-  const { data: profile } = useProfile();
+  const profileQuery = useProfile();
+  const { data: profile } = profileQuery;
   const projectsQuery = useProjects();
   const coursesQuery = useCourses();
   const tasksQuery = useTasks();
@@ -62,7 +63,7 @@ function ProjectsPage() {
     return grouped;
   }, [milestones]);
 
-  const queries = [projectsQuery, coursesQuery, tasksQuery, milestonesQuery];
+  const queries = [profileQuery, projectsQuery, coursesQuery, tasksQuery, milestonesQuery];
   if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your projects…" />;
   const queryError = queries.find((query) => query.error)?.error;
   if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
