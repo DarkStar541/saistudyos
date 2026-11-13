@@ -1,4 +1,4 @@
-name: StudyOS CI
+name: Pace CI
 
 on:
   push:
