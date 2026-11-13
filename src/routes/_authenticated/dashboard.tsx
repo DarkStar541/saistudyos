@@ -9,7 +9,7 @@ import { calendarDays, dateKeyInTimeZone, hourInTimeZone, parsePlanned, isForTod
 import { CalendarTask } from "@/components/calendar-task";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { CourseIcon } from "@/components/course-icon";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -177,7 +177,7 @@ function Dashboard() {
           <Eye className="mx-auto mb-2 size-5" /> Your dashboard is empty. Click Customize to add widgets.
         </div>
       )}
-      {editing && <TaskDialog open={true} onOpenChange={(o) => !o && setEditing(null)} task={editing} />}
+      {editing && <LazyTaskDialog open={true} onOpenChange={(o) => !o && setEditing(null)} task={editing} />}
     </div>
   );
 }
