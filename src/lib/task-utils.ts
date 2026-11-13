@@ -117,6 +117,20 @@ export function calendarDays<T extends TaskLike>(tasks: T[], timeZone?: string |
   return days;
 }
 
+/** Return one actionable deadline row per task/recurring-series deadline. */
+export function uniqueDeadlineTasks<T extends TaskLike>(tasks: T[]): T[] {
+  const deadlines = new Map<string, T>();
+  let unkeyed = 0;
+  for (const task of tasks) {
+    if (!task.due_at) continue;
+    const seriesId = task.recurrence_parent_id ?? task.id;
+    const key = seriesId ? `${seriesId}|${task.due_at}` : `unkeyed-${unkeyed++}`;
+    const previous = deadlines.get(key);
+    if (!previous || (isDone(previous) && !isDone(task))) deadlines.set(key, task);
+  }
+  return [...deadlines.values()];
+}
+
 export function isOverdue(t: TaskLike, now = new Date()) {
   return !isDone(t) && !!t.due_at && isBefore(new Date(t.due_at), now);
 }
