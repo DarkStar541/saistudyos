@@ -48,7 +48,7 @@ export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Tas
   return (
     <div className={cn("group flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent/50", done && "opacity-55")}>
       <Checkbox className="mt-0.5 rounded-full" checked={done} onCheckedChange={() => toggle.mutate(task)} aria-label={`Complete ${task.title}`} />
-      <button onClick={() => onOpen(task)} className="min-w-0 flex-1 text-left">
+      <button onClick={() => onOpen(task)} className="min-w-0 flex-1 text-left transition-colors duration-150 hover:text-primary focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none">
         <p className={cn("truncate text-sm font-medium", done && "line-through")}>{task.title}</p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {course && (
