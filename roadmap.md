@@ -133,6 +133,17 @@ Status key:
 - [ ] Review the complete draft PR and CI results
 - [ ] Merge to `main` only after explicit approval
 
+
+## 9. User-facing "Coming next" roadmap (Settings)
+
+Keep the Settings page's **Coming next** section aligned with this roadmap. These are planned product milestones, not features that should be presented as already shipped.
+
+- [ ] **AI Quick Add & Capture Inbox** — Planned. Build fast natural-language task capture and an inbox for reviewing/confirming captured items. Use the saved course list to infer course, due date, assignment type and priority; ask for clarification when uncertain.
+- [ ] **Canvas LMS** — Stage 3. Explore a secure Canvas integration for useful course and assignment context. Keep permissions scoped, protect account data and avoid assuming every school enables the same Canvas capabilities.
+- [ ] **Google Calendar** — Stage 3. Explore calendar connection and event/task visibility, with clear user consent, conflict handling and control over what Pace reads or writes.
+- [ ] **AI Hub & Knowledge Library** — Stage 4. Plan a centralized AI workspace and knowledge library that can organize useful school context and support future AI workflows without compromising privacy or making the app unnecessarily complex.
+
+
 ---
 
 ## Current checkpoint
