@@ -33,9 +33,23 @@ function AuthPage() {
   const [sent, setSent] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => data.user && navigate({ to: "/dashboard", replace: true }));
-    const { data } = supabase.auth.onAuthStateChange((e, s) => { if (s && e === "SIGNED_IN") navigate({ to: "/dashboard", replace: true }); });
-    return () => data.subscription.unsubscribe();
+    let active = true;
+    // getSession reads the persisted session locally. getUser() performs an
+    // avoidable network validation just to decide whether to leave this page.
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session?.user) {
+        void navigate({ to: "/dashboard", replace: true });
+      }
+    });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (active && session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        void navigate({ to: "/dashboard", replace: true });
+      }
+    });
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   async function submit(e: React.FormEvent) {
