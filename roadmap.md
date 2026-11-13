@@ -125,4 +125,4 @@ Status key:
 
 ## Current checkpoint
 
-The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, and first performance/auth optimizations have been committed to `design/neutral-apple-inspired`. Several items are **implemented but not yet browser/build/test verified**. The next priority is to resolve the remaining planned-date-versus-due-date discrepancy, then finish the screen-by-screen visual pass and measure performance. The `main` branch remains untouched.
+The Stage 2 implementation pass, Pace rename, neutral design foundation, Calendar page, landing page, date/time consistency fixes, recurring-deadline de-duplication, shared loading/error states and first auth/performance optimizations are committed to `design/neutral-apple-inspired`. Regression tests have been added but **have not been run**; browser visuals, responsive behavior, live auth and performance timings also remain unverified. The next priority is automated test/build/lint execution and real-data browser verification, followed by measured performance profiling. The `main` branch remains untouched.
