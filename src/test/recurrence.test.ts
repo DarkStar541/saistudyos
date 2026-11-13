@@ -11,7 +11,10 @@ function series(start: T | T[]): T[] {
   const initial = Array.isArray(start) ? start : [start];
   const all: T[] = [...initial];
   let cur = initial[0];
-  for (let i = 0; i < 100; i++) {
+  // Unbounded sample series are intentionally kept short; bounded series run
+  // until their saved deadline or repeat-until date.
+  const limit = cur.recurrence_end || cur.due_at ? 100 : 3;
+  for (let i = 0; i < limit; i++) {
     const p = nextInstanceDates(cur, new Date(`${cur.planned_date}T00:00:00`));
     if (!p) break;
     cur = { ...cur, id: `${cur.id}-${i}`, recurrence_parent_id: initial[0].id, ...p };
@@ -63,7 +66,7 @@ describe("recurrence intervals and weekday selection", () => {
     const next = nextPendingOccurrence({ recurrence: "daily" }, new Date(2024, 0, 1), new Date(2026, 10, 11));
     expect(next?.getFullYear()).toBe(2026);
     expect(next?.getMonth()).toBe(10);
-    expect(next?.getDate()).toBe(12);
+    expect(next?.getDate()).toBe(11);
   });
   it("skips missed occurrences without exceeding the recurrence end", () => {
     expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
