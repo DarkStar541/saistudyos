@@ -65,8 +65,18 @@ function FocusPage() {
 
   useEffect(() => {
     if (!timer || timer.pausedRemainingMs !== null) return;
-    const id = window.setInterval(() => setNow(Date.now()), 500);
-    return () => window.clearInterval(id);
+
+    // Background tabs throttle timers; reconcile immediately on return.
+    const syncClock = () => {
+      if (document.visibilityState === "visible") setNow(Date.now());
+    };
+    syncClock();
+    document.addEventListener("visibilitychange", syncClock);
+    const id = window.setInterval(syncClock, 500);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", syncClock);
+    };
   }, [timer]);
 
   useEffect(() => {
