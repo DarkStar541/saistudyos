@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — StudyOS" },
+      { title: "Calendar — Pace" },
       { name: "description", content: "See your assignments and planned work across the coming weeks and months." },
     ],
   }),
