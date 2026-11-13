@@ -17,6 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { dateKeyInTimeZone, dateTimeInTimeZoneToIso, parsePlanned } from "@/lib/task-utils";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({ meta: [{ title: "Projects — Pace" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — Pace" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -30,10 +31,14 @@ const deadlineLabel = (iso: string, timeZone?: string | null) => {
 
 function ProjectsPage() {
   const { data: profile } = useProfile();
-  const { data: projects = [] } = useProjects();
-  const { data: courses = [] } = useCourses();
-  const { data: tasks = [] } = useTasks();
-  const { data: milestones = [] } = useMilestones();
+  const projectsQuery = useProjects();
+  const coursesQuery = useCourses();
+  const tasksQuery = useTasks();
+  const milestonesQuery = useMilestones();
+  const { data: projects = [] } = projectsQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: tasks = [] } = tasksQuery;
+  const { data: milestones = [] } = milestonesQuery;
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
@@ -56,6 +61,11 @@ function ProjectsPage() {
     }
     return grouped;
   }, [milestones]);
+
+  const queries = [projectsQuery, coursesQuery, tasksQuery, milestonesQuery];
+  if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your projects…" />;
+  const queryError = queries.find((query) => query.error)?.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
 
   return (
     <div>
