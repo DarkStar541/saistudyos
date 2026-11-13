@@ -40,6 +40,8 @@ function FocusPage() {
     setTimerRestored(false);
     setDuration(profile.focus_minutes || 25);
     try {
+      const pendingTaskKey = `pace-focus-next-task:${profile.id}`;
+      const pendingTaskId = localStorage.getItem(pendingTaskKey);
       const saved = localStorage.getItem(`pace-focus-timer:${profile.id}`);
       if (saved) {
         const parsed = JSON.parse(saved) as TimerState;
@@ -51,6 +53,9 @@ function FocusPage() {
       }
     } catch {
       localStorage.removeItem(`pace-focus-timer:${profile.id}`);
+      const pendingTaskId = localStorage.getItem(`pace-focus-next-task:${profile.id}`);
+      if (pendingTaskId) setSelectedTask(pendingTaskId);
+      localStorage.removeItem(`pace-focus-next-task:${profile.id}`);
     }
     setTimerRestored(true);
   }, [profile?.id, profile?.focus_minutes]);
