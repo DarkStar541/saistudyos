@@ -2128,3 +2128,131 @@ html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
 html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
   margin-left: 0 !important;
 }
+
+/* ── Universal Pace interaction finish ──────────────────────────────────
+   Apply one restrained interaction language across shared controls and
+   interactive surfaces, including controls that do not use the Button UI.
+*/
+@layer base {
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea,
+  [role="checkbox"],
+  [role="switch"],
+  [role="tab"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]) {
+    transition:
+      color 150ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      opacity 150ms ease,
+      transform 150ms ease;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  a[href]:active {
+    transform: scale(0.985);
+  }
+
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a[href]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="checkbox"]:focus-visible,
+  [role="switch"]:focus-visible,
+  [role="tab"]:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  input,
+  select,
+  textarea {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 14%, transparent);
+  }
+}
+
+@layer components {
+  /* Shared clickable surfaces used by task rows, cards and list items. */
+  [data-interactive="true"],
+  .interactive-surface {
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+  }
+
+  [data-interactive="true"]:hover,
+  .interactive-surface:hover {
+    border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Keep static cards calm; only lift cards explicitly marked interactive. */
+  .card-interactive:hover,
+  [data-interactive="true"]:hover {
+    transform: translateY(-1px);
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    filter: brightness(1.015);
+  }
+
+  a[href]:hover {
+    text-decoration-thickness: 1.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="checkbox"],
+  [role="switch"],
+  [role="tab"],
+  [data-interactive="true"],
+  .interactive-surface {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
