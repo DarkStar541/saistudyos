@@ -22,7 +22,7 @@ const zones = typeof Intl.supportedValuesOf === "function"
   : ["UTC", "America/Denver", "America/Los_Angeles", "America/Chicago", "America/New_York", "Europe/London", "Asia/Kolkata"];
 
 const UPCOMING = [
-  ["AI Quick Add & Capture Inbox", "Stage 2"],
+  ["AI Quick Add & Capture Inbox", "Planned"],
   ["Canvas LMS", "Stage 3"],
   ["Google Calendar", "Stage 3"],
   ["AI Hub & Knowledge Library", "Stage 4"],
