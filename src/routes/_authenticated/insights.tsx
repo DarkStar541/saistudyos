@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { addDays, format, parseISO } from "date-fns";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useFocusSessions, useProfile, useTasks } from "@/lib/db";
-import { dateKeyInTimeZone, parsePlanned } from "@/lib/task-utils";
+import { dateKeyInTimeZone, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { QueryState } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 
@@ -30,7 +30,7 @@ function InsightsPage() {
     const todayDate = keyDate(today);
     const days = Array.from({ length: period }, (_, index) => {
       const date = addDays(todayDate, index - period + 1);
-      const key = dateKeyInTimeZone(date, timeZone);
+      const key = toDateKey(date);
       return { key, label: format(date, period === 7 ? "EEE" : "MMM d"), focusMinutes: 0, completedTasks: 0, plannedTasks: 0 };
     });
     const byKey = new Map(days.map((day) => [day.key, day]));
