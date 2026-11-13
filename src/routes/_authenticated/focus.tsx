@@ -71,7 +71,7 @@ function FocusPage() {
   const remaining = timer
     ? Math.max(0, Math.ceil((timer.pausedRemainingMs ?? Math.max(0, timer.endsAt - now)) / 1000))
     : plannedSeconds;
-  const selected = tasks.find((task) => task.id === (timer?.taskId ?? selectedTask));
+  const selected = timer ? (timer.taskId ? tasks.find((task) => task.id === timer.taskId) : undefined) : tasks.find((task) => task.id === selectedTask);
   const todaySessions = sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), profile?.timezone) === dateKeyInTimeZone(new Date(), profile?.timezone));
   const todayMinutes = Math.round(todaySessions.reduce((sum, session) => sum + session.duration_seconds, 0) / 60);
   const activeTasks = tasks.filter((task) => task.status !== "done");
