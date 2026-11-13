@@ -5,16 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * StudyOS design foundation — "editorial study journal".
- *
- * Light mode: warm paper surfaces, ink text, one restrained violet accent,
- * hairline borders and soft layered shadows.
- * Dark mode: atmospheric ink-plum, elevated surfaces, luminous accent —
- * never flat black.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- * All colors use oklch.
+ * Pace design tokens. The active runtime style is neutral; light and dark
+ * appearance are independent. Tailwind utilities map to these OKLCH tokens.
  */
 
 @theme inline {
@@ -48,8 +40,8 @@
   --color-warning: var(--warning);
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   --color-ring-offset-background: var(--background);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
