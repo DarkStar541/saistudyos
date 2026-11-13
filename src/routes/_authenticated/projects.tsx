@@ -159,7 +159,7 @@ function ProjectDetail({ project, tasks, courses, timeZone }: { project: Project
           <h3 className="text-sm font-semibold">Tasks</h3>
           <Button size="sm" variant="ghost" onClick={() => setTaskOpen(true)}><Plus className="size-4" /> Task</Button>
         </div>
-        {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
+        {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact timeZone={timeZone} />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
       </div>
       {(taskOpen || editing) && <TaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />}
     </div>
