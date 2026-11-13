@@ -4,7 +4,7 @@ import { getSavedStyle, type VisualStyle } from "@/lib/theme";
 import { addDays, format, startOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
+import { colorVar, useCourses, useTodayFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
 import { calendarDays, dateKeyInTimeZone, hourInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
 import { projectRecurringOccurrences } from "@/lib/recurrence";
@@ -38,8 +38,8 @@ function Dashboard() {
   const profileQuery = useProfile();
   const tasksQuery = useTasks();
   const coursesQuery = useCourses();
-  const sessionsQuery = useFocusSessions();
   const { data: profile } = profileQuery;
+  const sessionsQuery = useTodayFocusSessions(profile?.timezone, !profileQuery.isLoading && !!profile);
   const { data: tasks = [] } = tasksQuery;
   const { data: courses = [] } = coursesQuery;
   const { data: sessions = [] } = sessionsQuery;
