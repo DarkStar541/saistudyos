@@ -386,7 +386,7 @@ type Ctx = { tasks: Task[]; courses: Course[]; courseMap: Map<string, Course>; o
 
 function TaskList({ items, ctx, empty }: { items: Task[]; ctx: Ctx; empty: string }) {
   if (!items.length) return <p className="py-3 text-sm text-muted-foreground">{empty}</p>;
-  return <div className="-mx-2">{items.slice(0, 6).map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? ctx.courseMap.get(t.course_id) : undefined} onOpen={ctx.onOpen} compact />)}{items.length > 6 && <Link to="/tasks" className="block px-3 pt-1 text-xs text-primary">+{items.length - 6} more</Link>}</div>;
+  return <div className="-mx-2">{items.slice(0, 6).map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? ctx.courseMap.get(t.course_id) : undefined} onOpen={ctx.onOpen} compact timeZone={ctx.timeZone} />)}{items.length > 6 && <Link to="/tasks" className="block px-3 pt-1 text-xs text-primary">+{items.length - 6} more</Link>}</div>;
 }
 
 function Widget({ id, ...ctx }: { id: string } & Ctx) {
