@@ -7,6 +7,7 @@ import { BoardView, CalendarView, ListView } from "@/components/task-views";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({ meta: [{ title: "Tasks — Pace" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — Pace" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -20,8 +21,10 @@ const VIEWS = [
 ] as const;
 
 function TasksPage() {
-  const { data: tasks = [] } = useTasks();
-  const { data: courses = [] } = useCourses();
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
   const { data: profile } = useProfile();
   const [view, setView] = useState<string>("list");
   const [courseFilter, setCourseFilter] = useState("");
@@ -33,6 +36,9 @@ function TasksPage() {
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
   const filtered = tasks.filter((t) => (!courseFilter || t.course_id === courseFilter) && (showDone || view === "board" || t.status !== "done"));
+
+  if (tasksQuery.isLoading || coursesQuery.isLoading) return <QueryState loading loadingLabel="Loading your tasks…" />;
+  if (tasksQuery.error || coursesQuery.error) return <QueryState error={tasksQuery.error ?? coursesQuery.error} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch()]); }} />;
 
   return (
     <div>
