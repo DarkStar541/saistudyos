@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Check, Pause, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { useFocusSessions, useProfile, useSave, useTasks } from "@/lib/db";
+import { useTodayFocusSessions, useProfile, useSave, useTasks } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
@@ -21,8 +21,8 @@ const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().p
 function FocusPage() {
   const profileQuery = useProfile();
   const tasksQuery = useTasks();
-  const sessionsQuery = useFocusSessions();
   const profile = profileQuery.data;
+  const sessionsQuery = useTodayFocusSessions(profile?.timezone, !profileQuery.isLoading && !!profile);
   const tasks = tasksQuery.data ?? [];
   const sessions = sessionsQuery.data ?? [];
   const saveSession = useSave("focus_sessions");
