@@ -50,7 +50,10 @@ function FocusPage() {
           setSelectedTask(parsed.taskId ?? "");
           setMode(parsed.kind);
         }
+      } else if (pendingTaskId) {
+        setSelectedTask(pendingTaskId);
       }
+      localStorage.removeItem(pendingTaskKey);
     } catch {
       localStorage.removeItem(`pace-focus-timer:${profile.id}`);
       const pendingTaskId = localStorage.getItem(`pace-focus-next-task:${profile.id}`);
