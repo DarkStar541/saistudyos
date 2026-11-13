@@ -65,9 +65,10 @@ function TasksPage() {
           </SelectContent>
         </Select>
         {view !== "board" && (
-          <label className="flex items-center gap-2 text-muted-foreground">
-            <Checkbox checked={showDone} onCheckedChange={(checked) => setShowDone(checked === true)} /> Show completed
-          </label>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Checkbox id="show-completed-tasks" checked={showDone} onCheckedChange={(checked) => setShowDone(checked === true)} />
+            <label htmlFor="show-completed-tasks">Show completed</label>
+          </div>
         )}
       </div>
       {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} timeZone={profile?.timezone} />}
