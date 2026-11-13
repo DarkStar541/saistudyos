@@ -81,7 +81,7 @@ Status key:
 - [~] Lazy-load Recharts charts so the charting library is fetched only when Insights is opened.
 - [~] Lazy-load TaskDialog and its form dependencies so the editor bundle is fetched only when the user opens task creation/editing.
 - [x] Remove the redundant Focus-session refetch after save; the mutation already invalidates the focus-session query family.
-- [ ] Enable or implement route-level code splitting; generated routeTree currently imports all route modules eagerly, so route component code may still be included in the initial application bundle.
+- [~] Enable TanStack automatic route-level code splitting through the existing Lovable TanStack Start configuration. Unit tests, lint and production build pass with the setting; emitted chunk inspection and first-visit/navigation behavior still need verification.
 - [ ] Compare before/after timings on the same deployment and device; runtime gains still need measurement.
 - [~] Repository query-path audit completed; focus history no longer downloads unbounded lifetime records. Full slow-query plans, render profiling and route-bundle profiling require deployed database/browser measurements.
 - [ ] Investigate intermittent login failures if they persist after the auth fast-path change
