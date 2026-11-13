@@ -1,12 +1,24 @@
-import { format, isToday, isTomorrow } from "date-fns";
+import { addDays, format } from "date-fns";
 import { CalendarClock, Flag, Hammer, Repeat } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { colorVar, useToggleTask, type Course, type Task } from "@/lib/db";
-import { isOverdue, parsePlanned } from "@/lib/task-utils";
+import { dateKeyInTimeZone, isOverdue, parsePlanned, toDateKey } from "@/lib/task-utils";
 import { cn } from "@/lib/utils";
 
-const rel = (d: Date, withTime = false) =>
-  isToday(d) ? (withTime ? `Today ${format(d, "p")}` : "Today") : isTomorrow(d) ? (withTime ? `Tmrw ${format(d, "p")}` : "Tomorrow") : format(d, withTime ? "EEE MMM d, p" : "EEE MMM d");
+const rel = (d: Date, withTime = false, timeZone?: string) => {
+  const dayKey = dateKeyInTimeZone(d, timeZone);
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const today = parsePlanned(todayKey);
+  const tomorrowKey = today ? toDateKey(addDays(today, 1)) : "";
+  const day = parsePlanned(dayKey) ?? d;
+  const label = dayKey === todayKey ? "Today" : dayKey === tomorrowKey ? "Tomorrow" : format(day, "EEE MMM d");
+  if (!withTime) return label;
+  let time = format(d, "p");
+  if (timeZone) {
+    try { time = new Intl.DateTimeFormat(undefined, { timeZone, hour: "numeric", minute: "2-digit" }).format(d); } catch { /* Fall back to browser time. */ }
+  }
+  return `${label} ${time}`;
+};
 
 export const PRIORITY_CLASS: Record<string, string> = {
   low: "text-muted-foreground",
@@ -15,7 +27,7 @@ export const PRIORITY_CLASS: Record<string, string> = {
   urgent: "text-destructive",
 };
 
-export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?: Course | undefined; onOpen: (t: Task) => void; compact?: boolean }) {
+export function TaskRow({ task, course, onOpen, compact, timeZone }: { task: Task; course?: Course | undefined; onOpen: (t: Task) => void; compact?: boolean; timeZone?: string }) {
   const toggle = useToggleTask();
   const done = task.status === "done";
   const overdue = isOverdue(task);
@@ -35,12 +47,12 @@ export function TaskRow({ task, course, onOpen, compact }: { task: Task; course?
           {!compact && task.task_type !== "assignment" && <span className="capitalize">{task.task_type}</span>}
           {task.due_at && (
             <span className={cn("flex items-center gap-1", overdue && "font-medium text-destructive")}>
-              <CalendarClock className="size-3" /> Due {rel(new Date(task.due_at), true)}
+              <CalendarClock className="size-3" /> Due {rel(new Date(task.due_at), true, timeZone)}
             </span>
           )}
           {planned && (
             <span className="flex items-center gap-1 text-primary">
-              <Hammer className="size-3" /> Work {rel(planned)}
+              <Hammer className="size-3" /> Work {rel(planned, false, timeZone)}
             </span>
           )}
           {task.recurrence !== "none" && <Repeat className="size-3" />}
