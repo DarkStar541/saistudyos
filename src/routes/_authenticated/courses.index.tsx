@@ -36,7 +36,7 @@ function CoursesPage() {
     <div>
       <div className="page-intro mb-8 flex flex-wrap items-end gap-3 border-b border-border/70 pb-6">
         <div className="mr-auto"><p className="overline-label mb-2">YOUR ACADEMIC LANDSCAPE</p><h1 className="text-5xl font-semibold">Courses<span className="text-primary">.</span></h1><p className="mt-2 text-sm text-muted-foreground">Every class, its work, and the semester ahead.</p></div>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground"><Checkbox checked={showArchived} onCheckedChange={(checked) => setShowArchived(checked === true)} /> Archived</label>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground"><Checkbox id="show-archived-courses" checked={showArchived} onCheckedChange={(checked) => setShowArchived(checked === true)} /><label htmlFor="show-archived-courses">Archived</label></div>
         <Button onClick={() => setOpen(true)}><Plus className="size-4" /> New course</Button>
       </div>
       {!list.length && (
