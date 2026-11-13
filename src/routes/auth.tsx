@@ -89,7 +89,7 @@ function AuthPage() {
             <span className="text-xl font-semibold tracking-tight">Pace</span>
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight">{mode === "signup" ? "Create your workspace" : mode === "forgot" ? "Reset password" : "Welcome back"}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Your courses and deadlines, all in one place.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{mode === "signup" ? "Create your own private study workspace." : "Your courses and deadlines, all in one place."}</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
           {sent ? (
@@ -103,6 +103,7 @@ function AuthPage() {
                   <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
                 </div>
               )}
+              {mode === "signup" && <p className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">Your courses, tasks, projects and focus history belong to your account. Other Pace users cannot see your workspace.</p>}
               <form onSubmit={submit} className="space-y-3">
                 {mode === "signup" && <div className="space-y-1"><Label htmlFor="name">Name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>}
                 <div className="space-y-1"><Label htmlFor="email">Email</Label><Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
