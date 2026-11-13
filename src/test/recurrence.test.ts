@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence, projectRecurringOccurrences } from "@/lib/recurrence";
-import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, isUpcoming } from "@/lib/task-utils";
+import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, hourInTimeZone, isUpcoming } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
@@ -85,6 +85,21 @@ describe("future recurrence projection", () => {
 });
 
 describe("saved time zone calendar bucketing", () => {
+  it("uses the saved timezone for the Dashboard greeting hour", () => {
+    expect(hourInTimeZone(new Date("2026-11-12T02:00:00.000Z"), "America/Denver")).toBe(19);
+  });
+  it("round-trips a time after the spring DST transition", () => {
+    const iso = "2026-03-08T09:30:00.000Z";
+    const input = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(input).toEqual({ date: "2026-03-08", time: "03:30" });
+    expect(dateTimeInTimeZoneToIso(input.date, input.time, "America/Denver")).toBe(iso);
+  });
+  it("round-trips a time before the autumn DST transition", () => {
+    const iso = "2026-11-01T07:30:00.000Z";
+    const input = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(input).toEqual({ date: "2026-11-01", time: "01:30" });
+    expect(dateTimeInTimeZoneToIso(input.date, input.time, "America/Denver")).toBe(iso);
+  });
   it("places an instant on the correct local calendar day", () => {
     const instant = new Date("2026-11-12T02:00:00.000Z");
     expect(dateKeyInTimeZone(instant, "America/Denver")).toBe("2026-11-11");
