@@ -98,7 +98,7 @@ function Dashboard() {
           <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
             {stats.map((s) => (
               <span key={s.label} className="dashboard-stat">
-                <span className={cn("font-display text-2xl font-semibold", overdueCount > 0 && s.label === "overdue" ? "text-destructive" : "text-foreground")}>{s.value}</span>
+                <span className={cn("font-display text-2xl font-semibold", s.tone === "danger" ? "text-destructive" : "text-foreground")}>{s.value}</span>
                 <span className="text-xs text-muted-foreground">{s.label}</span>
               </span>
             ))}
