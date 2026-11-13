@@ -100,7 +100,7 @@ export function AppShell() {
           <button
             onClick={signOut}
             aria-label="Sign out"
-            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-[background-color,color,transform] duration-150 hover:-translate-y-px hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:translate-y-0 motion-reduce:transition-none"
           >
             <LogOut className="size-4" />
           </button>
@@ -123,8 +123,8 @@ export function AppShell() {
       </button>
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
-          <Link key={to} to={to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground" activeProps={{ className: "font-semibold text-primary" }}>
-            <Icon className="size-5" /> {label}
+          <Link key={to} to={to} className="group flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:text-foreground" activeProps={{ className: "font-semibold text-primary" }}>
+            <Icon className="size-5 transition-transform duration-150 group-hover:-translate-y-0.5 motion-reduce:transition-none" /> {label}
           </Link>
         ))}
       </nav>
