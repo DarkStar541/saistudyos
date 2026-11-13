@@ -83,3 +83,27 @@ Use date-only values for planned work dates. Convert an explicitly timed deadlin
 - No service-role key in the browser.
 - No vendor-specific provider code in UI components.
 - No assumption that all schools expose the same Canvas API permissions.
+
+
+## Implementation checkpoint — first AI Quick Add vertical slice
+
+Implemented on `design/neutral-apple-inspired`:
+
+- Added `supabase/functions/ai-quick-add/index.ts`, an authenticated Supabase Edge Function using Gemini 2.5 Flash.
+- The function verifies the bearer session, fetches active courses and profile settings with the user's JWT (therefore subject to RLS), and sends only the capture text plus minimal course context to Gemini.
+- Model output is validated server-side; task type, priority, dates, times and text lengths are bounded. Course names are resolved server-side against the authenticated user's own active courses. The model never receives or returns authoritative course IDs.
+- The endpoint only returns a proposal. It does not write tasks.
+- Added a database-backed atomic limit of 10 parse requests per user per minute. The counter uses one row per user, not an unbounded request log.
+- Added a Dashboard AI widget review flow. The student can edit title, course, type, priority, deadline, work date, estimate and description, then explicitly confirm before the normal RLS-protected task insert.
+- Added a strict client-side Zod schema and unit tests for malformed IDs, dates, times, enums, oversized content, unknown fields and invalid durations.
+
+### Required deployment setup before the feature can run
+
+1. Apply `drizzle/migrations/0004_ai_quick_add_rate_limits.sql` to the connected Supabase database. Registering the migration in Git does not apply it to the live database.
+2. Deploy the `ai-quick-add` Supabase Edge Function with `supabase/config.toml` so JWT verification is enabled.
+3. Add `GEMINI_API_KEY` as a server-side Supabase/Lovable secret. Never add it to a `VITE_*` variable or browser code.
+4. Confirm the Edge Function runtime has its standard `SUPABASE_URL`, `SUPABASE_ANON_KEY` (or publishable-key equivalent), and `SUPABASE_SERVICE_ROLE_KEY` secrets.
+5. Test with two synthetic accounts: each account must receive only its own course matches; unknown course names must remain unresolved; the endpoint must reject unauthenticated requests and enforce the per-user rate limit.
+6. Test the complete proposal/edit/confirm flow in the published app.
+
+The feature is implemented in source but is **not considered live or release-ready** until the migration, function deployment, secret configuration and browser/security tests are completed. No Gemini key or other secret is stored in the repository.
