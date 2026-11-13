@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QueryState } from "@/components/query-state";
 import { dateKeyInTimeZone } from "@/lib/task-utils";
+import { elapsedSeconds, pauseClock, remainingSeconds, resumeClock, type FocusClock } from "@/lib/focus-timer";
 
 export const Route = createFileRoute("/_authenticated/focus")({
   head: () => ({ meta: [{ title: "Focus — Pace" }, { name: "description", content: "A quiet place to work on one thing at a time." }] }),
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/focus")({
 });
 
 type TimerKind = "focus" | "short_break" | "long_break";
-type TimerState = { startedAt: number; endsAt: number; plannedSeconds: number; pausedRemainingMs: number | null; pausedAt: number | null; accumulatedPausedMs: number; taskId: string | null; kind: TimerKind };
+type TimerState = FocusClock & { taskId: string | null; kind: TimerKind };
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 
 function FocusPage() {
@@ -80,7 +81,7 @@ function FocusPage() {
     finishing.current = true;
     const end = Date.now();
     const started = new Date(timer.startedAt);
-    const seconds = timer.pausedRemainingMs !== null ? Math.max(0, Math.floor((plannedSeconds * 1000 - timer.pausedRemainingMs) / 1000)) : Math.max(0, Math.floor((end - timer.startedAt - timer.accumulatedPausedMs) / 1000));
+    const seconds = elapsedSeconds(timer, end);
     try {
       await saveSession.mutateAsync({
         user_id: profile.id,
@@ -114,11 +115,11 @@ function FocusPage() {
   }
   function pause() {
     if (!timer || timer.pausedRemainingMs !== null) return;
-    setTimer({ ...timer, pausedRemainingMs: Math.max(0, timer.endsAt - Date.now()), pausedAt: Date.now() });
+    setTimer(pauseClock(timer));
   }
   function resume() {
     if (!timer || timer.pausedRemainingMs === null) return;
-    setTimer({ ...timer, endsAt: Date.now() + timer.pausedRemainingMs, pausedRemainingMs: null, accumulatedPausedMs: timer.accumulatedPausedMs + (timer.pausedAt ? Date.now() - timer.pausedAt : 0), pausedAt: null });
+    setTimer(resumeClock(timer));
     setNow(Date.now());
   }
   function reset() {
