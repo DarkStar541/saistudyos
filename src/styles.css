@@ -2278,3 +2278,18 @@ html.theme-neutral .dashboard-customize-layout > [data-widget="calendar"] {
     grid-column: 1 / -1 !important;
   }
 }
+
+
+/* Responsive app shell: keep the desktop sidebar and content offset in sync.
+   Explicit CSS avoids relying on generated arbitrary breakpoint utilities. */
+@media (min-width: 900px) {
+  .app-sidebar { display: flex !important; }
+  main.app-main { padding-left: 15.5rem !important; padding-bottom: 0 !important; }
+  .app-mobile-nav, .app-mobile-add { display: none !important; }
+}
+@media (max-width: 899px) {
+  .app-sidebar { display: none !important; }
+  main.app-main { padding-left: 0 !important; padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important; }
+  .app-mobile-nav { display: grid !important; }
+  .app-mobile-add { display: grid !important; }
+}
