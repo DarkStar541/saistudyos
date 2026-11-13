@@ -22,6 +22,18 @@ export function parsePlanned(d: string | null): Date | null {
 }
 
 export const toDateKey = (d: Date) => format(d, "yyyy-MM-dd");
+/** Read the local hour in the student's saved time zone. */
+export function hourInTimeZone(date: Date, timeZone?: string | null): number {
+  if (!timeZone) return date.getHours();
+  try {
+    return Number(new Intl.DateTimeFormat("en-US", {
+      timeZone, hour: "numeric", hourCycle: "h23",
+    }).format(date));
+  } catch {
+    return date.getHours();
+  }
+}
+
 /** Convert an ISO instant into date/time input values in the saved IANA time zone. */
 export function dateTimeInputInTimeZone(iso: string, timeZone?: string | null) {
   const date = new Date(iso);
