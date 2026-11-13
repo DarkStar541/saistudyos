@@ -45,13 +45,14 @@ function FocusPage() {
         if (parsed && typeof parsed.startedAt === "number" && typeof parsed.endsAt === "number" && typeof parsed.accumulatedPausedMs === "number" && typeof parsed.plannedSeconds === "number" && ["focus", "short_break", "long_break"].includes(parsed.kind) && (parsed.pausedRemainingMs === null || typeof parsed.pausedRemainingMs === "number")) {
           setTimer(parsed);
           setSelectedTask(parsed.taskId ?? "");
+          setMode(parsed.kind);
         }
       }
     } catch {
       localStorage.removeItem(`pace-focus-timer:${profile.id}`);
     }
     setTimerRestored(true);
-  }, [profile?.id]);
+  }, [profile?.id, profile?.focus_minutes]);
 
   useEffect(() => {
     if (!timer || timer.pausedRemainingMs !== null) return;
