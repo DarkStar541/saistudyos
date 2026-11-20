@@ -6,6 +6,7 @@ import {
   isUpcoming,
   nextOccurrence,
   todayProgress,
+  uniqueDeadlineTasks,
   weeklyWorkload,
 } from "@/lib/task-utils";
 
@@ -59,6 +60,24 @@ describe("today progress", () => {
     });
   });
 
+  it("counts carried-forward work when it is completed today", () => {
+    const tasks = [
+      {
+        status: "done",
+        due_at: new Date(2026, 10, 8, 23, 59).toISOString(),
+        planned_date: "2026-11-02",
+        completed_at: new Date(2026, 10, 4, 10).toISOString(),
+      },
+    ];
+    expect(todayProgress(tasks, now)).toMatchObject({
+      completed: 1,
+      remaining: 0,
+      total: 1,
+      completionRatio: 1,
+      remainingRatio: 0,
+    });
+  });
+
   it("does not count work completed on a different day in today's gauge", () => {
     const tasks = [
       {
@@ -93,6 +112,18 @@ describe("dual dates", () => {
   });
 });
 
+describe("recurring deadline de-duplication", () => {
+  it("counts one deadline per recurring series while retaining separate work occurrences", () => {
+    const tasks = [
+      { id: "root", status: "done", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-04", recurrence_parent_id: null },
+      { id: "child-1", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-05", recurrence_parent_id: "root" },
+      { id: "child-2", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: "2026-11-06", recurrence_parent_id: "root" },
+      { id: "other", status: "todo", due_at: "2026-11-06T23:59:00.000Z", planned_date: null, recurrence_parent_id: null },
+    ];
+    expect(uniqueDeadlineTasks(tasks).map((task) => task.id).sort()).toEqual(["child-1", "other"]);
+  });
+});
+
 describe("independent calendar dates", () => {
   const due = new Date(2026, 10, 6, 23, 59).toISOString();
   it.each(["2026-11-05", "2026-11-06", "2026-11-07"])("work on %s never changes the Nov 6 deadline count", (planned_date) => {
@@ -115,5 +146,30 @@ describe("independent calendar dates", () => {
     const days = calendarDays([{ status: "todo", due_at: due, planned_date: null }, { status: "done", due_at: due, planned_date: "2026-11-06" }]);
     expect(days.get("2026-11-06")?.dueCount).toBe(1);
     expect(days.get("2026-11-06")?.work).toHaveLength(1);
+  });
+});
+
+
+describe("Insights focus aggregation", () => {
+  it("aggregates focus sessions by the profile timezone and excludes breaks", async () => {
+    const { focusMinutesByDate } = await import("@/lib/insights");
+    const sessions = [
+      { kind: "focus", started_at: "2026-11-13T01:30:00.000Z", duration_seconds: 1_200 },
+      { kind: "focus", started_at: "2026-11-13T02:00:00.000Z", duration_seconds: 600 },
+      { kind: "short_break", started_at: "2026-11-13T02:15:00.000Z", duration_seconds: 300 },
+      { kind: "focus", started_at: "2026-11-14T01:00:00.000Z", duration_seconds: 900 },
+    ];
+    expect(focusMinutesByDate(sessions, "America/Denver")).toEqual(new Map([
+      ["2026-11-12", 30],
+      ["2026-11-13", 15],
+    ]));
+  });
+
+  it("ignores zero or negative-duration sessions", async () => {
+    const { focusMinutesByDate } = await import("@/lib/insights");
+    expect(focusMinutesByDate([
+      { kind: "focus", started_at: "2026-11-13T12:00:00.000Z", duration_seconds: 0 },
+      { kind: "focus", started_at: "2026-11-13T12:00:00.000Z", duration_seconds: -30 },
+    ], "UTC").size).toBe(0);
   });
 });

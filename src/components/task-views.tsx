@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
-import { addDays, addMonths, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, addMonths, endOfMonth, endOfWeek, format, isSameMonth, startOfMonth, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { colorVar, type Course, type Task } from "@/lib/db";
-import { STATUSES, STATUS_LABEL, calendarDays, isOverdue, toDateKey } from "@/lib/task-utils";
+import { STATUSES, STATUS_LABEL, calendarDays, dateKeyInTimeZone, isOverdue, parsePlanned, toDateKey } from "@/lib/task-utils";
+import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { CalendarTask } from "@/components/calendar-task";
 import { Button } from "@/components/ui/button";
 import { TaskRow, PRIORITY_CLASS } from "@/components/task-row";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type ViewProps = { tasks: Task[]; courses: Map<string, Course>; onOpen: (t: Task) => void };
+type ViewProps = { tasks: Task[]; courses: Map<string, Course>; onOpen: (t: Task) => void; timeZone?: string };
 
 function useMove() {
   const qc = useQueryClient();
@@ -23,7 +24,7 @@ function useMove() {
   };
 }
 
-export function ListView({ tasks, courses, onOpen }: ViewProps) {
+export function ListView({ tasks, courses, onOpen, timeZone }: ViewProps) {
   const groups = useMemo(() => {
     const now = new Date();
     const g = { Overdue: [] as Task[], "No deadline": [] as Task[], Done: [] as Task[] };
@@ -33,15 +34,17 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
       else if (isOverdue(t, now)) g.Overdue.push(t);
       else if (!t.due_at) g["No deadline"].push(t);
       else {
-        const k = format(new Date(t.due_at), "yyyy-MM-dd");
+        const k = dateKeyInTimeZone(new Date(t.due_at), timeZone);
         (dated[k] ??= []).push(t);
       }
     }
     const out: [string, Task[]][] = [];
     if (g.Overdue.length) out.push(["Overdue", g.Overdue]);
+    const todayKey = dateKeyInTimeZone(now, timeZone);
     for (const k of Object.keys(dated).sort()) {
-      const d = new Date(`${k}T00:00`);
-      out.push([isToday(d) ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k] ?? []]);
+      const d = parsePlanned(k);
+      if (!d) continue;
+      out.push([k === todayKey ? "Due today" : `Due ${format(d, "EEEE, MMM d")}`, dated[k] ?? []]);
     }
     if (g["No deadline"].length) out.push(["No deadline", g["No deadline"]]);
     if (g.Done.length) out.push(["Done", g.Done]);
@@ -57,7 +60,7 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
             {label} <span className="font-normal">· {items.length}</span>
           </h3>
           <div className="rounded-2xl border border-border bg-card p-1 shadow-card">
-            {items.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={onOpen} />)}
+            {items.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={onOpen} timeZone={timeZone} />)}
           </div>
         </section>
       ))}
@@ -65,7 +68,7 @@ export function ListView({ tasks, courses, onOpen }: ViewProps) {
   );
 }
 
-export function BoardView({ tasks, courses, onOpen }: ViewProps) {
+export function BoardView({ tasks, courses, onOpen, timeZone }: ViewProps) {
   const move = useMove();
   const [over, setOver] = useState<string | null>(null);
   return (
@@ -90,6 +93,8 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
             <div className="space-y-2">
               {items.map((t) => {
                 const c = t.course_id ? courses.get(t.course_id) : undefined;
+                const dueKey = t.due_at ? dateKeyInTimeZone(new Date(t.due_at), timeZone) : null;
+                const dueDate = dueKey ? parsePlanned(dueKey) : null;
                 return (
                   <button
                     key={t.id}
@@ -102,7 +107,7 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
                     <p className="text-sm font-medium">{t.title}</p>
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                       {c && <span>{c.code || c.name}</span>}
-                      {t.due_at && <span className={cn(isOverdue(t) && "text-destructive")}>Due {format(new Date(t.due_at), "MMM d")}</span>}
+                      {dueDate && <span className={cn(isOverdue(t) && "text-destructive")}>Due {format(dueDate, "MMM d")}</span>}
                       {t.planned_date && <span className="text-primary">Work {format(new Date(`${t.planned_date}T00:00`), "MMM d")}</span>}
                       <Flag className={cn("ml-auto size-3", PRIORITY_CLASS[t.priority])} />
                     </div>
@@ -117,8 +122,8 @@ export function BoardView({ tasks, courses, onOpen }: ViewProps) {
   );
 }
 
-export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewProps & { weekStartsOn?: 0 | 1 }) {
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1, timeZone }: ViewProps & { weekStartsOn?: 0 | 1 }) {
+  const [month, setMonth] = useState(() => startOfMonth(parsePlanned(dateKeyInTimeZone(new Date(), timeZone)) ?? new Date()));
   const [mode, setMode] = useState<"planned" | "due">("planned");
   const move = useMove();
   const days = useMemo(() => {
@@ -129,12 +134,23 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
     return out;
   }, [month, weekStartsOn]);
 
-  const byDay = useMemo(() => calendarDays(tasks), [tasks]);
+  const byDay = useMemo(() => calendarDays(tasks, timeZone), [tasks, timeZone]);
+  const projectedByDay = useMemo(() => {
+    const projected = projectRecurringOccurrences(tasks, days[0] ?? month, days[days.length - 1] ?? month, new Date(), timeZone);
+    const grouped = new Map<string, typeof projected>();
+    for (const occurrence of projected) {
+      const items = grouped.get(occurrence.planned_date) ?? [];
+      items.push(occurrence);
+      grouped.set(occurrence.planned_date, items);
+    }
+    return grouped;
+  }, [tasks, days, month, timeZone]);
 
-  const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(new Date(), { weekStartsOn }), i), "EEE"));
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const labels = Array.from({ length: 7 }, (_, i) => format(addDays(startOfWeek(parsePlanned(todayKey) ?? new Date(), { weekStartsOn }), i), "EEE"));
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-3 shadow-card md:p-4">
+    <div className="task-calendar rounded-2xl border border-border bg-card p-3 shadow-card md:p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="text-lg font-semibold">{format(month, "MMMM yyyy")}</h3>
         <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-0.5 text-xs">
@@ -165,11 +181,16 @@ export function CalendarView({ tasks, courses, onOpen, weekStartsOn = 1 }: ViewP
               className={cn("min-h-20 bg-card p-1 md:min-h-28", !isSameMonth(d, month) && "bg-muted/40 text-muted-foreground")}
             >
               <div className="mb-1 flex flex-wrap items-center gap-1">
-                <span className={cn("grid size-6 place-items-center rounded-full", isToday(d) && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</span>
+                <span className={cn("grid size-6 place-items-center rounded-full", key === todayKey && "bg-primary font-semibold text-primary-foreground")}>{format(d, "d")}</span>
                 {!!entry?.dueCount && <span className="text-[10px] font-semibold text-destructive">{entry.dueCount} due</span>}
               </div>
               <div className="space-y-0.5">
                 {work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} draggable onOpen={onOpen} />)}
+                {mode === "planned" && (projectedByDay.get(key) ?? []).map(({ task, planned_date }) => (
+                  <button key={`projected-${task.id}-${planned_date}`} type="button" onClick={() => onOpen(task)} title="Projected recurring work — opens the series" className="projected-work-chip">
+                    <span aria-hidden="true">↻</span><span className="truncate">{task.title}</span>
+                  </button>
+                ))}
                 {deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
               </div>
             </div>

@@ -1,21 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { getSavedStyle, type VisualStyle } from "@/lib/theme";
-import { addDays, format, isSameDay, startOfDay } from "date-fns";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2, Sparkles } from "lucide-react";
+import { addDays, format, startOfDay } from "date-fns";
+import { ArrowDown, ArrowUp, Check, Eye, EyeOff, GripVertical, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
-import { colorVar, useCourses, useFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
-import { calendarDays, isDone, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, weeklyWorkload } from "@/lib/task-utils";
+import { colorVar, useCourses, useTodayFocusSessions, useProfile, useSave, useTasks, type Course, type Task } from "@/lib/db";
+import { calendarDays, dateKeyInTimeZone, hourInTimeZone, parsePlanned, isForToday, isOverdue, isUpcoming, todayProgress, toDateKey, uniqueDeadlineTasks, weeklyWorkload } from "@/lib/task-utils";
 import { CalendarTask } from "@/components/calendar-task";
+import { projectRecurringOccurrences } from "@/lib/recurrence";
 import { TaskRow } from "@/components/task-row";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { CourseIcon } from "@/components/course-icon";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/query-state";
+import { AiQuickAdd } from "@/components/ai-quick-add";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — StudyOS" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — StudyOS" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Pace" }, { name: "description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:title", content: "Dashboard — Pace" }, { property: "og:description", content: "Today's work, deadlines and exams at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Dashboard,
 });
 
@@ -28,14 +32,18 @@ export const WIDGETS: Record<string, { label: string; wide?: boolean }> = {
   calendar: { label: "This week", wide: true },
   workload: { label: "Weekly workload" },
   courses: { label: "Recent courses" },
-  ai: { label: "AI assistant" },
+  ai: { label: "AI Quick Add" },
 };
 
 function Dashboard() {
-  const { data: profile } = useProfile();
-  const { data: tasks = [] } = useTasks();
-  const { data: courses = [] } = useCourses();
-  const { data: sessions = [] } = useFocusSessions();
+  const profileQuery = useProfile();
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const { data: profile } = profileQuery;
+  const sessionsQuery = useTodayFocusSessions(profile?.timezone, !profileQuery.isLoading && !!profile);
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: sessions = [] } = sessionsQuery;
   const saveProfile = useSave("profiles");
   const [customizing, setCustomizing] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -43,7 +51,9 @@ function Dashboard() {
   const [visualStyle] = useState<VisualStyle>(() => getSavedStyle());
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
-  const layout = ((profile?.dashboard_widgets as string[] | undefined) ?? []).filter((k) => WIDGETS[k]);
+  const savedLayout = ((profile?.dashboard_widgets as string[] | undefined) ?? []).filter((k) => WIDGETS[k]);
+  // AI Quick Add is a core Pace action: keep it visible and first for every account.
+  const layout = ["ai", ...savedLayout.filter((key) => key !== "ai")];
   const hidden = Object.keys(WIDGETS).filter((k) => !layout.includes(k));
   const persist = (next: string[]) => profile && saveProfile.mutate({ id: profile.id, dashboard_widgets: next });
   const moveTo = (key: string, idx: number) => {
@@ -52,32 +62,39 @@ function Dashboard() {
     persist(next);
   };
 
-  const hour = new Date().getHours();
+  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60, timeZone: profile?.timezone };
+  const hour = hourInTimeZone(new Date(), ctx.timeZone);
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const ctx = { tasks, courses, courseMap, onOpen: setEditing, weekStartsOn: (profile?.week_starts_on ?? 1) as 0 | 1, fallback: profile?.default_duration_minutes ?? 60 };
 
-  const plannedToday = tasks.filter((t) => isForToday(t)).length;
-  const dueThisWeek = tasks.filter((t) => isUpcoming(t, 7)).length;
-  const overdueCount = tasks.filter((t) => isOverdue(t)).length;
-  const progressToday = todayProgress(tasks);
-  const focusMin = Math.round(
-    sessions
-      .filter((session) => session.kind === "focus" && toDateKey(new Date(session.started_at)) === toDateKey(new Date()))
-      .reduce((sum, session) => sum + session.duration_seconds, 0) / 60,
-  );
-  const weekMin = weeklyWorkload(tasks, new Date(), ctx.weekStartsOn, ctx.fallback).reduce((sum, day) => sum + day.minutes, 0);
+  const metrics = useMemo(() => {
+    const now = new Date();
+    const todayKey = dateKeyInTimeZone(now, ctx.timeZone);
+    return {
+      plannedToday: tasks.filter((task) => isForToday(task, now, ctx.timeZone)).length,
+      dueThisWeek: uniqueDeadlineTasks(tasks).filter((task) => isUpcoming(task, 7, now, ctx.timeZone)).length,
+      overdueCount: uniqueDeadlineTasks(tasks).filter((task) => isOverdue(task, now)).length,
+      progressToday: todayProgress(tasks, now, ctx.timeZone),
+      focusMin: Math.round(sessions.filter((session) => session.kind === "focus" && dateKeyInTimeZone(new Date(session.started_at), ctx.timeZone) === todayKey).reduce((sum, session) => sum + session.duration_seconds, 0) / 60),
+      weekMin: weeklyWorkload(tasks, now, ctx.weekStartsOn, ctx.fallback, ctx.timeZone).reduce((sum, day) => sum + day.minutes, 0),
+    };
+  }, [tasks, sessions, ctx.timeZone, ctx.weekStartsOn, ctx.fallback]);
+  const { plannedToday, dueThisWeek, overdueCount, progressToday, focusMin, weekMin } = metrics;
   const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
   const stats: { value: number; label: string; tone?: "danger" | undefined }[] = [
-    { value: plannedToday, label: "planned today" },
-    { value: dueThisWeek, label: "due this week" },
-    { value: overdueCount, label: "overdue", tone: overdueCount ? "danger" : undefined },
+    { value: plannedToday, label: "tasks planned today" },
+    { value: dueThisWeek, label: "tasks due this week" },
+    { value: overdueCount, label: "overdue tasks", tone: overdueCount ? "danger" : undefined },
   ];
+  const queries = [profileQuery, tasksQuery, coursesQuery, sessionsQuery];
+  if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your workspace…" />;
+  const queryError = queries.find((query) => query.error)?.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
 
   return (
     <div>
       <header className="dashboard-heading mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="mr-auto">
-          <p className="overline-label">YOUR STUDY SPACE <span className="mx-2 opacity-50">/</span> {format(new Date(), "EEEE, MMMM d")}</p>
+          <p className="overline-label">YOUR STUDY SPACE <span className="mx-2 opacity-50">/</span> {format(parsePlanned(dateKeyInTimeZone(new Date(), ctx.timeZone)) ?? new Date(), "EEEE, MMMM d")}</p>
           <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
             {greet}{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}
           </h1>
@@ -92,9 +109,9 @@ function Dashboard() {
         </div>
         {visualStyle !== "nocturne" && (
           <div className="dashboard-gauge-strip" aria-label="Today's progress and workload">
-            <Gauge value={progressToday.completionRatio} label={`${progressToday.completed}/${progressToday.total}`} sub="done today" />
-            <Gauge value={focusMin / 120} label={focusMin >= 60 ? hours(focusMin) : `${focusMin}m`} sub="of 2h focus" />
-            <Gauge value={weekMin / 1200} label={hours(weekMin)} sub="planned this week" />
+            <Gauge value={progressToday.completionRatio} label={`${progressToday.completed}/${progressToday.total}`} sub="tasks completed today" />
+            <Gauge value={focusMin / 120} label={focusMin >= 60 ? hours(focusMin) : `${focusMin}m`} sub="focus today · 2h goal" />
+            <Gauge value={weekMin / 1200} label={hours(weekMin)} sub="scheduled time this week" />
           </div>
         )}
         <Button variant={customizing ? "default" : "outline"} size="sm" onClick={() => setCustomizing((c) => !c)}>
@@ -126,8 +143,7 @@ function Dashboard() {
               key={key}
               data-widget={key}
               style={
-                visualStyle === "nocturne" &&
-                ["upcoming", "exams", "quickadd", "calendar", "ai"].includes(key)
+                (key === "ai" || (visualStyle === "nocturne" && ["upcoming", "exams", "quickadd", "calendar"].includes(key)))
                   ? { gridColumn: "1 / -1" }
                   : undefined
               }
@@ -137,6 +153,7 @@ function Dashboard() {
               onDrop={() => { if (dragKey && dragKey !== key) moveTo(dragKey, index); setDragKey(null); }}
               className={cn(
                 "dashboard-widget relative transition-shadow",
+                key === "ai" && "dashboard-ai-quick-add",
                 visualStyle === "nocturne" && ["upcoming", "exams"].includes(key) && "nocturne-widget-wide",
                 !customizing && "hover:shadow-lift",
                 customizing && "cursor-move ring-1 ring-primary/30",
@@ -146,7 +163,7 @@ function Dashboard() {
               <div className="dashboard-widget-heading mb-3 flex items-center gap-2 border-b border-border/70 pb-2.5">
                 {customizing && <GripVertical className="size-4 text-muted-foreground" />}
                 <h2 className="overline-label">{WIDGETS[key]?.label}</h2>
-                {customizing && (
+                {customizing && key !== "ai" && (
                   <div className="ml-auto flex gap-1">
                     <Button size="icon" variant="ghost" className="size-7" disabled={index === 0} onClick={() => moveTo(key, index - 1)} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="size-7" disabled={index === layout.length - 1} onClick={() => moveTo(key, index + 1)} aria-label="Move down"><ArrowDown className="size-3.5" /></Button>
@@ -163,7 +180,7 @@ function Dashboard() {
           <Eye className="mx-auto mb-2 size-5" /> Your dashboard is empty. Click Customize to add widgets.
         </div>
       )}
-      <TaskDialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)} task={editing} />
+      {editing && <LazyTaskDialog open={true} onOpenChange={(o) => !o && setEditing(null)} task={editing} />}
     </div>
   );
 }
@@ -215,13 +232,13 @@ function DashboardComposition(props: DashboardCompositionProps) {
 
 function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
   const open = ctx.tasks.filter((t) => t.status !== "done");
-  const today = open.filter(isForToday);
-  const overdue = open.filter(isOverdue);
-  const next = open.filter((t) => isUpcoming(t, 14)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
+  const today = open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
+  const overdue = open.filter((task) => isOverdue(task));
+  const next = open.filter((t) => isUpcoming(t, 14, new Date(), ctx.timeZone)).sort((a,b) => (a.due_at ?? "").localeCompare(b.due_at ?? ""));
   const lead = next[0] ?? today[0];
   return (
     <section className="paper-edition" aria-label="Daily academic edition">
-      <div className="paper-edition-masthead"><span>THE STUDYOS REVIEW</span><span>{format(new Date(),"EEEE · MMMM d, yyyy")}</span><span>VOL. 01 / DAILY</span></div>
+      <div className="paper-edition-masthead"><span>THE PACE REVIEW</span><span>{format(new Date(),"EEEE · MMMM d, yyyy")}</span><span>VOL. 01 / DAILY</span></div>
       <div className="paper-edition-title"><span>YOUR ACADEMIC DAILY</span><h2>Today, in focus.</h2><p>A clear account of what matters, what is next, and what can wait.</p></div>
       <div className="paper-edition-grid">
         <aside className="paper-edition-brief">
@@ -244,15 +261,18 @@ function PaperEditionDashboard({ ctx }: { ctx: Ctx }) {
 
 function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
   const open=ctx.tasks.filter(t=>t.status!=="done");
-  const today=open.filter(isForToday);
-  const upcoming=open.filter(t=>isUpcoming(t,7)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
-  const progress = todayProgress(ctx.tasks);
+  const today=open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
+  const upcoming=open.filter(t=>isUpcoming(t,7,new Date(),ctx.timeZone)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??""));
+  const progress = todayProgress(ctx.tasks, new Date(), ctx.timeZone);
   const pct = Math.round(progress.completionRatio * 100);
-  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(new Date()),i));
+  const todayKey = dateKeyInTimeZone(new Date(), ctx.timeZone);
+  const [year, month, day] = todayKey.split("-").map(Number);
+  const todayDate = new Date(year, month - 1, day);
+  const days=Array.from({length:7},(_,i)=>addDays(startOfDay(todayDate),i));
   return (
     <section className="daydream-dashboard" aria-label="Creative study dashboard">
       <div className="daydream-welcome"><div><span className="daydream-sticker">TODAY'S PROGRESS</span><h2>Make today<br/><em>count.</em></h2><p>Your week is yours to shape. Pick a starting point and build some momentum.</p></div><div className="daydream-progress-orbit"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48"/><circle className="daydream-progress-ring" cx="60" cy="60" r="48" style={{strokeDasharray:`${pct/100*302} 302`}}/></svg><strong>{pct}%</strong><span>completed today</span></div></div>
-      <div className="daydream-week"><div className="daydream-section-title"><span>YOUR WEEK, IN COLOR</span><small>7 DAY VIEW</small></div><div className="daydream-day-row">{days.map((day,i)=>{const count=open.filter(t=>t.due_at&&isSameDay(new Date(t.due_at),day)).length;return <div className={cn("daydream-day",i===0&&"is-today")} key={day.toISOString()}><small>{format(day,"EEE")}</small><strong>{format(day,"d")}</strong><i style={{transform:`scaleX(${Math.min(1,count/4)})`}}/><span>{count||"—"}</span></div>})}</div></div>
+      <div className="daydream-week"><div className="daydream-section-title"><span>YOUR WEEK, IN COLOR</span><small>7 DAY VIEW</small></div><div className="daydream-day-row">{days.map((day,i)=>{const count=open.filter(t=>t.due_at&&dateKeyInTimeZone(new Date(t.due_at),ctx.timeZone)===toDateKey(day)).length;return <div className={cn("daydream-day",i===0&&"is-today")} key={day.toISOString()}><small>{format(day,"EEE")}</small><strong>{format(day,"d")}</strong><i style={{transform:`scaleX(${Math.min(1,count/4)})`}}/><span>{count||"—"}</span></div>})}</div></div>
       <div className="daydream-board"><div className="daydream-board-main"><div className="daydream-section-title"><span>START HERE</span><small>{today.length} ON YOUR LIST</small></div>{today.length?today.slice(0,4).map((t,i)=><button key={t.id} className={`daydream-task-card daydream-task-${i%4}`} onClick={()=>ctx.onOpen(t)}><span>{ctx.courseMap.get(t.course_id??"")?.code??"PERSONAL"}</span><strong>{t.title}</strong><small>Open task ↗</small></button>):<div className="daydream-empty">Your slate is clear. Add something you want to make progress on.</div>}</div><aside className="daydream-next"><div className="daydream-section-title"><span>ON THE HORIZON</span></div>{upcoming.slice(0,5).map(t=><button key={t.id} onClick={()=>ctx.onOpen(t)}><span>{t.due_at?format(new Date(t.due_at),"MMM d"):"Anytime"}</span><strong>{t.title}</strong></button>)}{!upcoming.length&&<p>Nothing due soon. Enjoy the breathing room.</p>}</aside></div>
       <div className="daydream-capture"><span>DON'T LOSE THE IDEA</span><QuickCapture /></div>
     </section>
@@ -261,7 +281,7 @@ function DaydreamDashboard({ ctx }: { ctx: Ctx }) {
 
 function EmberAuroraDashboard({ ctx }: { ctx: Ctx }) {
   const open=ctx.tasks.filter(t=>t.status!=="done");
-  const today=open.filter(isForToday);
+  const today=open.filter((task) => isForToday(task, new Date(), ctx.timeZone));
   const upcoming=open.filter(t=>isUpcoming(t,14)).sort((a,b)=>(a.due_at??"").localeCompare(b.due_at??"")).slice(0,6);
   const done=ctx.tasks.length-open.length;
   const pct=ctx.tasks.length?Math.round(done/ctx.tasks.length*100):0;
@@ -306,7 +326,7 @@ function NocturneControlDeck({ tasks, courses }: { tasks: Task[]; courses: Cours
     <section className="nocturne-control-deck" aria-label="Academic operations control center">
       <div className="nocturne-console-topline">
         <div>
-          <p className="nocturne-eyebrow">STUDYOS / OPERATIONS</p>
+          <p className="nocturne-eyebrow">PACE / OPERATIONS</p>
           <h2>Control center<span>_</span></h2>
           <p className="nocturne-console-subtitle">A live overview of your academic workload.</p>
         </div>
@@ -365,33 +385,25 @@ function InstrumentGauge({ label, value, detail, ratio, tone }: { label: string;
   );
 }
 
-type Ctx = { tasks: Task[]; courses: Course[]; courseMap: Map<string, Course>; onOpen: (t: Task) => void; weekStartsOn: 0 | 1; fallback: number };
+type Ctx = { tasks: Task[]; courses: Course[]; courseMap: Map<string, Course>; onOpen: (t: Task) => void; weekStartsOn: 0 | 1; fallback: number; timeZone?: string };
 
 function TaskList({ items, ctx, empty }: { items: Task[]; ctx: Ctx; empty: string }) {
   if (!items.length) return <p className="py-3 text-sm text-muted-foreground">{empty}</p>;
-  return <div className="-mx-2">{items.slice(0, 6).map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? ctx.courseMap.get(t.course_id) : undefined} onOpen={ctx.onOpen} compact />)}{items.length > 6 && <Link to="/tasks" className="block px-3 pt-1 text-xs text-primary">+{items.length - 6} more</Link>}</div>;
+  return <div className="-mx-2">{items.slice(0, 6).map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? ctx.courseMap.get(t.course_id) : undefined} onOpen={ctx.onOpen} compact timeZone={ctx.timeZone} />)}{items.length > 6 && <Link to="/tasks" className="block px-3 pt-1 text-xs text-primary">+{items.length - 6} more</Link>}</div>;
 }
 
 function Widget({ id, ...ctx }: { id: string } & Ctx) {
   const { tasks } = ctx;
   switch (id) {
-    case "today": return <TaskList items={tasks.filter((t) => isForToday(t))} ctx={ctx} empty="Nothing planned for today." />;
+    case "today": return <TaskList items={tasks.filter((t) => isForToday(t, new Date(), ctx.timeZone))} ctx={ctx} empty="Nothing planned for today." />;
     case "overdue": return <TaskList items={tasks.filter((t) => isOverdue(t))} ctx={ctx} empty="No overdue work. Nice." />;
-    case "upcoming": return <TaskList items={tasks.filter((t) => isUpcoming(t, 7) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
-    case "exams": return <TaskList items={tasks.filter((t) => isUpcoming(t, 30) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
+    case "upcoming": return <TaskList items={uniqueDeadlineTasks(tasks).filter((t) => isUpcoming(t, 7, new Date(), ctx.timeZone) && !["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No deadlines in the next 7 days." />;
+    case "exams": return <TaskList items={uniqueDeadlineTasks(tasks).filter((t) => isUpcoming(t, 30, new Date(), ctx.timeZone) && ["exam", "quiz"].includes(t.task_type))} ctx={ctx} empty="No exams in the next 30 days." />;
     case "quickadd": return <QuickCapture />;
     case "workload": return <Workload {...ctx} />;
     case "calendar": return <WeekStrip {...ctx} />;
     case "courses": return <RecentCourses courses={ctx.courses} />;
-    case "ai": return (
-      <div className="flex items-start gap-3 py-1">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><Sparkles className="size-4" /></span>
-        <div className="text-sm">
-          <p className="font-medium">AI Quick Add — coming in Stage 2</p>
-          <p className="text-muted-foreground">Type shorthand like "bio ch 7 test fri" and StudyOS will fill in the course and dates. Not connected yet.</p>
-        </div>
-      </div>
-    );
+    case "ai": return <AiQuickAdd />;
     default: return null;
   }
 }
@@ -410,22 +422,24 @@ function QuickCapture() {
     }}>
       <Input placeholder="Write it down before you forget…" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 rounded-xl" />
       <div className="flex gap-2">
-        <select className="h-11 rounded-xl border border-input bg-background px-2 text-sm" value={when} onChange={(e) => setWhen(e.target.value as "today" | "none")}>
-          <option value="today">Work on today</option><option value="none">No date</option>
-        </select>
+        <Select value={when} onValueChange={(value) => setWhen(value as "today" | "none")}>
+          <SelectTrigger className="h-11 w-40 rounded-xl"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="today">Work on today</SelectItem><SelectItem value="none">No date</SelectItem></SelectContent>
+        </Select>
         <Button type="submit" className="h-11 rounded-xl">Add</Button>
       </div>
     </form>
   );
 }
 
-function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
-  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback);
+function Workload({ tasks, weekStartsOn, fallback, timeZone }: Ctx) {
+  const days = weeklyWorkload(tasks, new Date(), weekStartsOn, fallback, timeZone);
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
   const max = Math.max(120, ...days.map((d) => d.minutes));
   return (
     <div className="flex h-36 items-end gap-2 pt-2">
       {days.map((d) => {
-        const today = isSameDay(d.day, new Date());
+        const today = d.key === todayKey;
         return (
           <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
             <span className="font-display text-[11px] font-medium text-muted-foreground">{d.minutes ? `${Math.round((d.minutes / 60) * 10) / 10}h` : ""}</span>
@@ -443,20 +457,35 @@ function Workload({ tasks, weekStartsOn, fallback }: Ctx) {
   );
 }
 
-function WeekStrip({ tasks, courseMap, onOpen }: Ctx) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i));
-  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"));
+function WeekStrip({ tasks, courseMap, onOpen, timeZone }: Ctx) {
+  const todayKey = dateKeyInTimeZone(new Date(), timeZone);
+  const [year, month, day] = todayKey.split("-").map(Number);
+  const todayDate = new Date(year, month - 1, day);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(todayDate), i));
+  const byDay = calendarDays(tasks.filter((t) => t.status !== "done"), timeZone);
+  const projected = projectRecurringOccurrences(tasks, days[0] ?? new Date(), days[days.length - 1] ?? new Date(), new Date(), timeZone);
+  const projectedByDay = new Map<string, typeof projected>();
+  for (const occurrence of projected) {
+    const bucket = projectedByDay.get(occurrence.planned_date) ?? [];
+    bucket.push(occurrence);
+    projectedByDay.set(occurrence.planned_date, bucket);
+  }
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {days.map((d) => {
         const entry = byDay.get(toDateKey(d));
-        const today = isSameDay(d, new Date());
+        const today = toDateKey(d) === todayKey;
         return (
           <div key={d.toISOString()} className={cn("min-h-24 rounded-xl bg-muted/50 p-2", today && "bg-accent/60 ring-1 ring-primary/40")}>
             <p className={cn("text-xs font-medium", today && "font-semibold text-primary")}>{format(d, "EEE d")}</p>
             {!!entry?.dueCount && <p className="font-display text-[11px] font-semibold text-destructive">{entry.dueCount} due</p>}
             <div className="mt-1 space-y-0.5">
               {entry?.work.map((t) => <CalendarTask key={`work-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} onOpen={onOpen} />)}
+              {(projectedByDay.get(toDateKey(d)) ?? []).map(({ task, planned_date }) => (
+                <button key={`projected-${task.id}-${planned_date}`} type="button" onClick={() => onOpen(task)} title="Projected recurring work — opens the series" className="projected-work-chip">
+                  <span aria-hidden="true">↻</span><span className="truncate">{task.title}</span>
+                </button>
+              ))}
               {entry?.deadlines.map((t) => <CalendarTask key={`due-${t.id}`} task={t} course={t.course_id ? courseMap.get(t.course_id) : undefined} deadline onOpen={onOpen} />)}
             </div>
           </div>

@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate } from "@/lib/recurrence";
-import { calendarDays } from "@/lib/task-utils";
+import { describeRecurrence, effectiveRecurrenceEnd, nextInstanceDates, nextOccurrenceDate, nextPendingOccurrence, projectRecurringOccurrences } from "@/lib/recurrence";
+import { calendarDays, dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, hourInTimeZone, isUpcoming } from "@/lib/task-utils";
 
 type T = { id: string; recurrence_parent_id: string | null; status: string; planned_date: string | null; due_at: string | null; recurrence: string; recurrence_interval?: number; recurrence_days?: number[] | null; recurrence_end: string | null };
 
 /** Simulate completing each occurrence and collect the whole series. */
-function series(start: T): T[] {
-  const all: T[] = [start];
-  let cur = start;
-  for (let i = 0; i < 100; i++) {
+function series(start: T[]): T[];
+function series(start: T): T[];
+function series(start: T | T[]): T[] {
+  const initial = Array.isArray(start) ? start : [start];
+  const all: T[] = [...initial];
+  let cur = initial[0];
+  // Unbounded sample series are intentionally kept short; bounded series run
+  // until their saved deadline or repeat-until date.
+  const limit = cur.recurrence_end || cur.due_at ? 100 : 3;
+  for (let i = 0; i < limit; i++) {
     const p = nextInstanceDates(cur, new Date(`${cur.planned_date}T00:00:00`));
     if (!p) break;
-    cur = { ...cur, id: `${start.id}-${i}`, recurrence_parent_id: start.id, ...p };
+    cur = { ...cur, id: `${cur.id}-${i}`, recurrence_parent_id: initial[0].id, ...p };
     all.push(cur);
   }
   return all;
@@ -21,6 +27,114 @@ const base = (o: Partial<T>): T => ({ id: "s", recurrence_parent_id: null, statu
 const dueOn = (d: string) => new Date(`${d}T23:59:00`).toISOString();
 const deadlineDays = (s: T[]) => [...calendarDays(s).entries()].filter(([, e]) => e.deadlines.length).map(([k, e]) => [k, e.deadlines.length]);
 const totalDue = (s: T[]) => [...calendarDays(s).values()].reduce((n, e) => n + e.dueCount, 0);
+
+describe("recurrence intervals and weekday selection", () => {
+  it("keeps selected weekdays in the current eligible week", () => {
+    const rule = { recurrence: "weekly", recurrence_days: [1, 3] };
+    expect(work(series(base({ recurrence: "weekly", recurrence_days: [1, 3] })))).toEqual(["2026-11-09", "2026-11-11", "2026-11-16", "2026-11-18"]);
+    expect(nextOccurrenceDate(rule, new Date(2026, 10, 10))?.getDate()).toBe(11);
+  });
+  it("honors every-N-weeks when weekdays are selected", () => {
+    const rule = { recurrence: "weekly", recurrence_interval: 2, recurrence_days: [1, 3] };
+    const start = new Date(2026, 10, 9);
+    expect(nextOccurrenceDate(rule, start)?.getDate()).toBe(11);
+    expect(nextOccurrenceDate(rule, new Date(2026, 10, 11))?.toDateString()).toBe(new Date(2026, 10, 23).toDateString());
+    expect(describeRecurrence(rule)).toBe("Every 2 weeks on Mon, Wed");
+  });
+  it("deduplicates invalid and repeated weekday values", () => {
+    expect(nextOccurrenceDate({ recurrence: "weekly", recurrence_days: [1, 1, 9, -1] }, new Date(2026, 10, 9))?.getDate()).toBe(16);
+  });
+  it("clamps monthly recurrence to the last day of shorter months", () => {
+    const next = nextOccurrenceDate({ recurrence: "monthly" }, new Date(2026, 0, 31));
+    expect(next?.getFullYear()).toBe(2026);
+    expect(next?.getMonth()).toBe(1);
+    expect(next?.getDate()).toBe(28);
+  });
+  it("keeps the monthly 31st on the last day of February", () => {
+    expect(nextOccurrenceDate({ recurrence: "monthly" }, new Date(2026, 0, 31))?.toDateString()).toBe(new Date(2026, 1, 28).toDateString());
+  });
+  it("keeps leap-day yearly recurrence on the last day of February", () => {
+    const next = nextOccurrenceDate({ recurrence: "yearly" }, new Date(2024, 1, 29));
+    expect(next?.getFullYear()).toBe(2025);
+    expect(next?.getMonth()).toBe(1);
+    expect(next?.getDate()).toBe(28);
+  });
+  it("applies intervals to biweekly recurrence", () => {
+    expect(nextOccurrenceDate({ recurrence: "biweekly", recurrence_interval: 2 }, new Date(2026, 10, 9))?.getDate()).toBe(7);
+  });
+  it("catches up a daily series after more than 500 missed days", () => {
+    const next = nextPendingOccurrence({ recurrence: "daily" }, new Date(2024, 0, 1), new Date(2026, 10, 11));
+    expect(next?.getFullYear()).toBe(2026);
+    expect(next?.getMonth()).toBe(10);
+    expect(next?.getDate()).toBe(11);
+  });
+  it("skips missed occurrences without exceeding the recurrence end", () => {
+    expect(nextPendingOccurrence({ recurrence: "daily", recurrence_end: "2026-11-12" }, new Date(2026, 10, 9), new Date(2026, 10, 13))).toBeNull();
+  });
+});
+
+describe("future recurrence projection", () => {
+  it("projects future work slots without creating duplicate existing occurrences", () => {
+    const root = base({ planned_date: "2026-11-09", recurrence: "daily", recurrence_end: "2026-11-13" });
+    const child = { ...root, id: "child", recurrence_parent_id: "s", planned_date: "2026-11-11" };
+    const projected = projectRecurringOccurrences(
+      [root, child],
+      new Date(2026, 10, 9),
+      new Date(2026, 10, 13),
+      new Date(2026, 10, 9),
+    );
+    expect(projected.map((item) => item.planned_date)).toEqual(["2026-11-12", "2026-11-13"]);
+  });
+});
+
+describe("saved time zone calendar bucketing", () => {
+  it("uses the saved timezone for the Dashboard greeting hour", () => {
+    expect(hourInTimeZone(new Date("2026-11-12T02:00:00.000Z"), "America/Denver")).toBe(19);
+  });
+  it("round-trips a time after the spring DST transition", () => {
+    const iso = "2026-03-08T09:30:00.000Z";
+    const input = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(input).toEqual({ date: "2026-03-08", time: "03:30" });
+    expect(dateTimeInTimeZoneToIso(input.date, input.time, "America/Denver")).toBe(iso);
+  });
+  it("round-trips a time before the autumn DST transition", () => {
+    const iso = "2026-11-01T07:30:00.000Z";
+    const input = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(input).toEqual({ date: "2026-11-01", time: "01:30" });
+    expect(dateTimeInTimeZoneToIso(input.date, input.time, "America/Denver")).toBe(iso);
+  });
+  it("places an instant on the correct local calendar day", () => {
+    const instant = new Date("2026-11-12T02:00:00.000Z");
+    expect(dateKeyInTimeZone(instant, "America/Denver")).toBe("2026-11-11");
+  });
+  it("round-trips task deadline inputs through the saved time zone", () => {
+    const iso = "2026-11-12T02:00:00.000Z";
+    const inputs = dateTimeInputInTimeZone(iso, "America/Denver");
+    expect(inputs).toEqual({ date: "2026-11-11", time: "19:00" });
+    expect(dateTimeInTimeZoneToIso(inputs.date, inputs.time, "America/Denver")).toBe(iso);
+  });
+  it("uses the saved time zone to derive a recurring series end from its deadline", () => {
+    expect(effectiveRecurrenceEnd({ due_at: "2026-11-12T02:00:00.000Z" }, "America/Denver")).toBe("2026-11-11");
+    const next = nextInstanceDates(
+      base({ planned_date: "2026-11-10", due_at: "2026-11-12T02:00:00.000Z", recurrence: "daily" }),
+      new Date("2026-11-12T02:00:00.000Z"),
+      "America/Denver",
+    );
+    expect(next?.planned_date).toBe("2026-11-11");
+  });
+  it("uses the selected time zone for upcoming-day boundaries", () => {
+    const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
+    const now = new Date("2026-11-11T22:00:00.000Z");
+    expect(isUpcoming(task, 0, now, "America/Denver")).toBe(true);
+    expect(isUpcoming({ ...task, due_at: "2026-11-12T07:00:00.000Z" }, 0, now, "America/Denver")).toBe(false);
+  });
+  it("counts a deadline in the selected time zone", () => {
+    const task = base({ due_at: "2026-11-12T02:00:00.000Z" });
+    const days = calendarDays([task], "America/Denver");
+    expect(days.get("2026-11-11")?.dueCount).toBe(1);
+    expect(days.has("2026-11-12")).toBe(false);
+  });
+});
 
 describe("1. deadline only: series ends at the deadline", () => {
   it("daily through the deadline, one red indicator", () => {
@@ -61,6 +175,25 @@ describe("3. deadline + separate repeat end", () => {
     expect(work(s)).toEqual(["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12"]);
     expect(deadlineDays(s)).toEqual([["2026-11-10", 1]]);
     expect(totalDue(s)).toBe(1);
+  });
+});
+
+describe("calendar recurring projections", () => {
+  it("does not project future work from a fully completed series", () => {
+    const completed = [
+      { ...base({ planned_date: "2026-11-10", recurrence: "weekdays", recurrence_end: "2026-11-30" }), status: "done" },
+      { ...base({ planned_date: "2026-11-11", recurrence: "weekdays", recurrence_end: "2026-11-30" }), id: "s-1", recurrence_parent_id: "s", status: "done" },
+    ];
+    expect(projectRecurringOccurrences(completed, new Date("2026-11-12T00:00:00"), new Date("2026-11-18T00:00:00"), new Date("2026-11-12T12:00:00"))).toEqual([]);
+  });
+
+  it("continues projecting from the latest open occurrence while retaining completed dates", () => {
+    const tasks = [
+      { ...base({ planned_date: "2026-11-10", recurrence: "weekdays", recurrence_end: "2026-11-30" }), status: "done" },
+      { ...base({ planned_date: "2026-11-12", recurrence: "weekdays", recurrence_end: "2026-11-30" }), id: "s-1", recurrence_parent_id: "s", status: "todo" },
+    ];
+    const projected = projectRecurringOccurrences(tasks, new Date("2026-11-12T00:00:00"), new Date("2026-11-18T00:00:00"), new Date("2026-11-12T12:00:00"));
+    expect(projected.map((item) => item.planned_date)).toEqual(["2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18"]);
   });
 });
 

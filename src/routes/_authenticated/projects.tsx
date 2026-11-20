@@ -3,31 +3,70 @@ import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { colorVar, useCourses, useMilestones, useProjects, useRemove, useSave, useTasks, type Project, type Task } from "@/lib/db";
-import { TaskDialog } from "@/components/task-dialog";
+import { colorVar, useCourses, useMilestones, useProfile, useProjects, useRemove, useSave, useTasks, type Project, type Task } from "@/lib/db";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { TaskRow } from "@/components/task-row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/date-picker";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { dateKeyInTimeZone, dateTimeInTimeZoneToIso, parsePlanned } from "@/lib/task-utils";
+import { QueryState } from "@/components/query-state";
 
 export const Route = createFileRoute("/_authenticated/projects")({
-  head: () => ({ meta: [{ title: "Projects — StudyOS" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — StudyOS" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Projects — Pace" }, { name: "description", content: "Break big work into milestones and tasks." }, { property: "og:title", content: "Projects — Pace" }, { property: "og:description", content: "Break big work into milestones and tasks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ProjectsPage,
 });
 
+const deadlineLabel = (iso: string, timeZone?: string | null) => {
+  const day = parsePlanned(dateKeyInTimeZone(new Date(iso), timeZone));
+  return day ? format(day, "MMM d") : "";
+};
+
 function ProjectsPage() {
-  const { data: projects = [] } = useProjects();
-  const { data: courses = [] } = useCourses();
-  const { data: tasks = [] } = useTasks();
-  const { data: milestones = [] } = useMilestones();
+  const profileQuery = useProfile();
+  const { data: profile } = profileQuery;
+  const projectsQuery = useProjects();
+  const coursesQuery = useCourses();
+  const tasksQuery = useTasks();
+  const milestonesQuery = useMilestones();
+  const { data: projects = [] } = projectsQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: tasks = [] } = tasksQuery;
+  const { data: milestones = [] } = milestonesQuery;
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
+  const tasksByProject = useMemo(() => {
+    const grouped = new Map<string, Task[]>();
+    for (const task of tasks) {
+      if (!task.project_id) continue;
+      const bucket = grouped.get(task.project_id) ?? [];
+      bucket.push(task);
+      grouped.set(task.project_id, bucket);
+    }
+    return grouped;
+  }, [tasks]);
+  const milestonesByProject = useMemo(() => {
+    const grouped = new Map<string, typeof milestones>();
+    for (const milestone of milestones) {
+      const bucket = grouped.get(milestone.project_id) ?? [];
+      bucket.push(milestone);
+      grouped.set(milestone.project_id, bucket);
+    }
+    return grouped;
+  }, [milestones]);
+
+  const queries = [profileQuery, projectsQuery, coursesQuery, tasksQuery, milestonesQuery];
+  if (queries.some((query) => query.isLoading)) return <QueryState loading loadingLabel="Loading your projects…" />;
+  const queryError = queries.find((query) => query.error)?.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all(queries.map((query) => query.refetch())); }} />;
 
   return (
     <div>
@@ -43,8 +82,8 @@ function ProjectsPage() {
       )}
       <div className="space-y-3">
         {projects.map((p) => {
-          const pt = tasks.filter((t) => t.project_id === p.id);
-          const pm = milestones.filter((m) => m.project_id === p.id);
+          const pt = tasksByProject.get(p.id) ?? [];
+          const pm = milestonesByProject.get(p.id) ?? [];
           const total = pt.length + pm.length;
           const done = pt.filter((t) => t.status === "done").length + pm.filter((m) => m.done).length;
           const course = p.course_id ? courseMap.get(p.course_id) : undefined;
@@ -55,7 +94,7 @@ function ProjectsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{p.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {[course?.name, p.due_at && `Due ${format(new Date(p.due_at), "MMM d")}`, p.status !== "active" && p.status].filter(Boolean).join(" · ") || "No deadline"}
+                    {[course?.name, p.due_at && `Due ${deadlineLabel(p.due_at, profile?.timezone)}`, p.status !== "active" && p.status].filter(Boolean).join(" · ") || "No deadline"}
                   </p>
                 </div>
                 <div className="hidden w-40 sm:block">
@@ -64,7 +103,7 @@ function ProjectsPage() {
                 </div>
                 <ChevronDown className={cn("size-4 transition-transform", openId === p.id && "rotate-180")} />
               </button>
-              {openId === p.id && <ProjectDetail project={p} tasks={pt} courses={courseMap} />}
+              {openId === p.id && <ProjectDetail project={p} tasks={pt} courses={courseMap} timeZone={profile?.timezone} />}
             </div>
           );
         })}
@@ -74,8 +113,9 @@ function ProjectsPage() {
   );
 }
 
-function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: Task[]; courses: Map<string, import("@/lib/db").Course> }) {
+function ProjectDetail({ project, tasks, courses, timeZone }: { project: Project; tasks: Task[]; courses: Map<string, import("@/lib/db").Course>; timeZone?: string }) {
   const { data: milestones = [] } = useMilestones();
+  const { data: profile } = useProfile();
   const saveM = useSave("milestones");
   const removeM = useRemove("milestones");
   const saveP = useSave("projects");
@@ -96,20 +136,21 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
             <div key={m.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/60">
               <Checkbox checked={m.done} onCheckedChange={(v) => saveM.mutate({ id: m.id, done: !!v })} />
               <span className={cn("flex-1 text-sm", m.done && "line-through opacity-60")}>{m.title}</span>
-              {m.due_at && <span className="text-xs text-muted-foreground">{format(new Date(m.due_at), "MMM d")}</span>}
+              {m.due_at && <span className="text-xs text-muted-foreground">{deadlineLabel(m.due_at, timeZone)}</span>}
               <button onClick={() => removeM.mutate(m.id)} aria-label="Remove milestone"><Trash2 className="size-3.5 text-muted-foreground" /></button>
             </div>
           ))}
         </div>
-        <form className="mt-2 flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? new Date(`${date}T23:59`).toISOString() : null, position: ms.length }); setTitle(""); setDate(""); }}>
-          <Input className="h-8" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input className="h-8 w-36" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <form className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]" onSubmit={async (e) => { e.preventDefault(); if (!title.trim()) return; await saveM.mutateAsync({ project_id: project.id, title: title.trim(), due_at: date ? dateTimeInTimeZoneToIso(date, "23:59", profile?.timezone) : null, position: ms.length }); setTitle(""); setDate(""); }}>
+          <Input className="h-9 w-full min-w-0" placeholder="New milestone" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <DatePicker value={date} onChange={setDate} placeholder="Milestone date" className="h-9" />
           <Button size="sm" type="submit">Add</Button>
         </form>
         <div className="mt-6 flex gap-2">
-          <select className="h-8 rounded-md border border-input bg-background px-2 text-sm" value={project.status} onChange={(e) => saveP.mutate({ id: project.id, status: e.target.value })}>
-            <option value="active">Active</option><option value="on_hold">On hold</option><option value="completed">Completed</option>
-          </select>
+          <Select value={project.status} onValueChange={(value) => saveP.mutate({ id: project.id, status: value })}>
+            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="on_hold">On hold</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent>
+          </Select>
           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { if (confirm(`Delete "${project.name}"? Its tasks are kept.`)) removeP.mutate(project.id); }}><Trash2 className="size-4" /> Delete project</Button>
         </div>
       </div>
@@ -118,15 +159,16 @@ function ProjectDetail({ project, tasks, courses }: { project: Project; tasks: T
           <h3 className="text-sm font-semibold">Tasks</h3>
           <Button size="sm" variant="ghost" onClick={() => setTaskOpen(true)}><Plus className="size-4" /> Task</Button>
         </div>
-        {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
+        {tasks.length ? tasks.map((t) => <TaskRow key={t.id} task={t} course={t.course_id ? courses.get(t.course_id) : undefined} onOpen={setEditing} compact timeZone={timeZone} />) : <p className="text-sm text-muted-foreground">No tasks linked yet.</p>}
       </div>
-      <TaskDialog open={taskOpen || !!editing} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />
+      {(taskOpen || editing) && <LazyTaskDialog open={true} onOpenChange={(o) => { if (!o) { setTaskOpen(false); setEditing(null); } }} task={editing} defaults={{ project_id: project.id, course_id: project.course_id }} />}
     </div>
   );
 }
 
 function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { data: courses = [] } = useCourses();
+  const { data: profile } = useProfile();
   const save = useSave("projects");
   const [f, setF] = useState({ name: "", description: "", course_id: "", due: "" });
   return (
@@ -136,17 +178,18 @@ function ProjectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
           if (!f.name.trim()) return void toast.error("Name your project");
-          await save.mutateAsync({ name: f.name.trim(), description: f.description || null, course_id: f.course_id || null, due_at: f.due ? new Date(`${f.due}T23:59`).toISOString() : null });
+          await save.mutateAsync({ name: f.name.trim(), description: f.description || null, course_id: f.course_id || null, due_at: f.due ? dateTimeInTimeZoneToIso(f.due, "23:59", profile?.timezone) : null });
           setF({ name: "", description: "", course_id: "", due: "" });
           onOpenChange(false);
         }}>
           <div className="space-y-1"><Label className="text-xs">Name</Label><Input autoFocus value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="History research paper" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-xs">Course</Label>
-              <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={f.course_id} onChange={(e) => setF({ ...f, course_id: e.target.value })}>
-                <option value="">None</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select></div>
-            <div className="space-y-1"><Label className="text-xs">Final deadline</Label><Input type="date" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></div>
+              <Select value={f.course_id || "__none__"} onValueChange={(value) => setF({ ...f, course_id: value === "__none__" ? "" : value })}>
+                <SelectTrigger className="h-9 w-full"><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">None</SelectItem>{courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div className="space-y-1"><Label className="text-xs">Final deadline</Label><DatePicker value={f.due} onChange={(value) => setF({ ...f, due: value })} placeholder="Final deadline" /></div>
           </div>
           <div className="space-y-1"><Label className="text-xs">Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit">Create</Button></div>

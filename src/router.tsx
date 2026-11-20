@@ -10,7 +10,8 @@ export const getRouter = () => {
         // affected keys — so refetching on every window focus is pure waste.
         refetchOnWindowFocus: false,
         retry: 1,
-        staleTime: 30_000,
+        staleTime: 5 * 60_000,
+        gcTime: 30 * 60_000,
       },
     },
   });

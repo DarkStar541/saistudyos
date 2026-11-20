@@ -1,1 +1,4 @@
 project_id = "hghnknmgfwcaylgggfgg"
+
+[functions.ai-quick-add]
+verify_jwt = true

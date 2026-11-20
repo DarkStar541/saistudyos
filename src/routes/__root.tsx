@@ -74,27 +74,26 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 // Applies the saved theme before paint to avoid a flash.
-const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('studyos-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');var s=localStorage.getItem('studyos-visual-style')||'evergreen';if(['evergreen','paper-ink','nocturne','daydream','ember-aurora'].includes(s))r.classList.add('theme-'+s)}catch(e){}`;
+const themeScript = `try{var r=document.documentElement;var t=localStorage.getItem('studyos-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))r.classList.add('dark');r.classList.add('theme-neutral');if(localStorage.getItem('studyos-visual-style')!=='neutral')localStorage.setItem('studyos-visual-style','neutral')}catch(e){}`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StudyOS — The student operating system" },
-      { name: "description", content: "Courses, tasks, projects and deadlines in one calm workspace built for students." },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#f5f5f5" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Pace" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { title: "Pace — Make room for what matters." },
+      { name: "description", content: "Pace brings tasks, projects, schedules, and focus together in one calm workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap",
-      },
+      { rel: "icon", href: "/pace-icon.svg", type: "image/svg+xml" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -125,8 +124,16 @@ function RootComponent() {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+
+      // Query keys are intentionally simple and not user-id-prefixed. Clear
+      // every cached workspace record at an account boundary so switching
+      // accounts can never briefly render the previous user's cached data.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        queryClient.clear();
+      } else {
+        void queryClient.invalidateQueries();
+      }
+      void router.invalidate();
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);

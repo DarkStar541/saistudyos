@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { nextInstanceDates } from "./recurrence";
+import { dateKeyInTimeZone, dateTimeInTimeZoneToIso } from "./task-utils";
 
 type T = Database["public"]["Tables"];
 export type Profile = T["profiles"]["Row"];
@@ -21,7 +22,7 @@ const unwrap = <D,>(r: { data: D | null; error: { message: string } | null }) =>
 
 // Data changes only through our own mutations, which invalidate these keys —
 // so a 60s staleTime safely kills repeat fetches on every navigation.
-const STALE = 60_000;
+const STALE = 5 * 60_000; // Mutations invalidate immediately; keep read-only revisits instant for five minutes.
 
 export const profileQuery = queryOptions({
   queryKey: ["profile"],
@@ -61,7 +62,12 @@ export const subtasksQuery = queryOptions({
 export const focusSessionsQuery = queryOptions({
   queryKey: ["focus_sessions"],
   staleTime: STALE,
-  queryFn: async () => unwrap(await supabase.from("focus_sessions").select("*").order("started_at", { ascending: false })) as FocusSession[],
+  queryFn: async () => {
+    // Insights only exposes 7/30/90-day views and a 12-week heatmap.
+    // Keep a 120-day buffer for timezone boundaries without downloading an unbounded history.
+    const since = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString();
+    return unwrap(await supabase.from("focus_sessions").select("*").gte("started_at", since).order("started_at", { ascending: false })) as FocusSession[];
+  },
 });
 
 export const useProfile = () => useQuery(profileQuery);
@@ -71,6 +77,29 @@ export const useMilestones = () => useQuery(milestonesQuery);
 export const useTasks = () => useQuery(tasksQuery);
 export const useSubtasks = () => useQuery(subtasksQuery);
 export const useFocusSessions = () => useQuery(focusSessionsQuery);
+
+/** Fetch only today's focus sessions for Dashboard and Focus; Insights uses the 120-day query. */
+export function useTodayFocusSessions(timeZone: string | null | undefined, enabled = true) {
+  const zone = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const today = dateKeyInTimeZone(new Date(), zone);
+  const [year, month, day] = today.split("-").map(Number);
+  const tomorrow = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+
+  return useQuery({
+    queryKey: ["focus_sessions", "today", zone, today],
+    enabled,
+    staleTime: STALE,
+    queryFn: async () => {
+      const start = dateTimeInTimeZoneToIso(today, "00:00", zone);
+      const end = dateTimeInTimeZoneToIso(tomorrow, "00:00", zone);
+      return unwrap(
+        await supabase.from("focus_sessions").select("*")
+          .gte("started_at", start).lt("started_at", end)
+          .order("started_at", { ascending: false }),
+      ) as FocusSession[];
+    },
+  });
+}
 
 type TableName = "courses" | "projects" | "milestones" | "tasks" | "subtasks" | "profiles" | "focus_sessions";
 
@@ -87,17 +116,27 @@ export function useSave(table: TableName) {
       return unwrap(await supabase.from(table).insert(rest as never).select().single());
     },
     // Optimistic update for existing rows so edits feel instant; inserts wait for the server id.
+    // Profile queries are a single object, while all other table queries are arrays.
     onMutate: async (row) => {
       if (!row["id"]) return undefined;
       await qc.cancelQueries({ queryKey: key });
-      const previous = qc.getQueryData<Record<string, unknown>[]>(key);
-      qc.setQueryData<Record<string, unknown>[]>(key, (old) =>
-        old?.map((r) => (r["id"] === row["id"] ? { ...r, ...row } : r)),
-      );
+      const previous = qc.getQueryData(key);
+      qc.setQueryData(key, (old: unknown) => {
+        if (table === "profiles") {
+          const profile = old as Record<string, unknown> | null | undefined;
+          return profile && profile["id"] === row["id"] ? { ...profile, ...row } : profile;
+        }
+        if (!Array.isArray(old)) return old;
+        return old.map((item) =>
+          item && typeof item === "object" && (item as Record<string, unknown>)["id"] === row["id"]
+            ? { ...(item as Record<string, unknown>), ...row }
+            : item,
+        );
+      });
       return { previous };
     },
     onError: (e: Error, _row, ctx) => {
-      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+      if (ctx) qc.setQueryData(key, ctx.previous);
       toast.error(e.message);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
@@ -129,19 +168,20 @@ export const seriesIdOf = (t: Task) => t.recurrence_parent_id ?? t.id;
  * Compute the next occurrence of a recurring task. Returns null when the rule
  * has ended. Missed slots are skipped so the next instance lands today or later.
  */
-export function nextInstancePatch(t: Task, now = new Date()): { due_at: string | null; planned_date: string | null } | null {
-  return nextInstanceDates(t, now);
+export function nextInstancePatch(t: Task, now = new Date(), timeZone?: string | null): { due_at: string | null; planned_date: string | null } | null {
+  return nextInstanceDates(t, now, timeZone);
 }
 
 /** Toggle completion; completing a recurring task spawns the next occurrence (deduplicated). Optimistic: the checkbox flips instantly and rolls back on failure. */
 export function useToggleTask() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   return useMutation({
     mutationFn: async (t: Task) => {
       const done = t.status !== "done";
       unwrap(await supabase.from("tasks").update({ status: done ? "done" : "todo", completed_at: done ? new Date().toISOString() : null }).eq("id", t.id));
       if (done && t.recurrence !== "none") {
-        const patch = nextInstancePatch(t);
+        const patch = nextInstancePatch(t, new Date(), profile?.timezone);
         if (!patch) return; // series ended
         const sid = seriesIdOf(t);
         // Prevent duplicates: if an open instance of this series already exists, don't spawn another.
@@ -173,10 +213,17 @@ export function useToggleTask() {
 /** Skip the current occurrence of a recurring task: advance it to the next slot without completing it. */
 export function useSkipOccurrence() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   return useMutation({
     mutationFn: async (t: Task) => {
-      const patch = nextInstancePatch(t);
+      const patch = nextInstancePatch(t, new Date(), profile?.timezone);
       if (!patch) throw new Error("This series has ended — no future occurrences.");
+      const sid = seriesIdOf(t);
+      const existing = unwrap(
+        await supabase.from("tasks").select("id").eq("recurrence_parent_id", sid)
+          .eq("planned_date", patch.planned_date).neq("status", "done").neq("id", t.id).limit(1),
+      );
+      if (existing.length) throw new Error("That next occurrence already exists. Refresh the task list before skipping.");
       unwrap(await supabase.from("tasks").update(patch).eq("id", t.id));
     },
     onSuccess: () => {

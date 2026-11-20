@@ -1,0 +1,66 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { CalendarView } from "@/components/task-views";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
+import { useCourses, useProfile, useTasks, type Task } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/query-state";
+
+export const Route = createFileRoute("/_authenticated/calendar")({
+  head: () => ({
+    meta: [
+      { title: "Calendar — Pace" },
+      { name: "description", content: "See your assignments and planned work across the coming weeks and months." },
+    ],
+  }),
+  component: CalendarPage,
+});
+
+function CalendarPage() {
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const profileQuery = useProfile();
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: profile } = profileQuery;
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
+  const courseMap = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses]);
+  const visibleTasks = useMemo(
+    () => tasks.filter((task) => showCompleted || task.status !== "done"),
+    [tasks, showCompleted],
+  );
+
+  if (tasksQuery.isLoading || coursesQuery.isLoading || profileQuery.isLoading) return <QueryState loading loadingLabel="Loading your calendar…" />;
+  const queryError = tasksQuery.error ?? coursesQuery.error ?? profileQuery.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch(), profileQuery.refetch()]); }} />;
+
+  return (
+    <div>
+      <div className="page-intro mb-6 flex flex-wrap items-end gap-3 border-b border-border/70 pb-6">
+        <div className="mr-auto">
+          <p className="overline-label mb-2">LONG-TERM VIEW</p>
+          <h1 className="text-5xl font-semibold">Calendar<span className="text-primary">.</span></h1>
+          <p className="mt-2 text-sm text-muted-foreground">Plan ahead. See deadlines and work across the months ahead.</p>
+        </div>
+        <Button variant={showCompleted ? "default" : "outline"} size="sm" onClick={() => setShowCompleted((value) => !value)} aria-pressed={showCompleted}>
+          {showCompleted ? "Hide completed" : "Show completed"}
+        </Button>
+      </div>
+      <CalendarView
+        tasks={visibleTasks}
+        courses={courseMap}
+        onOpen={setEditing}
+        weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1}
+        timeZone={profile?.timezone}
+      />
+      {editing && (
+        <LazyTaskDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setEditing(null); }}
+          task={editing}
+        />
+      )}
+    </div>
+  );
+}

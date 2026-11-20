@@ -2,13 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Columns3, List, Plus } from "lucide-react";
 import { useCourses, useProfile, useTasks, type Task } from "@/lib/db";
-import { TaskDialog } from "@/components/task-dialog";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 import { BoardView, CalendarView, ListView } from "@/components/task-views";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/query-state";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
-  head: () => ({ meta: [{ title: "Tasks — StudyOS" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — StudyOS" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Tasks — Pace" }, { name: "description", content: "All your tasks in list, board and calendar views." }, { property: "og:title", content: "Tasks — Pace" }, { property: "og:description", content: "All your tasks in list, board and calendar views." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TasksPage,
 });
 
@@ -19,9 +22,12 @@ const VIEWS = [
 ] as const;
 
 function TasksPage() {
-  const { data: tasks = [] } = useTasks();
-  const { data: courses = [] } = useCourses();
-  const { data: profile } = useProfile();
+  const tasksQuery = useTasks();
+  const coursesQuery = useCourses();
+  const profileQuery = useProfile();
+  const { data: tasks = [] } = tasksQuery;
+  const { data: courses = [] } = coursesQuery;
+  const { data: profile } = profileQuery;
   const [view, setView] = useState<string>("list");
   const [courseFilter, setCourseFilter] = useState("");
   const [showDone, setShowDone] = useState(false);
@@ -32,6 +38,10 @@ function TasksPage() {
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
   const filtered = tasks.filter((t) => (!courseFilter || t.course_id === courseFilter) && (showDone || view === "board" || t.status !== "done"));
+
+  if (tasksQuery.isLoading || coursesQuery.isLoading || profileQuery.isLoading) return <QueryState loading loadingLabel="Loading your tasks…" />;
+  const queryError = tasksQuery.error ?? coursesQuery.error ?? profileQuery.error;
+  if (queryError) return <QueryState error={queryError} onRetry={() => { void Promise.all([tasksQuery.refetch(), coursesQuery.refetch(), profileQuery.refetch()]); }} />;
 
   return (
     <div>
@@ -47,20 +57,24 @@ function TasksPage() {
         <Button onClick={() => setCreating(true)}><Plus className="size-4" /> New</Button>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-        <select className="h-9 rounded-md border border-input bg-background px-2" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)}>
-          <option value="">All courses</option>
-          {courses.map((c) => <option key={c.id} value={c.id}>{c.code || c.name}</option>)}
-        </select>
+        <Select value={courseFilter || "__all__"} onValueChange={(value) => setCourseFilter(value === "__all__" ? "" : value)}>
+          <SelectTrigger className="h-9 w-[min(100%,15rem)]"><SelectValue placeholder="All courses" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All courses</SelectItem>
+            {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
         {view !== "board" && (
-          <label className="flex items-center gap-2 text-muted-foreground">
-            <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Show completed
-          </label>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Checkbox id="show-completed-tasks" checked={showDone} onCheckedChange={(checked) => setShowDone(checked === true)} />
+            <label htmlFor="show-completed-tasks">Show completed</label>
+          </div>
         )}
       </div>
-      {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
-      {view === "board" && <BoardView tasks={filtered} courses={courseMap} onOpen={setEditing} />}
-      {view === "calendar" && <CalendarView tasks={filtered} courses={courseMap} onOpen={setEditing} weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1} />}
-      <TaskDialog open={creating || !!editing} onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }} task={editing} defaults={courseFilter ? { course_id: courseFilter } : undefined} />
+      {view === "list" && <ListView tasks={filtered} courses={courseMap} onOpen={setEditing} timeZone={profile?.timezone} />}
+      {view === "board" && <BoardView tasks={filtered} courses={courseMap} onOpen={setEditing} timeZone={profile?.timezone} />}
+      {view === "calendar" && <CalendarView tasks={filtered} courses={courseMap} onOpen={setEditing} weekStartsOn={(profile?.week_starts_on ?? 1) as 0 | 1} timeZone={profile?.timezone} />}
+      {(creating || editing) && <LazyTaskDialog open={true} onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }} task={editing} defaults={courseFilter ? { course_id: courseFilter } : undefined} />}
     </div>
   );
 }

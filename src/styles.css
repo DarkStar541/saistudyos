@@ -5,16 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * StudyOS design foundation — "editorial study journal".
- *
- * Light mode: warm paper surfaces, ink text, one restrained violet accent,
- * hairline borders and soft layered shadows.
- * Dark mode: atmospheric ink-plum, elevated surfaces, luminous accent —
- * never flat black.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- * All colors use oklch.
+ * Pace design tokens. The active runtime style is neutral; light and dark
+ * appearance are independent. Tailwind utilities map to these OKLCH tokens.
  */
 
 @theme inline {
@@ -48,8 +40,8 @@
   --color-warning: var(--warning);
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   --color-ring-offset-background: var(--background);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -418,8 +410,7 @@ main.page-wash > div { max-width: 1580px !important; padding-top: clamp(1.5rem, 
   box-shadow: var(--shadow-card);
 }
 h1 { letter-spacing: -0.045em !important; }
-button, [role="button"] { transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
-button:active, [role="button"]:active { transform: scale(0.985); }
+/* Button motion is centralized in the universal interaction layer. */
 @media (max-width: 767px) {
   .app-sidebar { display: none; }
   .dashboard-heading { min-height: 17rem; }
@@ -1662,4 +1653,668 @@ html.theme-ember-aurora .app-new-task-button,
 html.theme-ember-aurora .app-mobile-add {
   background:linear-gradient(110deg,var(--primary),oklch(.72 .17 350)) !important;
   color:var(--primary-foreground) !important;
+}
+
+
+/* Stage 3 design foundation: page-level art direction shared across modules. */
+.page-intro {
+  position: relative;
+  min-width: 0;
+  isolation: isolate;
+}
+.page-intro > div:first-child { min-width: min(100%, 18rem); }
+.page-intro h1 {
+  max-width: 100%;
+  font-size: clamp(2.65rem, 5vw, 4.15rem);
+  line-height: .98;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+.page-intro > div:first-child > p:last-child {
+  max-width: 42rem;
+  line-height: 1.6;
+}
+.course-card {
+  min-width: 0;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.course-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+.task-calendar { min-width: 0; }
+.task-calendar [aria-label][class*="min-h-"] { min-width: 0; overflow-wrap: anywhere; }
+.page-section { min-width: 0; }
+html.theme-evergreen .page-intro {
+  border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+}
+html.theme-paper-ink .page-intro {
+  border-bottom: 3px double var(--foreground);
+}
+html.theme-paper-ink .page-intro h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+html.theme-nocturne .page-intro {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border));
+  border-radius: .8rem;
+  background: linear-gradient(115deg, color-mix(in oklab, var(--card) 94%, var(--primary)), var(--card));
+}
+html.theme-nocturne .page-intro .overline-label {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: .18em;
+}
+html.theme-daydream .page-intro {
+  padding: clamp(1rem, 2.5vw, 1.7rem);
+  border: 0;
+  border-radius: 1.5rem 1.5rem 1.5rem .45rem;
+  background: linear-gradient(125deg, color-mix(in oklab, var(--card) 94%, var(--course-purple)), color-mix(in oklab, var(--card) 90%, var(--course-orange)));
+}
+html.theme-daydream .page-intro h1 { letter-spacing: -.045em; }
+html.theme-ember-aurora .page-intro {
+  padding: clamp(1rem, 2.5vw, 1.7rem);
+  border: 1px solid color-mix(in oklab, var(--course-purple) 25%, var(--border));
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(ellipse at 100% 0%, color-mix(in oklab, var(--course-purple) 12%, transparent), transparent 48%),
+    linear-gradient(130deg, color-mix(in oklab, var(--card) 94%, var(--course-orange)), color-mix(in oklab, var(--card) 96%, var(--course-purple)));
+  box-shadow: var(--shadow-card);
+}
+html.theme-paper-ink .task-calendar { border-radius: 0; box-shadow: none; }
+html.theme-nocturne .task-calendar {
+  border-color: color-mix(in oklab, var(--primary) 25%, var(--border));
+  background: color-mix(in oklab, var(--card) 94%, var(--primary));
+}
+html.theme-daydream .task-calendar { border: 0; border-radius: 1.4rem; }
+html.theme-ember-aurora .task-calendar {
+  border-color: color-mix(in oklab, var(--course-purple) 24%, var(--border));
+  background: color-mix(in oklab, var(--card) 94%, var(--course-purple));
+}
+@media (max-width: 640px) {
+  .page-intro h1 { font-size: clamp(2.35rem, 12vw, 3.3rem); }
+  .page-intro { align-items: flex-start; }
+  .task-calendar { overflow-x: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card { transition: none; }
+}
+
+.projected-work-chip {
+  display:flex; min-width:0; align-items:center; gap:.3rem;
+  width:100%; padding:.22rem .35rem;
+  border:1px dashed color-mix(in oklab,var(--primary) 42%,var(--border));
+  border-radius:.45rem;
+  background:color-mix(in oklab,var(--primary) 8%,var(--card));
+  color:var(--muted-foreground);
+  font-size:.62rem; line-height:1.35; text-align:left;
+}
+.projected-work-chip > span:first-child { flex:none; color:var(--primary); font-size:.8rem; }
+.projected-work-chip:hover { border-style:solid; color:var(--foreground); }
+html.theme-paper-ink .projected-work-chip { border-radius:0; background:transparent; font-family:Georgia,serif; }
+html.theme-nocturne .projected-work-chip { background:oklch(.24 .035 255); color:oklch(.8 .035 205); }
+html.theme-daydream .projected-work-chip { border:1px dashed color-mix(in oklab,var(--course-purple) 45%,transparent); border-radius:.25rem .65rem .65rem .25rem; background:color-mix(in oklab,var(--course-purple) 10%,var(--card)); }
+html.theme-ember-aurora .projected-work-chip { border-color:color-mix(in oklab,var(--course-purple) 38%,var(--border)); background:color-mix(in oklab,var(--course-purple) 9%,var(--card)); }
+
+
+/* Neutral StudyOS design system — quiet, clear, and consistent. */
+:root {
+  --radius: .75rem;
+  --background: oklch(0.975 0.002 250);
+  --foreground: oklch(0.22 0.008 250);
+  --card: oklch(0.995 0.001 250);
+  --card-foreground: oklch(0.22 0.008 250);
+  --popover: oklch(0.995 0.001 250);
+  --popover-foreground: oklch(0.22 0.008 250);
+  --primary: oklch(0.53 0.19 255);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.004 250);
+  --secondary-foreground: oklch(0.28 0.008 250);
+  --muted: oklch(0.95 0.003 250);
+  --muted-foreground: oklch(0.51 0.01 250);
+  --accent: oklch(0.94 0.025 255);
+  --accent-foreground: oklch(0.36 0.13 255);
+  --border: oklch(0.89 0.004 250);
+  --input: oklch(0.87 0.005 250);
+  --ring: oklch(0.62 0.16 255);
+  --sidebar: oklch(0.985 0.001 250);
+  --sidebar-foreground: oklch(0.25 0.008 250);
+  --sidebar-primary: oklch(0.53 0.19 255);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.025 255);
+  --sidebar-accent-foreground: oklch(0.36 0.13 255);
+  --sidebar-border: oklch(0.90 0.004 250);
+  --sidebar-ring: oklch(0.62 0.16 255);
+  --shadow-card: 0 1px 2px oklch(0.2 0.01 250 / 5%), 0 5px 18px -12px oklch(0.2 0.01 250 / 12%);
+  --shadow-lift: 0 3px 10px oklch(0.2 0.01 250 / 7%), 0 12px 28px -18px oklch(0.2 0.01 250 / 18%);
+}
+.dark {
+  --background: oklch(0.17 0.004 250);
+  --foreground: oklch(0.94 0.003 250);
+  --card: oklch(0.215 0.005 250);
+  --card-foreground: oklch(0.94 0.003 250);
+  --popover: oklch(0.23 0.005 250);
+  --popover-foreground: oklch(0.94 0.003 250);
+  --primary: oklch(0.72 0.14 255);
+  --primary-foreground: oklch(0.17 0.004 250);
+  --secondary: oklch(0.27 0.005 250);
+  --secondary-foreground: oklch(0.92 0.003 250);
+  --muted: oklch(0.25 0.005 250);
+  --muted-foreground: oklch(0.69 0.006 250);
+  --accent: oklch(0.29 0.025 255);
+  --accent-foreground: oklch(0.9 0.04 255);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.14 255);
+  --sidebar: oklch(0.19 0.004 250);
+  --sidebar-foreground: oklch(0.92 0.003 250);
+  --sidebar-primary: oklch(0.72 0.14 255);
+  --sidebar-primary-foreground: oklch(0.17 0.004 250);
+  --sidebar-accent: oklch(0.27 0.02 255);
+  --sidebar-accent-foreground: oklch(0.93 0.01 250);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.72 0.14 255);
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 18%), 0 8px 22px -14px oklch(0 0 0 / 30%);
+  --shadow-lift: 0 3px 10px oklch(0 0 0 / 24%), 0 14px 30px -16px oklch(0 0 0 / 38%);
+}
+@layer base {
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: -0.01em; }
+  h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; font-variation-settings: normal; letter-spacing: -0.035em; }
+}
+.app-sidebar {
+  background: var(--sidebar) !important;
+  background-image: none !important;
+  box-shadow: 1px 0 0 var(--border) !important;
+}
+.app-wordmark-mark {
+  border-radius: .65rem !important;
+  box-shadow: none !important;
+}
+.app-nav-link { border-radius: .6rem !important; transform: none !important; }
+.app-nav-link:hover { transform: none !important; }
+.app-nav-link[data-status="active"] { box-shadow: none !important; }
+.page-wash { background: var(--background) !important; }
+.page-intro {
+  padding: 0 0 1.35rem !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.page-intro h1 { font-size: clamp(2rem, 3.2vw, 2.8rem) !important; line-height: 1.12 !important; letter-spacing: -.045em !important; font-weight: 650 !important; }
+.dashboard-heading {
+  border: 0 !important;
+  border-radius: 1rem !important;
+  background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.dashboard-widget {
+  border: 1px solid var(--border) !important;
+  border-radius: .9rem !important;
+  background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease !important;
+}
+.dashboard-widget:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+.course-card:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+.projected-work-chip { border-radius: .4rem !important; }
+.app-mobile-add { box-shadow: var(--shadow-card) !important; }
+button, [role="button"] { transition-duration: 140ms; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+
+/* Neutral system refinement: consistent page composition and quiet surfaces. */
+html.theme-neutral {
+  color-scheme: light;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+}
+html.dark.theme-neutral { color-scheme: dark; }
+html.theme-neutral body { letter-spacing: -0.012em; line-height: 1.5; }
+html.theme-neutral h1, html.theme-neutral h2, html.theme-neutral h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.035em;
+  font-weight: 620;
+}
+html.theme-neutral main.page-wash > div {
+  max-width: 1360px !important;
+  padding-top: clamp(1.5rem, 3vw, 2.75rem) !important;
+  padding-bottom: 3rem;
+}
+html.theme-neutral .app-sidebar {
+  width: 15.5rem !important;
+  padding: 1.65rem 1.1rem 1.15rem !important;
+  background: var(--sidebar) !important;
+  background-image: none !important;
+  border-right: 1px solid var(--sidebar-border) !important;
+  box-shadow: none !important;
+}
+
+html.theme-neutral .app-wordmark-mark {
+  width: 2rem; height: 2rem; border-radius: .6rem !important;
+  background: var(--primary) !important; color: var(--primary-foreground) !important;
+  box-shadow: none !important;
+}
+html.theme-neutral .app-nav-link {
+  min-height: 2.55rem; padding: .65rem .75rem !important;
+  border-radius: .55rem !important; font-weight: 500;
+  color: var(--sidebar-foreground);
+}
+html.theme-neutral .app-nav-link[data-status="active"] {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-accent-foreground) !important;
+  box-shadow: none !important;
+}
+html.theme-neutral .app-new-task-button {
+  border-radius: .65rem !important; box-shadow: none !important;
+}
+html.theme-neutral .page-intro {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding: 0 0 1.25rem !important;
+  border: 0 !important; border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+html.theme-neutral .page-intro h1 {
+  margin: 0; font-size: clamp(2rem, 3.1vw, 2.65rem) !important;
+  line-height: 1.15 !important; letter-spacing: -.045em !important;
+  font-weight: 650 !important;
+}
+html.theme-neutral .page-intro h1 .text-primary { color: inherit !important; }
+html.theme-neutral .page-intro .overline-label {
+  margin-bottom: .4rem; font-size: .68rem; letter-spacing: .08em;
+}
+html.theme-neutral .dashboard-heading {
+  min-height: 0 !important; align-items: center !important;
+  gap: 1.25rem; padding: 1.5rem 1.65rem !important;
+  border: 1px solid var(--border) !important; border-radius: .95rem !important;
+  color: var(--foreground) !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .dashboard-heading::after { display: none !important; }
+html.theme-neutral .dashboard-heading h1 {
+  max-width: none; margin-top: .45rem !important;
+  color: var(--foreground) !important; font-size: clamp(1.8rem, 3vw, 2.45rem) !important;
+  line-height: 1.16 !important; letter-spacing: -.045em !important;
+}
+html.theme-neutral .dashboard-heading .overline-label { color: var(--muted-foreground) !important; }
+html.theme-neutral .dashboard-heading button {
+  color: var(--foreground) !important; background: var(--background) !important;
+  border: 1px solid var(--border) !important;
+}
+html.theme-neutral .dashboard-stat {
+  display: inline-flex; gap: .4rem; align-items: baseline;
+  padding: .2rem .8rem .2rem 0 !important; margin-right: .75rem;
+  border: 0 !important; border-radius: 0 !important; border-right: 1px solid var(--border) !important;
+  background: transparent !important;
+}
+html.theme-neutral .dashboard-stat:last-child { border-right: 0 !important; }
+html.theme-neutral .dashboard-stat .text-foreground,
+html.theme-neutral .dashboard-stat .text-muted-foreground { color: inherit !important; }
+html.theme-neutral .dashboard-gauge-strip { justify-content: flex-start; gap: .8rem; }
+html.theme-neutral .dashboard-summary-gauge {
+  min-width: 0; align-items: flex-start; gap: .1rem; padding-left: .8rem;
+  border-left: 1px solid var(--border);
+}
+html.theme-neutral .dashboard-summary-gauge-dial { width: auto; height: auto; }
+html.theme-neutral .dashboard-summary-gauge-dial svg { display: none; }
+html.theme-neutral .dashboard-summary-gauge-dial strong {
+  position: static; display: block; padding: 0; font: 600 1rem var(--font-sans);
+}
+html.theme-neutral .dashboard-summary-gauge > span {
+  font-size: .68rem; white-space: normal; text-align: left;
+}
+html.theme-neutral .dashboard-composition,
+html.theme-neutral .dashboard-customize-layout {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem; align-items: start;
+}
+html.theme-neutral .dashboard-widget {
+  grid-column: span 6; min-width: 0; overflow: hidden;
+  padding: 1.15rem !important; border: 1px solid var(--border) !important;
+  border-radius: .85rem !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .dashboard-widget[data-widget="quickadd"],
+html.theme-neutral .dashboard-widget[data-widget="calendar"] { grid-column: 1 / -1; }
+html.theme-neutral .dashboard-widget > .dashboard-widget-heading {
+  margin-bottom: .9rem; padding-bottom: .7rem;
+  border-bottom: 1px solid var(--border) !important;
+}
+html.theme-neutral .dashboard-widget h2 { font-size: .72rem; letter-spacing: .08em; }
+html.theme-neutral .dashboard-widget:hover { transform: none !important; box-shadow: var(--shadow-card) !important; }
+html.theme-neutral .page-section,
+html.theme-neutral .rounded-2xl.border.border-border.bg-card {
+  border: 1px solid var(--border) !important; border-radius: .85rem !important;
+  background: var(--card) !important; box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .course-card {
+  border-radius: .85rem !important; background: var(--card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html.theme-neutral .course-card > div:first-child { height: 3px; }
+html.theme-neutral .course-card:hover { transform: none !important; border-color: var(--input); }
+html.theme-neutral .projected-work-chip {
+  border-radius: .4rem !important; background: var(--background) !important;
+}
+html.theme-neutral .app-mobile-add { box-shadow: var(--shadow-card) !important; }
+html.theme-neutral input:not([type="checkbox"]):not([type="radio"]),
+html.theme-neutral textarea,
+html.theme-neutral [role="combobox"] {
+  border-radius: .55rem;
+}
+/* Button interaction motion is defined once in the universal interaction layer below. */
+html.theme-neutral .appearance-mode,
+html.theme-neutral form > section { border-radius: .85rem; }
+@media (max-width: 1023px) {
+  html.theme-neutral .app-main { padding-left: 0 !important; }
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-heading { padding: 1.15rem !important; }
+  html.theme-neutral .dashboard-composition,
+  html.theme-neutral .dashboard-customize-layout { grid-template-columns: minmax(0, 1fr); }
+  html.theme-neutral .dashboard-widget,
+  html.theme-neutral .dashboard-widget[data-widget="quickadd"],
+  html.theme-neutral .dashboard-widget[data-widget="calendar"] { grid-column: 1 / -1; }
+  html.theme-neutral .dashboard-gauge-strip { width: 100%; }
+  html.theme-neutral .page-intro { align-items: flex-start; }
+  html.theme-neutral .page-intro h1 { font-size: clamp(1.9rem, 9vw, 2.5rem) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.theme-neutral *, html.theme-neutral *::before, html.theme-neutral *::after {
+    scroll-behavior: auto !important; transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
+
+/* Keep calendar/task metadata quiet, while the dashboard overdue metric stays clearly urgent. */
+html.theme-neutral .task-calendar .text-destructive {
+  color: var(--muted-foreground) !important;
+}
+html.theme-neutral .dashboard-widget[data-widget="overdue"] .dashboard-widget-heading h2 {
+  color: var(--foreground) !important;
+}
+html.theme-neutral .dashboard-stat .text-destructive {
+  color: var(--destructive) !important;
+}
+
+
+/* Keep the desktop rail and content breakpoint aligned; support browser zoom. */
+@media (max-width: 1023px) {
+  html.theme-neutral .app-main { padding-left: 0 !important; }
+}
+@media (min-width: 1024px) {
+  html.theme-neutral .app-sidebar {
+    max-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  html.theme-neutral .app-sidebar nav {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+
+/* Dashboard summary: keep the two metric groups close and make their units explicit. */
+html.theme-neutral .dashboard-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end !important;
+  column-gap: 1.5rem !important;
+  row-gap: 1rem !important;
+}
+html.theme-neutral .dashboard-heading > div:first-child {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-right: 0 !important;
+}
+html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+  grid-column: 1;
+  grid-row: 2;
+  width: auto;
+  margin: 0 !important;
+  justify-content: flex-start !important;
+  gap: 1rem !important;
+}
+html.theme-neutral .dashboard-heading > button {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: end;
+}
+html.theme-neutral .dashboard-heading .dashboard-summary-gauge {
+  padding-left: .9rem;
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-heading {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: .9rem !important;
+  }
+  html.theme-neutral .dashboard-heading > div:first-child,
+  html.theme-neutral .dashboard-heading .dashboard-gauge-strip,
+  html.theme-neutral .dashboard-heading > button {
+    grid-column: 1;
+  }
+  html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+    grid-row: 2;
+    flex-wrap: wrap;
+  }
+  html.theme-neutral .dashboard-heading > button {
+    grid-row: 3;
+    justify-self: start;
+  }
+}
+
+
+/* The lower dashboard metrics should start directly beneath the headline stats,
+   not be centered in the unused middle of the welcome card. */
+html.theme-neutral .dashboard-heading .dashboard-gauge-strip {
+  justify-self: start !important;
+  align-self: start !important;
+  width: max-content !important;
+  max-width: 100%;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  justify-content: flex-start !important;
+}
+html.theme-neutral .dashboard-heading .dashboard-summary-gauge:first-child {
+  margin-left: 0 !important;
+}
+
+/* ── Universal Pace interaction finish ──────────────────────────────────
+   Apply one restrained interaction language across shared controls and
+   interactive surfaces, including controls that do not use the Button UI.
+*/
+@layer base {
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea,
+  [role="checkbox"],
+  [role="switch"],
+  [role="tab"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]) {
+    transition:
+      color 150ms ease-out,
+      background-color 150ms ease-out,
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      opacity 150ms ease-out,
+      translate 150ms ease-out,
+      scale 150ms ease-out;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  a[href]:active {
+    translate: 0 0 !important;
+    scale: 0.985 !important;
+    box-shadow: none !important;
+  }
+
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a[href]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="checkbox"]:focus-visible,
+  [role="switch"]:focus-visible,
+  [role="tab"]:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  input,
+  select,
+  textarea {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 14%, transparent);
+  }
+}
+
+@layer components {
+  /* Shared clickable surfaces used by task rows, cards and list items. */
+  [data-interactive="true"],
+  .interactive-surface {
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+  }
+
+  [data-interactive="true"]:hover,
+  .interactive-surface:hover {
+    border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Keep static cards calm; only lift cards explicitly marked interactive. */
+  .card-interactive:hover,
+  [data-interactive="true"]:hover {
+    transform: translateY(-1px);
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+/* One hover treatment for every enabled button, including native buttons
+   and buttons rendered by page-specific dashboard components. Do not gate
+   this on pointer capability: some desktop/browser environments report
+   hover capability inconsistently. */
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  translate: 0 -1px !important;
+  scale: 1 !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08) !important;
+  filter: brightness(1.015);
+}
+
+a[href]:hover {
+  text-decoration-thickness: 1.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="checkbox"],
+  [role="switch"],
+  [role="tab"],
+  [data-interactive="true"],
+  .interactive-surface {
+    transition: none !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+  }
+}
+
+
+/* Dashboard Customize: neutral theme uses a 12-column grid. The generic
+   auto-placement rule above must not collapse widgets into a single track. */
+html.theme-neutral .dashboard-customize-layout > [data-widget] {
+  grid-column: span 6 !important;
+  min-width: 0;
+}
+html.theme-neutral .dashboard-customize-layout > [data-widget="quickadd"],
+html.theme-neutral .dashboard-customize-layout > [data-widget="calendar"] {
+  grid-column: 1 / -1 !important;
+}
+@media (max-width: 700px) {
+  html.theme-neutral .dashboard-customize-layout > [data-widget] {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+
+/* Responsive app shell: keep the desktop sidebar and content offset in sync.
+   Explicit CSS avoids relying on generated arbitrary breakpoint utilities. */
+/* 1100px leaves room for the 15.5rem sidebar plus a usable content
+   canvas. Browser zoom reduces the CSS viewport, naturally switching to
+   the same bottom navigation used on phones before the two layouts collide. */
+@media (min-width: 1100px) {
+  .app-sidebar { display: flex !important; }
+  main.app-main { padding-left: 15.5rem !important; padding-bottom: 0 !important; }
+  .app-mobile-nav, .app-mobile-add { display: none !important; }
+}
+@media (max-width: 1099px) {
+  .app-sidebar { display: none !important; }
+  main.app-main { padding-left: 0 !important; padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important; }
+  .app-mobile-nav { display: grid !important; }
+  .app-mobile-add { display: grid !important; }
+}
+
+
+/* AI Quick Add is the primary Dashboard capture action. */
+.dashboard-ai-quick-add {
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.055), hsl(var(--card)) 58%);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  box-shadow: 0 2px 10px hsl(var(--foreground) / 0.035);
+}
+.dashboard-ai-quick-add .dashboard-widget-heading {
+  border-bottom-color: hsl(var(--primary) / 0.18);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-ai-quick-add {
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .dashboard-ai-quick-add:focus-within {
+    border-color: hsl(var(--primary) / 0.48);
+    box-shadow: 0 4px 18px hsl(var(--primary) / 0.09);
+  }
 }

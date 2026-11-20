@@ -1,16 +1,20 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { BookOpen, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
+import { BarChart3, BookOpen, CalendarDays, CheckSquare, Clock3, FolderKanban, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/db";
-import { applyTheme } from "@/lib/theme";
+import { applyTheme, applyStyle, getSavedStyle } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
-import { TaskDialog } from "@/components/task-dialog";
+import { toast } from "sonner";
+import { LazyTaskDialog } from "@/components/lazy-task-dialog";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/focus", label: "Focus", icon: Clock3 },
+  { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/courses", label: "Courses", icon: BookOpen },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -19,10 +23,8 @@ const NAV = [
 function Wordmark() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5 px-2">
-      <span className="app-wordmark-mark grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-semibold text-primary-foreground shadow-card">
-        S
-      </span>
-      <span className="font-display text-2xl font-normal italic tracking-tight">StudyOS</span>
+      <span className="app-wordmark-mark grid size-8 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">P</span>
+      <span className="text-lg font-semibold tracking-tight">Pace</span>
     </Link>
   );
 }
@@ -35,6 +37,7 @@ export function AppShell() {
 
   useEffect(() => {
     if (profile?.theme) applyTheme(profile.theme);
+    applyStyle(getSavedStyle());
   }, [profile?.theme]);
 
   // Keep system mode in sync if the operating system theme changes mid-session.
@@ -61,24 +64,28 @@ export function AppShell() {
   }, []);
 
   async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Couldn't sign out. Please try again.");
+      return;
+    }
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 
-  const initial = (profile?.display_name ?? "S").trim().charAt(0).toUpperCase() || "S";
+  const initial = (profile?.display_name ?? "P").trim().charAt(0).toUpperCase() || "P";
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="app-sidebar fixed inset-y-0 left-0 hidden w-[17rem] flex-col px-5 py-7 md:flex">
+      <aside className="app-sidebar fixed inset-y-0 left-0 z-20 hidden w-[15.5rem] flex-col overflow-y-auto overscroll-contain px-5 py-7">
         <Wordmark />
         <Button className="app-new-task-button mt-9 h-11 justify-start gap-2 rounded-xl shadow-card" onClick={() => setAddOpen(true)}>
           <Plus className="size-4" /> New task
           <kbd className="ml-auto rounded bg-primary-foreground/20 px-1.5 text-xs">N</kbd>
         </Button>
-        <div className="mt-12 mb-2 px-3"><p className="overline-label">Your space</p><p className="mt-1 text-xs text-sidebar-foreground/50">A calmer way to get things done</p></div>
-        <nav className="mt-3 flex flex-1 flex-col gap-1">
+        <div className="mt-10 mb-2 px-3"><p className="text-xs font-medium text-muted-foreground">Workspace</p></div>
+        <nav className="mt-3 flex flex-col gap-1">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
@@ -98,15 +105,15 @@ export function AppShell() {
           <button
             onClick={signOut}
             aria-label="Sign out"
-            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-[background-color,color,transform] duration-150 hover:-translate-y-px hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:translate-y-0 motion-reduce:transition-none"
           >
             <LogOut className="size-4" />
           </button>
         </div>
       </aside>
 
-      <main className="page-wash pb-24 md:pb-0 md:pl-[17rem]">
-        <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-10 md:py-10 xl:px-14">
+      <main className="app-main page-wash pb-24">
+        <div className="mx-auto max-w-[1440px] px-4 py-6 lg:px-10 lg:py-10 xl:px-14">
           <Outlet />
         </div>
       </main>
@@ -115,19 +122,19 @@ export function AppShell() {
       <button
         aria-label="New task"
         onClick={() => setAddOpen(true)}
-        className="app-mobile-add fixed bottom-20 right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lift md:hidden"
+        className="app-mobile-add fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lift min-[900px]:hidden"
       >
         <Plus className="size-6" />
       </button>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/90 backdrop-blur-md md:hidden">
+      <nav className="app-mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-8 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         {NAV.map(({ to, label, icon: Icon }) => (
-          <Link key={to} to={to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground" activeProps={{ className: "font-semibold text-primary" }}>
-            <Icon className="size-5" /> {label}
+          <Link key={to} to={to} className="group flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:text-foreground" activeProps={{ className: "font-semibold text-primary" }}>
+            <Icon className="size-5 transition-transform duration-150 group-hover:-translate-y-0.5 motion-reduce:transition-none" /> {label}
           </Link>
         ))}
       </nav>
 
-      <TaskDialog open={addOpen} onOpenChange={setAddOpen} />
+      {addOpen && <LazyTaskDialog open={addOpen} onOpenChange={setAddOpen} />}
     </div>
   );
 }

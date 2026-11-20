@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { useNavigate } from "@tanstack/react-router";
+
 import { Paperclip, Plus, SkipForward, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { seriesIdOf, useCourses, useMilestones, useProfile, useProjects, useRemove, useSkipOccurrence, useSubtasks, type Task } from "@/lib/db";
-import { PRIORITIES, STATUSES, STATUS_LABEL, TASK_TYPES } from "@/lib/task-utils";
+import { dateKeyInTimeZone, dateTimeInputInTimeZone, dateTimeInTimeZoneToIso, PRIORITIES, STATUSES, STATUS_LABEL, TASK_TYPES } from "@/lib/task-utils";
 import { RECURRENCE_OPTIONS, WEEKDAY_LABELS, describeRecurrence } from "@/lib/recurrence";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/date-picker";
 import { cn } from "@/lib/utils";
 
-type Props = {
+export type TaskDialogProps = {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   task?: Task | null | undefined;
@@ -27,7 +28,8 @@ type Props = {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ");
 const NONE = "__none__";
 
-export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
+export function TaskDialog({ open, onOpenChange, task, defaults }: TaskDialogProps) {
+  const navigate = useNavigate();
   const { data: courses = [] } = useCourses();
   const { data: projects = [] } = useProjects();
   const { data: milestones = [] } = useMilestones();
@@ -53,11 +55,11 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
   useEffect(() => {
     if (!open) return undefined;
     if (task) {
-      const d = task.due_at ? new Date(task.due_at) : null;
+      const dueInputs = task.due_at ? dateTimeInputInTimeZone(task.due_at, profile?.timezone) : null;
       setF({
         title: task.title, description: task.description ?? "", course_id: task.course_id ?? "", project_id: task.project_id ?? "",
         milestone_id: task.milestone_id ?? "", task_type: task.task_type, status: task.status, priority: task.priority,
-        due_date: d ? format(d, "yyyy-MM-dd") : "", due_time: d ? format(d, "HH:mm") : "23:59",
+        due_date: dueInputs?.date ?? "", due_time: dueInputs?.time ?? "23:59",
         planned_date: task.planned_date ?? "", estimated_minutes: task.estimated_minutes?.toString() ?? "",
         tags: task.tags.join(", "), recurrence: task.recurrence,
         recurrence_interval: String(task.recurrence_interval ?? 1), recurrence_days: task.recurrence_days ?? [],
@@ -72,7 +74,7 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
     setApplySeries(false);
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, task?.id]);
+  }, [open, task?.id, profile?.timezone, profile?.default_priority, profile?.default_duration_minutes]);
 
   const projectMilestones = useMemo(() => milestones.filter((m) => m.project_id === f.project_id), [milestones, f.project_id]);
   const patch = (k: keyof typeof f, v: string | number[] | boolean) => setF((p) => ({ ...p, [k]: v }));
@@ -92,8 +94,8 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
         title: f.title.trim().slice(0, 300), description: f.description || null, course_id: f.course_id || null,
         project_id: f.project_id || null, milestone_id: f.project_id && f.milestone_id ? f.milestone_id : null,
         task_type: f.task_type, status: f.status, priority: f.priority,
-        due_at: f.due_date ? new Date(`${f.due_date}T${f.due_time || "23:59"}`).toISOString() : null,
-        planned_date: f.planned_date || (isRecurring ? format(new Date(), "yyyy-MM-dd") : null),
+        due_at: f.due_date ? dateTimeInTimeZoneToIso(f.due_date, f.due_time, profile?.timezone) : null,
+        planned_date: f.planned_date || (isRecurring ? dateKeyInTimeZone(new Date(), profile?.timezone) : null),
         estimated_minutes: f.estimated_minutes ? Math.max(0, Math.min(10000, parseInt(f.estimated_minutes) || 0)) : null,
         tags: f.tags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 20),
         recurrence: f.recurrence,
@@ -122,9 +124,20 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
       if (task && applySeries && task.recurrence !== "none") {
         const sid = seriesIdOf(task);
         const seriesPatch = {
-          recurrence: row.recurrence, recurrence_interval: row.recurrence_interval,
-          recurrence_days: row.recurrence_days, recurrence_end: row.recurrence_end,
-          priority: row.priority, estimated_minutes: row.estimated_minutes, course_id: row.course_id,
+          title: row.title,
+          description: row.description,
+          course_id: row.course_id,
+          project_id: row.project_id,
+          milestone_id: row.milestone_id,
+          task_type: row.task_type,
+          priority: row.priority,
+          estimated_minutes: row.estimated_minutes,
+          tags: row.tags,
+          due_at: row.due_at,
+          recurrence: row.recurrence,
+          recurrence_interval: row.recurrence_interval,
+          recurrence_days: row.recurrence_days,
+          recurrence_end: row.recurrence_end,
         };
         // If the edited occurrence is a child, keep the series root in sync too.
         if (task.id !== sid) {
@@ -359,9 +372,12 @@ export function TaskDialog({ open, onOpenChange, task, defaults }: Props) {
 
           <div className="flex items-center justify-between gap-2 pt-2">
             {task ? (
-              <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { await remove.mutateAsync(task.id); onOpenChange(false); }}>
-                <Trash2 className="size-4" /> Delete
-              </Button>
+              <div className="flex flex-wrap gap-1">
+                {task.status !== "done" && <Button type="button" variant="outline" size="sm" onClick={() => { if (profile?.id) localStorage.setItem(`pace-focus-next-task:${profile.id}`, task.id); onOpenChange(false); void navigate({ to: "/focus" }); }}>Focus on this task</Button>}
+                <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { await remove.mutateAsync(task.id); onOpenChange(false); }}>
+                  <Trash2 className="size-4" /> Delete
+                </Button>
+              </div>
             ) : <span />}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
